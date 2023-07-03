@@ -1,0 +1,11 @@
+FROM quay.io/quarkus/quarkus-micro-image@sha256:a9182e3618935ab7decb6ec0a7cdd2dd60288ea4a61e0c08c8c486fff42696e8
+WORKDIR /work/
+RUN chown 1001 /work \
+    && chmod "g+rwX" /work \
+    && chown 1001:root /work
+COPY --chown=1001:root target/*-runner /work/application
+
+EXPOSE 8080
+USER 1001
+
+CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]

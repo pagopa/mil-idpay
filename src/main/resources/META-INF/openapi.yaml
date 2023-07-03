@@ -1,0 +1,474 @@
+openapi: 3.0.3
+
+info:
+  title: IDPay Microservice
+  version: 1.0.0-RC
+  description: IDPay Microservice for Multi-channel Integration Layer of SW Client Project
+  contact:
+    name: Antonio Tarricone
+    email: antonio.tarricone@pagopa.it
+
+servers:
+  - description: DEV
+    url: https://mil-d-apim.azure-api.net/mil-idpay
+  - description: UAT
+    url: https://mil-u-apim.azure-api.net/mil-idpay
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ================================================================================================
+  #
+  # /initiatives
+  #
+  # ================================================================================================
+  /initiatives:
+    get:
+      operationId: getInitiatives
+      summary: Returns the list of initiatives that can be used with the Merchant
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/Version'
+        - $ref: '#/components/parameters/AcquirerId'
+        - $ref: '#/components/parameters/Channel'
+        - $ref: '#/components/parameters/MerchantId'
+        - $ref: '#/components/parameters/TerminalId'
+      responses:
+        "200":
+          $ref: '#/components/responses/Initiatives'
+        "400":
+          $ref: '#/components/responses/Error'
+        "401":
+          description: Wrong credentials
+        "403":
+          description: Forbidden
+        "406":
+          description: Not acceptable. Did you require application/json?
+        "429":
+          description: Too many request
+        "500":
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+
+  # ================================================================================================
+  #
+  # /transactions
+  #
+  # ================================================================================================
+  /transactions:
+    post:
+      operationId: createTransaction
+      summary: Creates an IDPay transaction
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/Version'
+        - $ref: '#/components/parameters/AcquirerId'
+        - $ref: '#/components/parameters/Channel'
+        - $ref: '#/components/parameters/MerchantId'
+        - $ref: '#/components/parameters/TerminalId'
+      requestBody:
+        $ref: '#/components/requestBodies/CreateTransaction'
+      responses:
+        "201":
+          $ref: '#/components/responses/CreateTransaction'
+        "400":
+          $ref: '#/components/responses/Error'
+        "401":
+          description: Wrong credentials
+        "403":
+          description: Forbidden
+        "406":
+          description: Not acceptable. Did you require application/json?
+        "415":
+          description: Unsupported media type. Did you provide application/json?
+        "429":
+          description: Too many request
+        "500":
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+
+  # ================================================================================================
+  #
+  # /transactions/{transactionId}
+  #
+  # ================================================================================================
+  /transactions/{transactionId}:
+    get:
+      operationId: getTransaction
+      summary: Returns details on an IDPay transaction
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/Version'
+        - $ref: '#/components/parameters/AcquirerId'
+        - $ref: '#/components/parameters/Channel'
+        - $ref: '#/components/parameters/MerchantId'
+        - $ref: '#/components/parameters/TerminalId'
+        - name: transactionId
+          description: ID of the transaction
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/TransactionId'
+      responses:
+        "200":
+          $ref: '#/components/responses/Transaction'
+        "400":
+          $ref: '#/components/responses/Error'
+        "401":
+          description: Wrong credentials
+        "403":
+          description: Forbidden
+        "404":
+          description: Transaction not found
+        "406":
+          description: Not acceptable. Did you require application/json?
+        "429":
+          description: Too many request
+        "500":
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+
+components:
+  # ================================================================================================
+  #
+  # schema
+  #
+  # ================================================================================================
+  schemas:
+    # ----------------------------------------------------------------------------------------------
+    #
+    # Basic types
+    #
+    # ----------------------------------------------------------------------------------------------
+    AcquirerId:
+      description: Acquirer ID assigned by PagoPA
+      type: string
+      pattern: "^\\d{1,11}$"
+      example: "4585625"
+
+    Challenge:
+      description: Challenge to authenticate the CIE
+      type: string
+      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+      
+    Channel:
+      description: Channel originating the request
+      enum:
+        - ATM
+        - POS
+        - TOTEM
+        - CASH_REGISTER
+        - CSA
+      type: string
+      example: "ATM"
+    
+    CoveredAmount:
+      description: Amount covered by the initiative in euro cents
+      type: integer
+      format: int64
+      minimum: 1
+      maximum: 99999999999
+    
+    Error:
+      description: Error code
+      type: string
+      pattern: "^[A-F0-9]{9}$"
+      example: "001000005"
+    
+    GoodsCost:
+      description: Cost of goods or service to buy in euro cents
+      type: integer
+      format: int64
+      minimum: 1
+      maximum: 99999999999
+    
+    InitiativeId:
+      description: ID of the initiative.
+      type: string
+      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+
+    InitiativeName:
+      description: Name of the initiative.
+      type: string
+      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+    
+    MerchantId:
+      description: Merchant ID. Mandatory when Channel equals POS.
+      type: string
+      pattern: "^[0-9a-zA-Z]{1,15}$"
+      example: "28405fHfk73x88D"
+
+    Organization:
+      description: Name of the governmental organization that makes the initiative
+      type: string
+      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+    
+    QrCode:
+      description: String to be encoded in the QR-code
+      type: string
+      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+
+    RequestId:
+      description: ID of the request
+      type: string
+      format: uuid
+      pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+      example: "d0d654e6-97da-4848-b568-99fedccb642b"
+
+    TerminalId:
+      description: ID of the terminal originating the transaction. It must be unique per acquirer and channel.
+      type: string
+      pattern: "^[0-9a-zA-Z]{1,8}$"
+      example: "0aB9wXyZ"
+
+    TransactionId:
+      description: ID of the IDPay transaction
+      type: string
+      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+    
+    TransactionLocation:
+      description: URL of the transaction
+      type: string
+      format: uri
+      pattern: "^[ -~]{1,2048}$"
+    
+    TransactionStatus:
+     description: Status of the transaction
+     type: string
+     enum:
+       - CREATED
+       - AUTHORIZED
+       - REJECTED
+    
+    TransactionTimestamp:
+      description: Timestamp of the transaction
+      type: string
+      format: date-time
+      maxLength: 19
+    
+    Version:
+      description: Version of the required API
+      type: string
+      pattern: "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+      maxLength: 64
+      example: "1.0.0-alpha-a.b-c-somethinglong+build.1-aef.1-its-okay"
+    
+    # ----------------------------------------------------------------------------------------------
+    #
+    # Complex types
+    #
+    # ----------------------------------------------------------------------------------------------
+    CreateTransaction:
+      description: Details to create a new IDPay transaction
+      type: object
+      additionalProperties: false
+      properties:
+        initiativeId:
+          $ref: '#/components/schemas/InitiativeId'
+        timestamp:
+          $ref: '#/components/schemas/TransactionTimestamp'
+        goodsCost:
+          $ref: '#/components/schemas/GoodsCost'
+      required:
+        - initiativeId
+        - timestamp
+        - goodsCost
+      
+    Errors:
+      description: List of errors
+      type: object
+      additionalProperties: false
+      properties:
+        errors:
+          type: array
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/Error'
+      required:
+        - errors
+      example:
+        errors:
+          - "00000000A"
+          - "001000001"
+    
+    Initiative:
+      description: Initiative details
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/InitiativeId'
+        name:
+          $ref: '#/components/schemas/InitiativeName'
+        organization:
+          $ref: '#/components/schemas/Organization'
+      required:
+        - id
+        - name
+        - organization
+    
+    Initiatives:
+      description: List of initiatives
+      type: object
+      additionalProperties: false
+      properties:
+        initiatives:
+          type: array
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/Initiative'
+      required:
+        - initiatives
+
+    Transaction:
+      description: IDPay transaction details
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: '#/components/schemas/TransactionId'
+        initiativeId:
+          $ref: '#/components/schemas/InitiativeId'
+        timestamp:
+          $ref: '#/components/schemas/TransactionTimestamp'
+        goodsCost:
+          $ref: '#/components/schemas/GoodsCost'
+        challenge:
+          $ref: '#/components/schemas/Challenge'
+        qrCode:
+          $ref: '#/components/schemas/QrCode'
+        coveredAmount:
+          $ref: '#/components/schemas/CoveredAmount'
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+      required:
+        - id
+        - initiativeId
+        - timestamp
+        - goodsCost
+        - challenge
+        - qrCode
+        - coveredAmount
+        - status
+
+  # ================================================================================================
+  #
+  # requestBodies
+  #
+  # ================================================================================================
+  requestBodies:
+    CreateTransaction:
+      description: Request to create a new IDPay transaction
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateTransaction'
+
+  # ================================================================================================
+  #
+  # parameters
+  #
+  # ================================================================================================
+  parameters:
+    AcquirerId:
+      name: AcquirerId
+      in: header
+      description: Acquirer ID assigned by PagoPA
+      required: true
+      schema:
+        $ref: '#/components/schemas/AcquirerId'
+
+    Channel:
+      name: Channel
+      in: header
+      description: Channel originating the request
+      required: true
+      schema:
+        $ref: '#/components/schemas/Channel'
+
+    MerchantId:
+      name: MerchantId
+      description: Merchant ID
+      in: header
+      required: true
+      schema:
+        $ref: '#/components/schemas/MerchantId'
+    
+    RequestId:
+      name: RequestId
+      in: header
+      description: ID of the request
+      required: true
+      schema:
+        $ref: '#/components/schemas/RequestId'
+
+    TerminalId:
+      name: TerminalId
+      in: header
+      description: ID of the terminal originating the transaction. It must be unique per acquirer and channel.
+      required: true
+      schema:
+        $ref: '#/components/schemas/TerminalId'
+
+    Version:
+      name: Version
+      in: header
+      description: Version of the required API
+      required: false
+      schema:
+        $ref: '#/components/schemas/Version'
+
+  # ================================================================================================
+  #
+  # responses
+  #
+  # ================================================================================================
+  responses:
+    CreateTransaction:
+      description: Transaction details
+      headers:
+        Location:
+          description: URL to get the status of the transaction
+          required: true
+          schema:
+            $ref: '#/components/schemas/TransactionLocation'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateTransaction'
+    
+    Error:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+    
+    Initiatives:
+      description: List of initiatives that can be used with the Merchant
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Initiatives'
+    
+    Transaction:
+      description: Transaction details
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Transaction'
+
+  # ================================================================================================
+  #
+  # securitySchemes
+  #
+  # ================================================================================================
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
