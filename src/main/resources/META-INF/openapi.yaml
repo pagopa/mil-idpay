@@ -153,7 +153,9 @@ components:
     Challenge:
       description: Challenge to authenticate the CIE
       type: string
-      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+      format: byte
+      minLength: 12 #  8 bytes -> lenght of base64 string is 12
+      maxLength: 18 # 16 bytes -> length of base64 string is 18
       
     Channel:
       description: Channel originating the request
@@ -209,11 +211,23 @@ components:
       pattern: "^[0-9a-zA-Z]{1,15}$"
       example: "28405fHfk73x88D"
 
+    Nis:
+      description: Numero identificativo servizi read from the CIE
+      type: string
+      pattern: "^[0-9]{12}$"
+      
     Organization:
       description: Name of the governmental organization that makes the initiative
       type: string
       pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
     
+    CiePublicKey:
+      description: Public key read from the CIE
+      type: string
+      format: byte
+      minLength: 4     #     1 byte  -> lenght of base64 string is 4
+      maxLength: 43692 # 32767 bytes -> lenght of base64 string is 43692
+
     QrCode:
       description: String to be encoded in the QR-code
       type: string
@@ -232,13 +246,32 @@ components:
       minimum: 1
       maximum: 60
       example: 5
-      
+    
+    Signature:
+      description: Signature of the challenge calculated by the CIE
+      type: string
+      format: byte
+      minLength: 4     #     1 byte  -> lenght of base64 string is 4
+      maxLength: 43692 # 32767 bytes -> lenght of base64 string is 43692
+
+    Sod:
+      description: Document Security Object read from the CIE
+      type: string
+      format: byte
+      minLength: 4     #     1 byte  -> lenght of base64 string is 4
+      maxLength: 43692 # 32767 bytes -> lenght of base64 string is 43692
+
     TerminalId:
       description: ID of the terminal originating the transaction. It must be unique per acquirer and channel.
       type: string
       pattern: "^[0-9a-zA-Z]{1,8}$"
       example: "0aB9wXyZ"
 
+    TransactionCode:
+      description: Fallback code to use when IO cannot read the QR-code
+      type: string
+      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+    
     TransactionId:
       description: ID of the IDPay transaction
       type: string
@@ -255,6 +288,7 @@ components:
      type: string
      enum:
        - CREATED
+       - IDENTIFIED
        - AUTHORIZED
        - REJECTED
     
@@ -353,6 +387,8 @@ components:
           $ref: '#/components/schemas/GoodsCost'
         challenge:
           $ref: '#/components/schemas/Challenge'
+        trxCode:
+          $ref: '#/components/schemas/TransactionCode'
         qrCode:
           $ref: '#/components/schemas/QrCode'
         coveredAmount:
