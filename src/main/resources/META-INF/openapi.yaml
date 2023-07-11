@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: IDPay Microservice
-  version: 1.0.1-RC
+  version: 1.1.0-RC
   description: IDPay Microservice for Multi-channel Integration Layer of SW Client Project
   contact:
     name: Antonio Tarricone
@@ -96,25 +96,75 @@ paths:
   #
   # ================================================================================================
   /transactions/{transactionId}:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+      - $ref: '#/components/parameters/Version'
+      - $ref: '#/components/parameters/AcquirerId'
+      - $ref: '#/components/parameters/Channel'
+      - $ref: '#/components/parameters/MerchantId'
+      - $ref: '#/components/parameters/TerminalId'
+      - name: transactionId
+        description: ID of the transaction
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/TransactionId'
     get:
       operationId: getTransaction
       summary: Returns details on an IDPay transaction
-      parameters:
-        - $ref: '#/components/parameters/RequestId'
-        - $ref: '#/components/parameters/Version'
-        - $ref: '#/components/parameters/AcquirerId'
-        - $ref: '#/components/parameters/Channel'
-        - $ref: '#/components/parameters/MerchantId'
-        - $ref: '#/components/parameters/TerminalId'
-        - name: transactionId
-          description: ID of the transaction
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/TransactionId'
       responses:
         "200":
           $ref: '#/components/responses/Transaction'
+        "400":
+          $ref: '#/components/responses/Error'
+        "401":
+          description: Wrong credentials
+        "403":
+          description: Forbidden
+        "404":
+          description: Transaction not found
+        "406":
+          description: Not acceptable. Did you require application/json?
+        "429":
+          description: Too many request
+        "500":
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+
+    patch:
+      operationId: updateTransaction
+      summary: Updates an IDPay transaction (verify CIE, verify IDPay Authorization Code and authorize transaction)
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateTransaction'
+      responses:
+        "200":
+          $ref: '#/components/responses/UpdateTransaction'
+        "400":
+          $ref: '#/components/responses/Error'
+        "401":
+          description: Wrong credentials
+        "403":
+          description: Forbidden
+        "404":
+          description: Transaction doesn't exist
+        "406":
+          description: Not acceptable. Did you require application/json?
+        "415":
+          description: Unsupported media type. Did you provide application/json?
+        "429":
+          description: Too many request
+        "500":
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+
+    delete:
+      operationId: cancelTransaction
+      summary: Cancels an IDPay transaction
+      responses:
+        "204":
+          description: Transaction cancelled successfully
         "400":
           $ref: '#/components/responses/Error'
         "401":
@@ -150,12 +200,19 @@ components:
       pattern: "^\\d{1,11}$"
       example: "4585625"
 
+    AuthCodeBlock:
+      description: Authorization Code Block
+      type: string
+      format: byte  # Base64 URL safe
+      minLength: 16 # bytes
+      maxLength: 16 # bytes
+    
     Challenge:
       description: Challenge to authenticate the CIE
       type: string
-      format: byte
-      minLength: 12 #  8 bytes -> lenght of base64 string is 12
-      maxLength: 18 # 16 bytes -> length of base64 string is 18
+      format: byte  # Base64 URL safe
+      minLength:  8 # bytes
+      maxLength: 16 # bytes
       
     Channel:
       description: Channel originating the request
@@ -168,12 +225,25 @@ components:
       type: string
       example: "ATM"
     
+    CiePublicKey:
+      description: Public key read from the CIE
+      type: string
+      format: byte     # Base64 URL safe
+      maxLength: 32767 # bytes
+      
     CoveredAmount:
       description: Amount covered by the initiative in euro cents
       type: integer
       format: int64
-      minimum: 1
+      minimum: 0
       maximum: 99999999999
+    
+    EncryptedSessionKey:
+      description: Encrypted session key
+      type: string
+      format: byte    # Base64 URL safe
+      minLength:  256 # bytes  
+      maxLength: 2048 # bytes
     
     Error:
       description: Error code
@@ -181,12 +251,24 @@ components:
       pattern: "^[A-F0-9]{9}$"
       example: "001000005"
     
+    Exp:
+      description: Expiration timestamp (epoch millis) of master key
+      type: integer
+      minimum: 0
+      example: 1678975089
+    
     GoodsCost:
       description: Cost of goods or service to buy in euro cents
       type: integer
       format: int64
-      minimum: 1
+      minimum: 0
       maximum: 99999999999
+    
+    Iat:
+      description: Issued at timestamp (epoch millis) of master key
+      type: integer
+      minimum: 0
+      example: 1678888689
     
     InitiativeId:
       description: ID of the initiative.
@@ -198,6 +280,20 @@ components:
       type: string
       pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
     
+    KeyType:
+      description: Master key type
+      enum:
+        - RSA
+      type: string
+      example: "RSA"
+    
+    Kid:
+      description: Master key ID
+      type: string
+      format: uuid
+      pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+      example: "d0d654e6-97da-4848-b568-99fedccb642b"
+      
     MaxRetries:
       description: Max number of retries to check the status of the transaction
       type: integer
@@ -211,6 +307,14 @@ components:
       pattern: "^[0-9a-zA-Z]{1,15}$"
       example: "28405fHfk73x88D"
 
+    Modulus:
+      description: Modulus of master key
+      type: string
+      format: byte    # Base64 URL safe
+      minLength:  256 # bytes  
+      maxLength: 2048 # bytes
+      example: "qjcVEWJTTySeKxHsJSsmVGk2cEvXJ4tBC4uyU5MxYwBAiIWuZb_yDOIjLz7JN8QsJs3QrZtS3vqv18ljW2db6ED90OUo9CVJveSF4eNRozDHOvnHGT0HR-8Wf5GxcNy63zfQLrnfdp5F9TrhMFRMkEA0TCT7PhT3yF6YvwLtQyMciER1_KKnpGomfAkW-UpaF2nHfXiFPrOIHMuNb5BoRR1f0349tqloLgLd7vyMy1jg-BldmEgRV1bcFqjH0Cg3leROjDy9HzdFauRIlSb4VZrqNni2hgaTUHI5Xp7aCwpS9Y_mf19KpxN0_8d-f3UVRlwtI1dryelpdC5jowxia2Pf8UgSZyMs2ZxDf6eU0SH8wHEvMpeFpwmiBD1XcsISoTan0Yv7w_CLo6JOqX6EfogDQZUBzKKlVCZSoSinAz0_7Bj2orgWKQ9sbfgJWgJweKkJLH-bNSRaVcu02boxPnlJeay3wROhSAgtiKWZnsU1_FpPNG0JBFCh_x-VjkuBoREpNEyJM5NvhRCmyObtzocS4eCtAgvmo3EFv_Xa-rp0p5ez4A-_QUb5OsYOswqYbIV1GbtiAfCTOrNbv6K86LaTllZ9WqYrKgDv7KA-604K37k33LHROqcO9Q-bCN8hKzQDWs7M3DFNP6P5iBUUVs-gtWncHvIuUWTth-fBXa8"
+    
     Nis:
       description: Numero identificativo servizi read from the CIE
       type: string
@@ -221,13 +325,21 @@ components:
       type: string
       pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
     
-    CiePublicKey:
-      description: Public key read from the CIE
+    PublicExponent:
+      description: Public key exponent
       type: string
-      format: byte
-      minLength: 4     #     1 byte  -> lenght of base64 string is 4
-      maxLength: 43692 # 32767 bytes -> lenght of base64 string is 43692
-
+      format: byte    # Base64 URL safe
+      minLength:    1 # bytes
+      maxLength: 2048 # bytes
+      example: "AQAB"
+      
+    PublicKeyUse:
+      description: Public key use
+      enum:
+        - enc
+      type: string
+      example: "enc"
+    
     QrCode:
       description: String to be encoded in the QR-code
       type: string
@@ -250,16 +362,14 @@ components:
     Signature:
       description: Signature of the challenge calculated by the CIE
       type: string
-      format: byte
-      minLength: 4     #     1 byte  -> lenght of base64 string is 4
-      maxLength: 43692 # 32767 bytes -> lenght of base64 string is 43692
+      format: byte     # Base64 URL safe
+      maxLength: 32767 # bytes
 
     Sod:
       description: Document Security Object read from the CIE
       type: string
-      format: byte
-      minLength: 4     #     1 byte  -> lenght of base64 string is 4
-      maxLength: 43692 # 32767 bytes -> lenght of base64 string is 43692
+      format: byte     # Base64 URL safe
+      maxLength: 32767 # bytes
 
     TerminalId:
       description: ID of the terminal originating the transaction. It must be unique per acquirer and channel.
@@ -288,7 +398,7 @@ components:
      type: string
      enum:
        - CREATED
-       - IDENTIFIED
+       - IDENTIFIED    # QR-code has been read by App IO or CIE has been verified successfully
        - AUTHORIZED
        - REJECTED
     
@@ -310,6 +420,32 @@ components:
     # Complex types
     #
     # ----------------------------------------------------------------------------------------------
+    AuthCodeBlockData:
+      description: Details on IDPay Authorization Code Block
+      type: object
+      additionalProperties: false
+      properties:
+        encSessionKey:
+          $ref: '#/components/schemas/EncryptedSessionKey'
+        authCodeBlock:
+          $ref: '#/components/schemas/AuthCodeBlock'
+      required:
+        - encSessionKey
+        - authCodeBlock
+    
+    Authorize:
+      description: Details to authorize an IDPay transaction by means of a CIE
+      type: object
+      additionalProperties: true
+      properties:
+        nis:
+          $ref: '#/components/schemas/Nis'
+        authCodeBlockData:
+          $ref: '#/components/schemas/AuthCodeBlockData'
+      required:
+        - nis
+        - authCodeBlockData
+          
     CreateTransaction:
       description: Details to create a new IDPay transaction
       type: object
@@ -372,10 +508,46 @@ components:
       required:
         - initiatives
 
+    PublicKey:
+      description: Public master key to be used to encrypt session key
+      type: object
+      additionalProperties: true
+      properties:
+        kty:
+          $ref: '#/components/schemas/KeyType'
+        e:
+          $ref: '#/components/schemas/PublicExponent'
+        use:
+          $ref: '#/components/schemas/PublicKeyUse'
+        kid:
+          $ref: '#/components/schemas/Kid'
+        exp:
+          $ref: '#/components/schemas/Exp'
+        iat:
+          $ref: '#/components/schemas/Iat'
+        n:
+          $ref: '#/components/schemas/Modulus'
+      required:
+        - kty
+        - e
+        - use
+        - kid
+        - exp
+        - iat
+        - n
+      example:
+        kty: "RSA"
+        e: "AQAB"
+        use: "enc"
+        kid: "0ffa8f8d-d92b-46ee-a4e7-8f26651a2a96"
+        exp: 1678975089
+        iat: 1678888689
+        n: "qjcVEWJTTySeKxHsJSsmVGk2cEvXJ4tBC4uyU5MxYwBAiIWuZb_yDOIjLz7JN8QsJs3QrZtS3vqv18ljW2db6ED90OUo9CVJveSF4eNRozDHOvnHGT0HR-8Wf5GxcNy63zfQLrnfdp5F9TrhMFRMkEA0TCT7PhT3yF6YvwLtQyMciER1_KKnpGomfAkW-UpaF2nHfXiFPrOIHMuNb5BoRR1f0349tqloLgLd7vyMy1jg-BldmEgRV1bcFqjH0Cg3leROjDy9HzdFauRIlSb4VZrqNni2hgaTUHI5Xp7aCwpS9Y_mf19KpxN0_8d-f3UVRlwtI1dryelpdC5jowxia2Pf8UgSZyMs2ZxDf6eU0SH8wHEvMpeFpwmiBD1XcsISoTan0Yv7w_CLo6JOqX6EfogDQZUBzKKlVCZSoSinAz0_7Bj2orgWKQ9sbfgJWgJweKkJLH-bNSRaVcu02boxPnlJeay3wROhSAgtiKWZnsU1_FpPNG0JBFCh_x-VjkuBoREpNEyJM5NvhRCmyObtzocS4eCtAgvmo3EFv_Xa-rp0p5ez4A-_QUb5OsYOswqYbIV1GbtiAfCTOrNbv6K86LaTllZ9WqYrKgDv7KA-604K37k33LHROqcO9Q-bCN8hKzQDWs7M3DFNP6P5iBUUVs-gtWncHvIuUWTth-fBXa8"
+    
     Transaction:
       description: IDPay transaction details
       type: object
-      additionalProperties: false
+      additionalProperties: true
       properties:
         id:
           $ref: '#/components/schemas/TransactionId'
@@ -404,7 +576,25 @@ components:
         - qrCode
         - coveredAmount
         - status
-
+    
+    VerifyCie:
+      description: Details to verify CIE
+      type: object
+      additionalProperties: true
+      properties:
+        nis:
+          $ref: '#/components/schemas/Nis'
+        ciePublicKey:
+          $ref: '#/components/schemas/CiePublicKey'
+        signature:
+          $ref: '#/components/schemas/Signature'
+        sod:
+          $ref: '#/components/schemas/Sod'
+      required:
+        - ciePublicKey
+        - signature
+        - sod
+    
   # ================================================================================================
   #
   # requestBodies
@@ -417,6 +607,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateTransaction'
+
+    UpdateTransaction:
+      description: Request to update an IDPay transaction
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/VerifyCie'
+              - $ref: '#/components/schemas/Authorize'
 
   # ================================================================================================
   #
@@ -521,6 +720,15 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Transaction'
+
+    UpdateTransaction:
+      description: When the operation updateTransaction is invoked to verify CIE, the master key to generate AuthCodeBlock is returned
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/PublicKey'
+              - $ref: '#/components/schemas/Transaction'
 
   # ================================================================================================
   #
