@@ -92,7 +92,7 @@ paths:
 
   # ================================================================================================
   #
-  # /transactions/{transactionId}
+  # /transactions/{milTransactionId}
   #
   # ================================================================================================
   /transactions/{transactionId}:
@@ -104,11 +104,11 @@ paths:
       - $ref: '#/components/parameters/MerchantId'
       - $ref: '#/components/parameters/TerminalId'
       - name: transactionId
-        description: ID of the transaction
+        description: ID of the transaction for MIL
         in: path
         required: true
         schema:
-          $ref: '#/components/schemas/TransactionId'
+          $ref: '#/components/schemas/MilTransactionId'
     get:
       operationId: getTransaction
       summary: Returns details on an IDPay transaction
@@ -270,6 +270,11 @@ components:
       minimum: 0
       example: 1678888689
     
+    IdPayTransactionId:
+      description: ID of the transaction for IDPay
+      type: string
+      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+    
     InitiativeId:
       description: ID of the initiative.
       type: string
@@ -307,6 +312,11 @@ components:
       pattern: "^[0-9a-zA-Z]{1,15}$"
       example: "28405fHfk73x88D"
 
+    MilTransactionId:
+      description: ID of the transaction for MIL
+      type: string
+      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+    
     Modulus:
       description: Modulus of master key
       type: string
@@ -379,11 +389,6 @@ components:
 
     TransactionCode:
       description: Fallback code to use when IO cannot read the QR-code
-      type: string
-      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
-    
-    TransactionId:
-      description: ID of the IDPay transaction
       type: string
       pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
     
@@ -549,8 +554,10 @@ components:
       type: object
       additionalProperties: true
       properties:
-        id:
-          $ref: '#/components/schemas/TransactionId'
+        idpayTransactionId:
+          $ref: '#/components/schemas/IdPayTransactionId'
+        milTransactionId:
+          $ref: '#/components/schemas/MilTransactionId'
         initiativeId:
           $ref: '#/components/schemas/InitiativeId'
         timestamp:
