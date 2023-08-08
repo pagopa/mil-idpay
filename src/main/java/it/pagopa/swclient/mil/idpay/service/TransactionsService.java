@@ -16,6 +16,8 @@ import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.text.SimpleDateFormat;
@@ -34,7 +36,7 @@ public class TransactionsService {
     @RestClient
     IdpayTransactionsRestClient idpayTransactionsRestClient;
 
-    public Uni<?> createTransaction(CommonHeader headers, CreateTransaction createTransaction) {
+    public Uni<Transaction> createTransaction(CommonHeader headers, CreateTransaction createTransaction) {
 
         Log.debugf("TransactionsService -> createTransaction - Input parameters: %s, %s", headers, createTransaction);
 
@@ -45,30 +47,34 @@ public class TransactionsService {
 
         Log.debugf("TransactionsService -> createTransaction: REQUEST to idpay [%s]", req);
 
+
         return idpayTransactionsRestClient.createTransaction(headers.getMerchantId(), headers.getAcquirerId(), req)
-                .onItemOrFailure().transformToUni((res, error) -> {
-            if (error != null) {         //Errore da IdPay
-                Log.errorf(error, "TransactionsService -> createTransaction: idpay error response for MerchantId [%s] e timestamp [%s]", headers.getMerchantId(), createTransaction.getTimestamp());
-                Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG));
-                return Uni.createFrom().item(errors);
-            } else {
-                Log.debugf("TransactionsService -> createTransaction: idpay createTransaction service returned a 200 status, response: [%s]", res);
+                .onFailure().transform(t -> {
+                    Log.errorf(t, "TransactionsService -> createTransaction: idpay error response for MerchantId [%s] e timestamp [%s]", headers.getMerchantId(), createTransaction.getTimestamp());
+                    Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG));
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(errors)
+                            .build());
+                }).chain(res -> {
+                    Log.debugf("TransactionsService -> createTransaction: idpay createTransaction service returned a 200 status, response: [%s]", res);
 
-                IdpayTransactionEntity entity = createIdpayTransactionEntity(headers, createTransaction, req, res);
-                Log.debugf("TransactionsService -> createTransaction: storing idpay transaction [%s] on DB", entity.idpayTransaction);
+                    IdpayTransactionEntity entity = createIdpayTransactionEntity(headers, createTransaction, req, res);
+                    Log.debugf("TransactionsService -> createTransaction: storing idpay transaction [%s] on DB", entity.idpayTransaction);
 
-                return idpayTransactionRepository.persist(entity)
-                        .onItemOrFailure().transformToUni((ent, er) -> {
-                            if (er != null) {
-                                Log.errorf(er, "TransactionsService -> createTransaction: Error while storing idpay transaction %s on db", entity.transactionId);
+                    return idpayTransactionRepository.persist(entity)
+                            .onFailure().transform(err-> {
+                                Log.errorf(err, "TransactionsService -> createTransaction: Error while storing idpay transaction %s on db", entity.transactionId);
                                 Errors errors = new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG));
-                                return Uni.createFrom().item(errors);
-                            } else {
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(errors)
+                                        .build());
+                            }).map(ent -> {
                                 Transaction transaction = createTransactionFromIdpayTransactionEntity(ent);
-                                return Uni.createFrom().item(transaction);
-                            }
-                        });
-            } });
+                                return transaction;
+                            });
+                });
     }
 
     protected IdpayTransactionEntity createIdpayTransactionEntity(CommonHeader headers, CreateTransaction createTransaction, TransactionCreationRequest req, TransactionResponse res) {

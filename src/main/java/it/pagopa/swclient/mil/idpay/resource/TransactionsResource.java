@@ -57,27 +57,17 @@ public class TransactionsResource {
 
         Log.debugf("TransactionsResource -> createTransaction - Input createTransaction: %s, %s", headers, createTransaction);
 
-        return transactionsService.createTransaction(headers, createTransaction).onItem().transformToUni(res -> {
-                        if (res instanceof Errors) {            //Errore gestito dal service
-                            Log.errorf("TransactionsResource -> TransactionsService -> createTransaction error [%s]", ((Errors) res));
-                            return Uni.createFrom().item(
-                                    Response.status(Status.INTERNAL_SERVER_ERROR)
-                                            .entity(res)
-                                            .build());
-                        }
-                        else {       //Risposta positiva dal service
-                            Log.debugf("TransactionsResource -> TransactionsService -> createTransaction - Response %s", res);
+        return transactionsService.createTransaction(headers, createTransaction).chain(res -> {
+            Log.debugf("TransactionsResource -> TransactionsService -> createTransaction - Response %s", res);
 
-                            Response.ResponseBuilder responseBuilder = Response.status(Status.CREATED);
-                            responseBuilder
-                                    .location(getTransactionURI(((Transaction) res).getMilTransactionId()))
-                                    .header("Retry-After", idpayTransactionRetryAfter)
-                                    .header("Max-Retries", idpayTransactionMaxRetry);
+            Response.ResponseBuilder responseBuilder = Response.status(Status.CREATED);
+            responseBuilder
+                    .location(getTransactionURI(((Transaction) res).getMilTransactionId()))
+                    .header("Retry-After", idpayTransactionRetryAfter)
+                    .header("Max-Retries", idpayTransactionMaxRetry);
 
-                            return Uni.createFrom().item(responseBuilder.entity(res).build());
-                        }
-
-                    });
+            return Uni.createFrom().item(responseBuilder.entity(res).build());
+        });
     }
 
     private URI getTransactionURI(String milTransactionId) {

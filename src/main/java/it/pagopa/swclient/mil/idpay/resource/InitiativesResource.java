@@ -30,24 +30,13 @@ public class InitiativesResource {
 
         Log.debugf("InitiativesResource -> getInitiatives - Input parameters: %s", headers);
 
-        return initiativesService.getInitiatives(headers).onItem().transformToUni(res -> {
-            if (res instanceof Errors) {
-                Errors err = (Errors) res;
-                Log.errorf("InitiativesResource -> InitiativesService -> getInitiatives error [%s] ", err);
+        return initiativesService.getInitiatives(headers).chain(res -> {
+                    Log.debugf("InitiativesResource -> InitiativesService -> getInitiatives - Response %s", res);
 
-                // Se tra errori gestiti è presente "404 NOT FOUND" - lo passo al client. Altrimenti 500
-                return Uni.createFrom().item(
-                        Response.status(err.getErrors().contains(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES) ? Response.Status.NOT_FOUND : Response.Status.INTERNAL_SERVER_ERROR)
-                                .entity(res)
-                                .build());
-            } else {       //Risposta positiva dal service
-                Log.debugf("InitiativesResource -> InitiativesService -> getInitiatives - Response %s", res);
-
-                return Uni.createFrom().item(
-                        Response.status(Response.Status.OK)
-                                .entity(res)
-                                .build());
-            }
-        });
+                    return Uni.createFrom().item(
+                            Response.status(Response.Status.OK)
+                                    .entity(res)
+                                    .build());
+                });
     }
 }

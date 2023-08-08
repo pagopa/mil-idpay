@@ -10,6 +10,9 @@ import it.pagopa.swclient.mil.idpay.bean.Initiatives;
 import it.pagopa.swclient.mil.idpay.client.IdpayInitiativesRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.InitiativeStatus;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 
@@ -22,41 +25,43 @@ public class InitiativesService {
     @RestClient
     IdpayInitiativesRestClient idpayInitiativesRestClient;
 
-    public Uni<?> getInitiatives(CommonHeader headers) {
+    public Uni<Initiatives> getInitiatives(CommonHeader headers) {
 
         Log.debugf("InitiativesService -> getInitiatives - Input parameters: %s", headers);
 
         return idpayInitiativesRestClient.getMerchantInitiativeList(headers.getMerchantId())
-                .onItemOrFailure().transformToUni((res, error) -> {
-                    if (error != null) {         //Errore da IdPay
-                        Log.errorf(error, "InitiativesService -> getInitiatives: error in calling idpay rest services");
-                        if (error instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
-                            Log.errorf(error, " InitiativesService -> getInitiatives: idpay NOT FOUND for MerchantId [%s]", headers.getMerchantId());
-                            Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
-                            return Uni.createFrom().item(errors);
-                        } else {
-                            Log.errorf(error, "InitiativesService -> getInitiatives: idpay error response for MerchantId [%s]", headers.getMerchantId());
-                            Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG));
-                            return Uni.createFrom().item(errors);
-                        }
+                .onFailure().transform(t -> {
+                    if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
+                        Log.errorf(t, " InitiativesService -> getInitiatives: idpay NOT FOUND for MerchantId [%s]", headers.getMerchantId());
+                        Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
+                        return new NotFoundException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(errors)
+                                .build());
                     } else {
-                            Log.debugf("InitiativesService -> getInitiatives: idpay getMerchantInitiativeList service returned a 200 status, response: [%s]", res);
+                        Log.errorf(t, "InitiativesService -> getInitiatives: idpay error response for MerchantId [%s]", headers.getMerchantId());
+                        Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG));
+                        return new InternalServerErrorException(Response
+                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(errors)
+                                .build());
+                    }
+                }).map(res -> {
+                    Log.debugf("InitiativesService -> getInitiatives: idpay getMerchantInitiativeList service returned a 200 status, response: [%s]", res);
 
-                            LocalDate today = LocalDate.now();
+                    LocalDate today = LocalDate.now();
 
-                            List<Initiative> iniList = res.stream().filter(ini -> {
+                    List<Initiative> iniList = res.stream().filter(ini -> {
                                 return (InitiativeStatus.PUBLISHED == ini.getStatus()  && Boolean.TRUE.equals(ini.getEnabled())
                                         && (today.isAfter(ini.getStartDate()) || today.isEqual(ini.getStartDate()))
                                         && (ini.getEndDate() == null || (today.isBefore(ini.getEndDate()) || today.isEqual(ini.getEndDate()))));
                             })
-                                    .map(fIni -> new Initiative(fIni.getInitiativeId(), fIni.getInitiativeName(), fIni.getOrganizationName())).toList();
+                            .map(fIni -> new Initiative(fIni.getInitiativeId(), fIni.getInitiativeName(), fIni.getOrganizationName())).toList();
 
-                            Initiatives inis = new Initiatives();
-                            inis.setInitiatives(iniList);
+                    Initiatives inis = new Initiatives();
+                    inis.setInitiatives(iniList);
 
-                            return Uni.createFrom().item(inis);
-
-                        }
-                     });
+                    return inis;
+                });
     }
 }

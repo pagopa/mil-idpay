@@ -1,7 +1,14 @@
 package it.pagopa.swclient.mil.idpay.client.bean;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDate;
 
+@Getter
+@Setter
+@NoArgsConstructor
 public class InitiativeDTO {
     private String initiativeId;
     private String initiativeName;
@@ -11,70 +18,6 @@ public class InitiativeDTO {
     private LocalDate endDate;
     private String serviceId;
     private Boolean enabled;
-
-    public String getInitiativeId() {
-        return initiativeId;
-    }
-
-    public void setInitiativeId(String initiativeId) {
-        this.initiativeId = initiativeId;
-    }
-
-    public String getInitiativeName() {
-        return initiativeName;
-    }
-
-    public void setInitiativeName(String initiativeName) {
-        this.initiativeName = initiativeName;
-    }
-
-    public String getOrganizationName() {
-        return organizationName;
-    }
-
-    public void setOrganizationName(String organizationName) {
-        this.organizationName = organizationName;
-    }
-
-    public InitiativeStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(InitiativeStatus status) {
-        this.status = status;
-    }
-
-    public LocalDate getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(LocalDate startDate) {
-        this.startDate = startDate;
-    }
-
-    public LocalDate getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
-    }
-
-    public String getServiceId() {
-        return serviceId;
-    }
-
-    public void setServiceId(String serviceId) {
-        this.serviceId = serviceId;
-    }
-
-    public Boolean getEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
 
     @Override
     public String toString() {
