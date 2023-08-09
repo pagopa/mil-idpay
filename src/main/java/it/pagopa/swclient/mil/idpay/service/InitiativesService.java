@@ -47,7 +47,7 @@ public class InitiativesService {
                                 .build());
                     }
                 }).map(res -> {
-                    Log.debugf("InitiativesService -> getInitiatives: idpay getMerchantInitiativeList service returned a 200 status, response: [%s]", res);
+                    Log.debugf("InitiativesService -> getInitiatives:  idpay getMerchantInitiativeList service returned a 200 status, response: [%s]", res);
 
                     LocalDate today = LocalDate.now();
 
