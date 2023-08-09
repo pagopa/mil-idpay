@@ -99,15 +99,10 @@ jobs:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
       
       - name: Move JIRA tasks to code review - Find issue key
-        id: find
-        uses: atlassian/gajira-find-issue-key@7d9cbdfce900a0fcf608050ce728620a928be8b6
+        uses: Broadshield/gajira-find-issue-key@main
         with:
-          string: ${{ github.event.pull_request.title }}
-          from: ""
-
-      - name: Move JIRA tasks to code review - Transition issue
-        uses: atlassian/gajira-transition@4749176faf14633954d72af7a44d7f2af01cc92b
-        with:
-          issue: ${{ steps.find.outputs.issue }}
-          transition: "CODE REVIEW"
+          from: pull_request
+          returns: all
+          jira-transition-on-pr-open: "CODE REVIEW"
+      
         
