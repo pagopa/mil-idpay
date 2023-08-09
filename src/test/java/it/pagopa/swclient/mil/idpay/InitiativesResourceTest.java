@@ -26,7 +26,7 @@ import static io.restassured.RestAssured.given;
 @QuarkusTest
 @TestHTTPEndpoint(InitiativesResource.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class InitiativesResourceTest {
+class InitiativesResourceTest {
 
     @InjectMock
     @RestClient

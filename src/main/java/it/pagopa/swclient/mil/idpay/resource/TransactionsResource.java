@@ -62,7 +62,7 @@ public class TransactionsResource {
 
             Response.ResponseBuilder responseBuilder = Response.status(Status.CREATED);
             responseBuilder
-                    .location(getTransactionURI(((Transaction) res).getMilTransactionId()))
+                    .location(getTransactionURI(res.getMilTransactionId()))
                     .header("Retry-After", idpayTransactionRetryAfter)
                     .header("Max-Retries", idpayTransactionMaxRetry);
 

@@ -70,8 +70,7 @@ public class TransactionsService {
                                         .entity(errors)
                                         .build());
                             }).map(ent -> {
-                                Transaction transaction = createTransactionFromIdpayTransactionEntity(ent);
-                                return transaction;
+                                return createTransactionFromIdpayTransactionEntity(ent);
                             });
                 });
     }
