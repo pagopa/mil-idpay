@@ -3,8 +3,6 @@ package it.pagopa.swclient.mil.idpay.resource;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.bean.CommonHeader;
-import it.pagopa.swclient.mil.bean.Errors;
-import it.pagopa.swclient.mil.idpay.ErrorCode;
 import it.pagopa.swclient.mil.idpay.service.InitiativesService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
