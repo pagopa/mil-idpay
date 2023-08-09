@@ -90,3 +90,14 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ${{ runner.temp }}/maven/bin/mvn verify -Pvalidate -s ${{ runner.temp }}/settings.xml --no-transfer-progress
+
+      - name: Move JIRA tasks to code review - Login
+        uses: atlassian/gajira-login@ca13f8850ea309cf44a6e4e0c49d9aa48ac3ca4c
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+      
+      
+      
+        
