@@ -99,7 +99,7 @@ jobs:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
       
       - name: Move JIRA tasks to code review - Find Issue Key
-        uses: ./
+        uses: atlassian/gajira-find-issue-key@7d9cbdfce900a0fcf608050ce728620a928be8b6
         with:
           from: commits
 
