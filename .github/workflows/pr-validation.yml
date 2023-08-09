@@ -92,7 +92,7 @@ jobs:
         run: ${{ runner.temp }}/maven/bin/mvn verify -Pvalidate -s ${{ runner.temp }}/settings.xml --no-transfer-progress
 
       - name: Move JIRA tasks to code review - Login
-        uses: atlassian/gajira-login@4dbe4cdf783639be5d0c3d2fa6b5530a03a629ce
+        uses: atlassian/gajira-login@ca13f8850ea309cf44a6e4e0c49d9aa48ac3ca4c
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
@@ -104,7 +104,7 @@ jobs:
           from: commits
 
       - name: Move JIRA tasks to code review - Transition issue
-        uses: atlassian/gajira-transition@4dbe4cdf783639be5d0c3d2fa6b5530a03a629ce
+        uses: atlassian/gajira-transition@4749176faf14633954d72af7a44d7f2af01cc92b
         with:
           issue: ${{ steps.create.outputs.issue }}
           transition: "CODE REVIEW"
