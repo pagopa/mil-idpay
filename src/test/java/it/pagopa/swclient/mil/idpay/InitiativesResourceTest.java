@@ -66,7 +66,7 @@ public class InitiativesResourceTest {
                 .response();
 
         Assertions.assertEquals(200, response.statusCode());
-        Assertions.assertEquals(2, response.jsonPath().getList("initiatives").size());
+        Assertions.assertEquals(4, response.jsonPath().getList("initiatives").size());
         Assertions.assertNull(response.jsonPath().getList("errors"));
     }
 
@@ -95,6 +95,26 @@ public class InitiativesResourceTest {
 
         Mockito.when(idpayInitiativesRestClient.getMerchantInitiativeList(Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
+
+        Response response = given()
+                .headers(validMilHeaders)
+                .when()
+                .get()
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+        Assertions.assertNull(response.jsonPath().getList("initiatives"));
+    }
+
+    @Test
+    void getMerchantInitiativeListTest_KO500RuntimeEx() {
+
+        Mockito.when(idpayInitiativesRestClient.getMerchantInitiativeList(Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new RuntimeException()));
 
         Response response = given()
                 .headers(validMilHeaders)

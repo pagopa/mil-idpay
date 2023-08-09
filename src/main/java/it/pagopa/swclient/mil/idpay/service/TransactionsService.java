@@ -87,11 +87,7 @@ public class TransactionsService {
         idpayTransaction.setTerminalId(headers.getTerminalId());
         idpayTransaction.setIdpayTransactionId(res.getId());
 
-        if (LaunchMode.DEVELOPMENT.equals(io.quarkus.runtime.LaunchMode.current())) {
-            idpayTransaction.setMilTransactionId(req.getIdTrxAcquirer());
-        } else {
-            idpayTransaction.setMilTransactionId(res.getIdTrxAcquirer());
-        }
+        idpayTransaction.setMilTransactionId(req.getIdTrxAcquirer());
 
         idpayTransaction.setInitiativeId(res.getInitiativeId());
         idpayTransaction.setTimestamp(createTransaction.getTimestamp());
@@ -105,11 +101,8 @@ public class TransactionsService {
 
         IdpayTransactionEntity entity = new IdpayTransactionEntity();
 
-        if (LaunchMode.DEVELOPMENT.equals(io.quarkus.runtime.LaunchMode.current())) {
-            entity.transactionId = req.getIdTrxAcquirer();
-        } else {
-            entity.transactionId = res.getIdTrxAcquirer();
-        }
+        entity.transactionId = req.getIdTrxAcquirer();
+
         entity.idpayTransaction = idpayTransaction;
 
         return entity;

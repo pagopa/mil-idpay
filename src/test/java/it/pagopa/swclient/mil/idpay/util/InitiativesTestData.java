@@ -81,6 +81,26 @@ public final class InitiativesTestData {
         initiative6.setServiceId("serviceId6");
         initiative6.setEnabled(Boolean.TRUE);
 
+        InitiativeDTO initiative7 = new InitiativeDTO();
+        initiative7.setInitiativeId("7g");
+        initiative7.setInitiativeName("Iniziative name7");
+        initiative7.setOrganizationName("Organization name7");
+        initiative7.setStatus(InitiativeStatus.PUBLISHED);
+        initiative7.setStartDate(LocalDate.now());
+        initiative7.setEndDate(LocalDate.of(2030, 7, 30));
+        initiative7.setServiceId("serviceId6");
+        initiative7.setEnabled(Boolean.TRUE);
+
+        InitiativeDTO initiative8 = new InitiativeDTO();
+        initiative8.setInitiativeId("8h");
+        initiative8.setInitiativeName("Iniziative name8");
+        initiative8.setOrganizationName("Organization name8");
+        initiative8.setStatus(InitiativeStatus.PUBLISHED);
+        initiative8.setStartDate(LocalDate.of(2020, 1, 8));
+        initiative8.setEndDate(LocalDate.now());
+        initiative8.setServiceId("serviceId8");
+        initiative8.setEnabled(Boolean.TRUE);
+
         List<InitiativeDTO> res = new ArrayList<>();
         res.add(initiative1);
         res.add(initiative2);
@@ -88,6 +108,8 @@ public final class InitiativesTestData {
         res.add(initiative4);
         res.add(initiative5);
         res.add(initiative6);
+        res.add(initiative7);
+        res.add(initiative8);
 
 
         return res;

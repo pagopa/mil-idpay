@@ -42,4 +42,6 @@ public final class ErrorCode {
     public static final String ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG = "[" + ERROR_NOT_FOUND_IDPAY_REST_SERVICES + "] " + ERROR_NOT_FOUND_IDPAY_REST_SERVICES_DESCR;
     public static final String ERROR_STORING_DATA_IN_DB_MSG = "[" + ERROR_STORING_DATA_IN_DB + "] " + ERROR_STORING_DATA_IN_DB_DESCR;
 
+    private ErrorCode() {
+    }
 }
