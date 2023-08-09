@@ -1,12 +1,10 @@
 package it.pagopa.swclient.mil.idpay.util;
 
-import java.time.LocalDate;
-import java.util.*;
-
-import io.quarkus.logging.Log;
-import it.pagopa.swclient.mil.bean.Errors;
 import it.pagopa.swclient.mil.idpay.client.bean.InitiativeDTO;
 import it.pagopa.swclient.mil.idpay.client.bean.InitiativeStatus;
+
+import java.time.LocalDate;
+import java.util.*;
 
 public final class InitiativesTestData {
 

@@ -1,18 +1,11 @@
 package it.pagopa.swclient.mil.idpay;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.quarkus.logging.Log;
-import io.quarkus.test.junit.mockito.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectMock;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.bean.Errors;
-import it.pagopa.swclient.mil.idpay.bean.Initiative;
-import it.pagopa.swclient.mil.idpay.bean.Initiatives;
 import it.pagopa.swclient.mil.idpay.client.IdpayInitiativesRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.InitiativeDTO;
 import it.pagopa.swclient.mil.idpay.resource.InitiativesResource;

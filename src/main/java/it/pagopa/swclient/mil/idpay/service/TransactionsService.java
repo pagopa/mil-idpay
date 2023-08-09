@@ -1,7 +1,6 @@
 package it.pagopa.swclient.mil.idpay.service;
 
 import io.quarkus.logging.Log;
-import io.quarkus.runtime.LaunchMode;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.bean.Errors;

@@ -1,6 +1,5 @@
 package it.pagopa.swclient.mil.idpay;
 
-import io.quarkus.logging.Log;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
@@ -11,12 +10,10 @@ import it.pagopa.swclient.mil.bean.Errors;
 import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
 import it.pagopa.swclient.mil.idpay.bean.TransactionStatus;
 import it.pagopa.swclient.mil.idpay.client.IdpayTransactionsRestClient;
-import it.pagopa.swclient.mil.idpay.client.bean.InitiativeDTO;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionRepository;
 import it.pagopa.swclient.mil.idpay.resource.TransactionsResource;
-import it.pagopa.swclient.mil.idpay.util.InitiativesTestData;
 import it.pagopa.swclient.mil.idpay.util.TransactionsTestData;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
@@ -26,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 

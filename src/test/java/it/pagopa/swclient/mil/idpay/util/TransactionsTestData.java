@@ -1,22 +1,17 @@
 package it.pagopa.swclient.mil.idpay.util;
 
-import io.quarkus.runtime.LaunchMode;
-import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
 import it.pagopa.swclient.mil.idpay.bean.TransactionStatus;
-import it.pagopa.swclient.mil.idpay.client.bean.InitiativeDTO;
-import it.pagopa.swclient.mil.idpay.client.bean.InitiativeStatus;
-import it.pagopa.swclient.mil.idpay.client.bean.TransactionCreationRequest;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransaction;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
-import it.pagopa.swclient.mil.idpay.service.TransactionsService;
 
-import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public final class TransactionsTestData {
 
