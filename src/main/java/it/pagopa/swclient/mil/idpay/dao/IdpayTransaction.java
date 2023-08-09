@@ -5,10 +5,12 @@ import it.pagopa.swclient.mil.idpay.bean.TransactionStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString
 @RegisterForReflection
 public class IdpayTransaction {
 
@@ -28,25 +30,4 @@ public class IdpayTransaction {
     private TransactionStatus status;
     private String lastUpdate;
 
-
-    @Override
-    public String toString() {
-        return "IdpayTransaction{" +
-                "acquirerId='" + acquirerId + '\'' +
-                ", channel='" + channel + '\'' +
-                ", merchantId='" + merchantId + '\'' +
-                ", terminalId='" + terminalId + '\'' +
-                ", idpayTransactionId='" + idpayTransactionId + '\'' +
-                ", milTransactionId='" + milTransactionId + '\'' +
-                ", initiativeId='" + initiativeId + '\'' +
-                ", timestamp='" + timestamp + '\'' +
-                ", goodsCost=" + goodsCost +
-                ", challenge='" + challenge + '\'' +
-                ", trxCode='" + trxCode + '\'' +
-                ", qrCode='" + qrCode + '\'' +
-                ", coveredAmount=" + coveredAmount +
-                ", status=" + status +
-                ", lastUpdate='" + lastUpdate + '\'' +
-                '}';
-    }
 }

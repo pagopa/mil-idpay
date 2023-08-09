@@ -3,10 +3,12 @@ package it.pagopa.swclient.mil.idpay.client.bean;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString
 public class TransactionCreationRequest {
 
     private String initiativeId;
@@ -14,13 +16,4 @@ public class TransactionCreationRequest {
     private String mcc;
     private String idTrxAcquirer;
 
-    @Override
-    public String toString() {
-        return "TransactionCreationRequest{" +
-                "initiativeId='" + initiativeId + '\'' +
-                ", amountCents=" + amountCents +
-                ", mcc='" + mcc + '\'' +
-                ", idTrxAcquirer='" + idTrxAcquirer + '\'' +
-                '}';
-    }
 }

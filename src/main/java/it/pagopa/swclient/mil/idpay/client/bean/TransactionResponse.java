@@ -4,6 +4,7 @@ import it.pagopa.swclient.mil.idpay.bean.TransactionStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -11,6 +12,7 @@ import java.util.Date;
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString
 public class TransactionResponse {
 
     private String id;
@@ -32,27 +34,4 @@ public class TransactionResponse {
     private String qrcodePngUrl;
     private String qrcodeTxtUrl;
 
-    @Override
-    public String toString() {
-        return "TransactionResponse{" +
-                "id='" + id + '\'' +
-                ", trxCode='" + trxCode + '\'' +
-                ", initiativeId='" + initiativeId + '\'' +
-                ", merchantId='" + merchantId + '\'' +
-                ", idTrxAcquirer='" + idTrxAcquirer + '\'' +
-                ", trxDate=" + trxDate +
-                ", trxExpirationMinutes=" + trxExpirationMinutes +
-                ", amountCents=" + amountCents +
-                ", amountCurrency='" + amountCurrency + '\'' +
-                ", mcc='" + mcc + '\'' +
-                ", acquirerId='" + acquirerId + '\'' +
-                ", status=" + status +
-                ", merchantFiscalCode='" + merchantFiscalCode + '\'' +
-                ", vat='" + vat + '\'' +
-                ", splitPayment=" + splitPayment +
-                ", residualAmountCents=" + residualAmountCents +
-                ", qrcodePngUrl='" + qrcodePngUrl + '\'' +
-                ", qrcodeTxtUrl='" + qrcodeTxtUrl + '\'' +
-                '}';
-    }
 }

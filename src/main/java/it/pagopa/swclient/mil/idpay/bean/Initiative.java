@@ -4,9 +4,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 public class Initiative {
     @NotNull
     @Pattern(regexp = "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$")
@@ -26,13 +28,4 @@ public class Initiative {
         this.organization = organization;
     }
 
-
-    @Override
-    public String toString() {
-        return "Initiative{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", organization='" + organization + '\'' +
-                '}';
-    }
 }

@@ -5,7 +5,15 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString
 public class CreateTransaction {
 
     @NotNull(message = "[" + ErrorCode.ERROR_INITIATIVEID_MUST_NOT_BE_NULL + "] initiativeId must not be null")
@@ -22,36 +30,4 @@ public class CreateTransaction {
     @Max(value = 99999999999L, message = "[" + ErrorCode.ERROR_GOODSCOST_MUST_BE_LESS_THAN + "] goodsCost must less than {value}")
     private Long goodsCost;
 
-    public String getInitiativeId() {
-        return initiativeId;
-    }
-
-    public void setInitiativeId(String initiativeId) {
-        this.initiativeId = initiativeId;
-    }
-
-    public String getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public Long getGoodsCost() {
-        return goodsCost;
-    }
-
-    public void setGoodsCost(Long goodsCost) {
-        this.goodsCost = goodsCost;
-    }
-
-    @Override
-    public String toString() {
-        return "CreateTransaction{" +
-                "initiativeId='" + initiativeId + '\'' +
-                ", timestamp='" + timestamp + '\'' +
-                ", goodsCost=" + goodsCost +
-                '}';
-    }
 }
