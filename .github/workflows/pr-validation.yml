@@ -101,6 +101,7 @@ jobs:
       - name: Move JIRA tasks to code review - Find issue key
         uses: Broadshield/gajira-find-issue-key@master
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           from: pull_request
           returns: all
           jira-transition-on-pr-open: "CODE REVIEW"
