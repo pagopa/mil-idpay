@@ -101,7 +101,8 @@ jobs:
       - name: Move JIRA tasks to code review - Find Issue Key
         uses: atlassian/gajira-find-issue-key@7d9cbdfce900a0fcf608050ce728620a928be8b6
         with:
-          from: commits
+          string: ${{ github.event.pull_request.title }}
+          from: ""
 
       - name: Move JIRA tasks to code review - Transition issue
         uses: atlassian/gajira-transition@4749176faf14633954d72af7a44d7f2af01cc92b
