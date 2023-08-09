@@ -99,7 +99,7 @@ jobs:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
       
       - name: Move JIRA tasks to code review - Find issue key
-        uses: Broadshield/gajira-find-issue-key@main
+        uses: Broadshield/gajira-find-issue-key@master
         with:
           from: pull_request
           returns: all
