@@ -264,3 +264,15 @@ jobs:
           inlineScript: |
             az config set extension.use_dynamic_install=yes_without_prompt
             az containerapp update -n ${{ secrets.AZURE_CONTAINER_APP_NAME }} -g ${{ secrets.AZURE_RESOURCE_GROUP_NAME }} --image ghcr.io/${{ github.repository }}:${{ steps.semantic.outputs.new_release_version }}
+      
+      #
+      # Move related JIRA tasks status to DONE.
+      #
+      - name: Move related JIRA tasks status to DONE
+        run: |
+          temp=$(echo "${{ github.event.pull_request.title }}" | grep -o '\[[^]]*\]' | sed 's/\[//;s/\]//' | tr -d ' ')
+          IFS=$',' read -ra keys <<< "$temp"
+          for key in "${keys[@]}"; do
+            echo "Move $key to DONE."
+            curl -u ${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }} -X POST --data '{"transition":{"id":"31"}}' -H "Content-Type: application/json" ${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/$key/transitions
+          done
