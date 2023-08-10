@@ -1,0 +1,38 @@
+name: Post-merge workflow
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  post_merge:
+    if: github.event.pull_request.merged == true
+    
+    runs-on: ubuntu-latest
+    
+    environment: dev-cd
+    
+    permissions:
+      id-token: write
+      packages: write
+      contents: write
+    
+    #outputs:
+    #  new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+    #  new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+
+    steps:
+      #
+      # Move related JIRA tasks status to DONE.
+      #
+      - name: Move related JIRA tasks status to DONE
+        run: |
+          temp=$(echo "${{ github.event.pull_request.title }}" | grep -o '\[[^]]*\]' | sed 's/\[//;s/\]//' | tr -d ' ')
+          IFS=$',' read -ra keys <<< "$temp"
+          for key in "${keys[@]}"; do
+            echo "Move $key to DONE."
+            curl -u ${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }} -X POST --data '{"transition":{"id":"31"}}' -H "Content-Type: application/json" ${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/$key/transitions
+          done
