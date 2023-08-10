@@ -91,11 +91,11 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ${{ runner.temp }}/maven/bin/mvn verify -Pvalidate -s ${{ runner.temp }}/settings.xml --no-transfer-progress
 
-      - name: Find JIRA task IDs from PR title and do transition to CODE REVIEW
+      - name: Move related JIRA tasks status from IN PROGRESS to CODE REVIEW
         run: |
           temp=$(echo "${{ github.event.pull_request.title }}" | grep -o '\[[^]]*\]' | sed 's/\[//;s/\]//' | tr -d ' ')
           IFS=$',' read -ra keys <<< "$temp"
           for key in "${keys[@]}"; do
-            echo "Key: $key"
-            curl -u ${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }} -X POST --data '{"transition":{"id":"71"}}' -H "Content-Type: application/json" ${{ secrets.JIRA_BASE_URL }}/rest/api/2/issue/$key/transitions
+            echo "Move $key to CODE REVIEW."
+            curl -u ${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }} -X POST --data '{"transition":{"id":"71"}}' -H "Content-Type: application/json" ${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/$key/transitions
           done
