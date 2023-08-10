@@ -1,11 +1,12 @@
 name: Post-merge workflow
 
 on:
-  pull_request:
-    types:
-      - closed
-    branches:
-      - main
+  workflow_dispatch:
+  #pull_request:
+  #  types:
+  #    - closed
+  #  branches:
+  #    - main
 
 jobs:
   post_merge:
