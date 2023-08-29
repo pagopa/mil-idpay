@@ -3,15 +3,15 @@ package it.pagopa.swclient.mil.idpay.resource;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.bean.CommonHeader;
-import it.pagopa.swclient.mil.bean.Errors;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
+import it.pagopa.swclient.mil.idpay.IdpayConstants;
 import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
-import it.pagopa.swclient.mil.idpay.bean.Transaction;
 import it.pagopa.swclient.mil.idpay.service.TransactionsService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -70,8 +70,47 @@ public class TransactionsResource {
         });
     }
 
+    @GET
+    @Path("/{transactionId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({"NoticePayer", "SlavePos"})
+    public Uni<Response> getTransaction(@Valid @BeanParam CommonHeader headers,
+                                          @Pattern(regexp = IdpayConstants.TRANSACTION_ID_REGEX,
+                                                  message = "[" + ErrorCode.ERROR_TRANSACTION_ID_MUST_MATCH_REGEXP + "] transactionId must match \"{regexp}\"")
+                                          @PathParam(value = "transactionId") String transactionId) {
+
+        Log.debugf("TransactionsResource -> getTransaction - Input parameters: %s, transactionId: %s", headers, transactionId);
+
+        return transactionsService.getTransaction(headers, transactionId).chain(res -> {
+            Log.debugf("TransactionsResource -> TransactionsService -> getTransaction - Response %s", res);
+
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.OK)
+                            .entity(res)
+                            .build());
+        });
+    }
+
+    @DELETE
+    @Path("/{transactionId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({"NoticePayer", "SlavePos"})
+    public Uni<Response> cancelTransaction(@Valid @BeanParam CommonHeader headers,
+                                        @Pattern(regexp = IdpayConstants.TRANSACTION_ID_REGEX,
+                                                message = "[" + ErrorCode.ERROR_TRANSACTION_ID_MUST_MATCH_REGEXP + "] transactionId must match \"{regexp}\"")
+                                        @PathParam(value = "transactionId") String transactionId) {
+
+        Log.debugf("TransactionsResource -> cancelTransaction - Input parameters: %s, transactionId: %s", headers, transactionId);
+
+        return transactionsService.cancelTransaction(headers, transactionId).chain(() -> {
+
+            return Uni.createFrom().item(
+                    Response.status(Status.NO_CONTENT).build());
+        });
+    }
+
     private URI getTransactionURI(String milTransactionId) {
-        return URI.create(idpayTransactionLocationBaseURL + "/payments/" + milTransactionId);
+        return URI.create(idpayTransactionLocationBaseURL + "/transactions/" + milTransactionId);
     }
 
 
