@@ -1,8 +1,5 @@
 package it.pagopa.swclient.mil.idpay;
 
-import lombok.NoArgsConstructor;
-
-@NoArgsConstructor
 public final class ErrorCode {
 
     public static final String MODULE_ID = "009";
@@ -52,4 +49,6 @@ public final class ErrorCode {
     public static final String ERROR_RETRIEVING_DATA_FROM_DB_MSG = "[" + ERROR_RETRIEVING_DATA_FROM_DB + "] " + ERROR_RETRIEVING_DATA_FROM_DB_DESCR;
     public static final String ERROR_TRANSACTION_NOT_FOUND_MIL_DB_MSG = "[" + ERROR_TRANSACTION_NOT_FOUND_MIL_DB + "] " + ERROR_TRANSACTION_NOT_FOUND_MIL_DB_DESCR;
 
+    private ErrorCode() {
+    }
 }

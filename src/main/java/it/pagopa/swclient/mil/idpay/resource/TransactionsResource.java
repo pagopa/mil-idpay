@@ -102,11 +102,10 @@ public class TransactionsResource {
 
         Log.debugf("TransactionsResource -> cancelTransaction - Input parameters: %s, transactionId: %s", headers, transactionId);
 
-        return transactionsService.cancelTransaction(headers, transactionId).chain(() -> {
-
-            return Uni.createFrom().item(
-                    Response.status(Status.NO_CONTENT).build());
-        });
+        return transactionsService.cancelTransaction(headers, transactionId).chain(() ->
+            Uni.createFrom().item(
+                    Response.status(Status.NO_CONTENT).build())
+        );
     }
 
     private URI getTransactionURI(String milTransactionId) {

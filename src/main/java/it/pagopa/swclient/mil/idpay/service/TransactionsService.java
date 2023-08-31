@@ -72,9 +72,7 @@ public class TransactionsService {
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
                                         .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
                                         .build());
-                            }).map(ent -> {
-                                return createTransactionFromIdpayTransactionEntity(ent);
-                            });
+                            }).map(this::createTransactionFromIdpayTransactionEntity);
                 });
     }
 
@@ -166,14 +164,13 @@ public class TransactionsService {
 
                                 IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(entity, res);
 
+                                //update ok, invio la risposta al client
                                 return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
                                         .onFailure().recoverWithItem(err-> {
                                             Log.errorf(err, "TransactionsService -> getTransaction: Error while updating transaction %s on db", entity.transactionId);
 
                                             return updEntity;
-                                        }).map(ent -> { //update ok, invio la risposta al client
-                                            return createTransactionFromIdpayTransactionEntity(ent);
-                                        });
+                                        }).map(this::createTransactionFromIdpayTransactionEntity);//update ok, invio la risposta al client
                             });
                 });
     }
@@ -236,7 +233,7 @@ public class TransactionsService {
 
                                             return updEntity;
                                         })
-                                        .chain(() -> {return Uni.createFrom().voidItem();});
+                                        .chain(() -> Uni.createFrom().voidItem());
                                     });
                 });
     }
