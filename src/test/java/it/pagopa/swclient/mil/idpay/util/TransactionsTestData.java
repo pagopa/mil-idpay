@@ -1,17 +1,16 @@
 package it.pagopa.swclient.mil.idpay.util;
 
 import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
+import it.pagopa.swclient.mil.idpay.bean.OperationType;
 import it.pagopa.swclient.mil.idpay.bean.TransactionStatus;
+import it.pagopa.swclient.mil.idpay.client.bean.SyncTrxStatus;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransaction;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public final class TransactionsTestData {
 
@@ -95,5 +94,27 @@ public final class TransactionsTestData {
         entity.idpayTransaction = idpayTransaction;
 
         return entity;
+    }
+
+    public static SyncTrxStatus getStatusTransactionResponse() {
+
+        SyncTrxStatus res = new SyncTrxStatus();
+
+        res.setId("4490eea8-9c81-4879-9720-22222222333");
+        res.setIdTrxIssuer("IdTrxIssuer1");
+        res.setTrxCode("trxCodetrxCodetrxCode");
+        res.setTrxDate(new Date());
+        res.setAuthDate(new Date());
+        res.setOperationType(OperationType.CHARGE);
+        res.setAmountCents(99999999999L);
+        res.setAmountCurrency("EUR");
+        res.setMcc("mcc1");
+        res.setAcquirerId("222");
+        res.setMerchantId("111");
+        res.setInitiativeId("initiativeId1");
+        res.setRewardCents(123L);
+        res.setStatus(TransactionStatus.CREATED);
+
+        return res;
     }
 }
