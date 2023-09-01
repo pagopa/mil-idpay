@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: IDPay Microservice
-  version: 1.1.0-RC
+  version: 1.1.1-RC
   description: IDPay Microservice for Multi-channel Integration Layer of SW Client Project
   contact:
     name: Antonio Tarricone
@@ -120,7 +120,7 @@ paths:
   # /transactions/{milTransactionId}
   #
   # ================================================================================================
-  /transactions/{transactionId}:
+  /transactions/{milTransactionId}:
     parameters:
       - $ref: '#/components/parameters/RequestId'
       - $ref: '#/components/parameters/Version'
@@ -128,7 +128,7 @@ paths:
       - $ref: '#/components/parameters/Channel'
       - $ref: '#/components/parameters/MerchantId'
       - $ref: '#/components/parameters/TerminalId'
-      - name: transactionId
+      - name: milTransactionId
         description: ID of the transaction for MIL
         in: path
         required: true
@@ -157,14 +157,56 @@ paths:
         default:
           description: Unexpected error
 
-    patch:
-      operationId: updateTransaction
-      summary: Updates an IDPay transaction (verify CIE, verify IDPay Authorization Code and authorize transaction)
+    delete:
+      operationId: cancelTransaction
+      summary: Cancels an IDPay transaction
+      responses:
+        "204":
+          description: Transaction cancelled successfully
+        "400":
+          $ref: '#/components/responses/Error'
+        "401":
+          description: Wrong credentials
+        "403":
+          description: Forbidden
+        "404":
+          description: Transaction not found
+        "406":
+          description: Not acceptable. Did you require application/json?
+        "429":
+          description: Too many request
+        "500":
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+
+  # ================================================================================================
+  #
+  # /transactions/{milTransactionId}/verifyCie
+  #
+  # ================================================================================================
+  /transactions/{milTransactionId}/verifyCie:
+    post:
+      operationId: verifyCie
+      summary: Verifies the CIE
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/Version'
+        - $ref: '#/components/parameters/AcquirerId'
+        - $ref: '#/components/parameters/Channel'
+        - $ref: '#/components/parameters/MerchantId'
+        - $ref: '#/components/parameters/TerminalId'
+        - name: milTransactionId
+          description: ID of the transaction for MIL
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/MilTransactionId'
       requestBody:
-        $ref: '#/components/requestBodies/UpdateTransaction'
+        $ref: '#/components/requestBodies/VerifyCie'
       responses:
         "200":
-          $ref: '#/components/responses/UpdateTransaction'
+          $ref: '#/components/responses/VerifyCie'
         "400":
           $ref: '#/components/responses/Error'
         "401":
@@ -184,12 +226,33 @@ paths:
         default:
           description: Unexpected error
 
-    delete:
-      operationId: cancelTransaction
-      summary: Cancels an IDPay transaction
+  # ================================================================================================
+  #
+  # /transactions/{milTransactionId}/authorize
+  #
+  # ================================================================================================
+  /transactions/{milTransactionId}/authorize:
+    post:
+      operationId: authorize
+      summary: Authorizes IDPay transaction by means of CIE
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/Version'
+        - $ref: '#/components/parameters/AcquirerId'
+        - $ref: '#/components/parameters/Channel'
+        - $ref: '#/components/parameters/MerchantId'
+        - $ref: '#/components/parameters/TerminalId'
+        - name: milTransactionId
+          description: ID of the transaction for MIL
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/MilTransactionId'
+      requestBody:
+        $ref: '#/components/requestBodies/Authorize'
       responses:
-        "204":
-          description: Transaction cancelled successfully
+        "200":
+          description: Ok
         "400":
           $ref: '#/components/responses/Error'
         "401":
@@ -197,9 +260,11 @@ paths:
         "403":
           description: Forbidden
         "404":
-          description: Transaction not found
+          description: Transaction doesn't exist
         "406":
           description: Not acceptable. Did you require application/json?
+        "415":
+          description: Unsupported media type. Did you provide application/json?
         "429":
           description: Too many request
         "500":
@@ -310,6 +375,13 @@ components:
       type: string
       pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
     
+    KeyOp:
+      description: Operation that can be executed
+      enum:
+        - wrapKey
+      type: string
+      example: "wrapKey"
+    
     KeyType:
       description: Master key type
       enum:
@@ -321,8 +393,8 @@ components:
       description: Master key ID
       type: string
       format: uuid
-      pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
-      example: "d0d654e6-97da-4848-b568-99fedccb642b"
+      pattern: "^[ -~]{1,2048}$"
+      example: "d0d654e697da4848b56899fedccb642b/4536def850ac6e9830f"
       
     LastUpdateTimestamp:
       description: Timestamp of the last update of stored transaction data
@@ -399,6 +471,12 @@ components:
       maximum: 60
       example: 5
     
+    SecondFactor:
+      description: Second factor to build authorization code block
+      type: string
+      pattern: "^[a-fA-F0-9]{12}$"
+      example: "483efab359c1"
+    
     Signature:
       description: Signature of the challenge calculated by the CIE
       type: string
@@ -429,14 +507,14 @@ components:
       pattern: "^[ -~]{1,2048}$"
     
     TransactionStatus:
-     description: Status of the transaction
-     type: string
-     enum:
-       - CREATED       # CREATED -> IDENTIFIED -> CREATED : Transaction has not been authorized by the User
-       - IDENTIFIED    # QR-code has been read by App IO or CIE has been verified successfully
-       - AUTHORIZED    # CREATED -> IDENTIFIED -> AUTHORIZED : Transaction has been authorized by the User
-       - REJECTED
-       - REWARDED
+      description: Status of the transaction
+      type: string
+      enum:
+        - CREATED       # CREATED -> IDENTIFIED -> CREATED : Transaction has not been authorized by the User
+        - IDENTIFIED    # QR-code has been read by App IO or IPZS verified CIE successfully
+        - AUTHORIZED    # CREATED -> IDENTIFIED -> AUTHORIZED : Transaction has been authorized by the User
+        - REJECTED
+        - REWARDED
     
     TransactionTimestamp:
       description: Timestamp of the transaction
@@ -461,25 +539,25 @@ components:
       type: object
       additionalProperties: false
       properties:
+        kid:
+          $ref: '#/components/schemas/Kid'
         encSessionKey:
           $ref: '#/components/schemas/EncryptedSessionKey'
         authCodeBlock:
           $ref: '#/components/schemas/AuthCodeBlock'
       required:
+        - kid
         - encSessionKey
         - authCodeBlock
     
     Authorize:
       description: Details to authorize an IDPay transaction by means of a CIE
       type: object
-      additionalProperties: true
+      additionalProperties: false
       properties:
-        nis:
-          $ref: '#/components/schemas/Nis'
         authCodeBlockData:
           $ref: '#/components/schemas/AuthCodeBlockData'
       required:
-        - nis
         - authCodeBlockData
           
     CreateTransaction:
@@ -515,6 +593,23 @@ components:
           - "00000000A"
           - "001000001"
     
+    KeyOps:
+      description: Operations that can be executed
+      type: object
+      additionalProperties: false
+      properties:
+        keyOps:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            $ref: '#/components/schemas/KeyOp'
+      required:
+        - keyOps
+      example:
+        keyOps:
+          - "wrapKey"
+    
     Initiative:
       description: Initiative details
       type: object
@@ -547,7 +642,7 @@ components:
     PublicKey:
       description: Public master key to be used to encrypt session key
       type: object
-      additionalProperties: true
+      additionalProperties: false
       properties:
         kty:
           $ref: '#/components/schemas/KeyType'
@@ -563,6 +658,8 @@ components:
           $ref: '#/components/schemas/Iat'
         n:
           $ref: '#/components/schemas/Modulus'
+        keyOps:
+          $ref: '#/components/schemas/KeyOps'
       required:
         - kty
         - e
@@ -571,6 +668,7 @@ components:
         - exp
         - iat
         - n
+        - keyOps
       example:
         kty: "RSA"
         e: "AQAB"
@@ -579,11 +677,13 @@ components:
         exp: 1678975089
         iat: 1678888689
         n: "qjcVEWJTTySeKxHsJSsmVGk2cEvXJ4tBC4uyU5MxYwBAiIWuZb_yDOIjLz7JN8QsJs3QrZtS3vqv18ljW2db6ED90OUo9CVJveSF4eNRozDHOvnHGT0HR-8Wf5GxcNy63zfQLrnfdp5F9TrhMFRMkEA0TCT7PhT3yF6YvwLtQyMciER1_KKnpGomfAkW-UpaF2nHfXiFPrOIHMuNb5BoRR1f0349tqloLgLd7vyMy1jg-BldmEgRV1bcFqjH0Cg3leROjDy9HzdFauRIlSb4VZrqNni2hgaTUHI5Xp7aCwpS9Y_mf19KpxN0_8d-f3UVRlwtI1dryelpdC5jowxia2Pf8UgSZyMs2ZxDf6eU0SH8wHEvMpeFpwmiBD1XcsISoTan0Yv7w_CLo6JOqX6EfogDQZUBzKKlVCZSoSinAz0_7Bj2orgWKQ9sbfgJWgJweKkJLH-bNSRaVcu02boxPnlJeay3wROhSAgtiKWZnsU1_FpPNG0JBFCh_x-VjkuBoREpNEyJM5NvhRCmyObtzocS4eCtAgvmo3EFv_Xa-rp0p5ez4A-_QUb5OsYOswqYbIV1GbtiAfCTOrNbv6K86LaTllZ9WqYrKgDv7KA-604K37k33LHROqcO9Q-bCN8hKzQDWs7M3DFNP6P5iBUUVs-gtWncHvIuUWTth-fBXa8"
+        keyOps:
+          - "wrapKey"
     
     Transaction:
       description: IDPay transaction details
       type: object
-      additionalProperties: true
+      additionalProperties: false
       properties:
         idpayTransactionId:
           $ref: '#/components/schemas/IdPayTransactionId'
@@ -607,6 +707,8 @@ components:
           $ref: '#/components/schemas/TransactionStatus'
         lastUpdate:
           $ref: '#/components/schemas/LastUpdateTimestamp'
+        secondFactor:
+          $ref: '#/components/schemas/SecondFactor'
       required:
         - idpayTransactionId
         - milTransactionId
@@ -632,7 +734,7 @@ components:
     VerifyCie:
       description: Details to verify CIE
       type: object
-      additionalProperties: true
+      additionalProperties: false
       properties:
         nis:
           $ref: '#/components/schemas/Nis'
@@ -643,6 +745,7 @@ components:
         sod:
           $ref: '#/components/schemas/Sod'
       required:
+        - nis
         - ciePublicKey
         - signature
         - sod
@@ -653,6 +756,13 @@ components:
   #
   # ================================================================================================
   requestBodies:
+    Authorize:
+      description: Request to authorize IDPay transaction by means of CIE
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Authorize'
+    
     CreateTransaction:
       description: Request to create a new IDPay transaction
       content:
@@ -660,14 +770,12 @@ components:
           schema:
             $ref: '#/components/schemas/CreateTransaction'
 
-    UpdateTransaction:
-      description: Request to update an IDPay transaction
+    VerifyCie:
+      description: Request to verify CIE
       content:
         application/json:
           schema:
-            oneOf:
-              - $ref: '#/components/schemas/VerifyCie'
-              - $ref: '#/components/schemas/Authorize'
+            $ref: '#/components/schemas/VerifyCie'
 
   # ================================================================================================
   #
@@ -693,9 +801,9 @@ components:
 
     MerchantId:
       name: MerchantId
-      description: Merchant ID
+      description: Merchant ID (if Channel = POS, this parameter is mandatory)
       in: header
-      required: true
+      required: false
       schema:
         $ref: '#/components/schemas/MerchantId'
     
@@ -780,14 +888,12 @@ components:
           schema:
             $ref: '#/components/schemas/Transactions'
     
-    UpdateTransaction:
-      description: When the operation updateTransaction is invoked to verify CIE, the master key to generate AuthCodeBlock is returned
+    VerifyCie:
+      description: Public key to generate AuthCodeBlock
       content:
         application/json:
           schema:
-            oneOf:
-              - $ref: '#/components/schemas/PublicKey'
-              - $ref: '#/components/schemas/Transaction'
+            $ref: '#/components/schemas/PublicKey'
 
   # ================================================================================================
   #
