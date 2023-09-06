@@ -6,6 +6,7 @@ import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
 import it.pagopa.swclient.mil.idpay.IdpayConstants;
 import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
+import it.pagopa.swclient.mil.idpay.bean.VerifyCie;
 import it.pagopa.swclient.mil.idpay.service.TransactionsService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -48,7 +49,7 @@ public class TransactionsResource {
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"NoticePayer", "SlavePos"})
+    @RolesAllowed({"PayWithIDPay"})
     public Uni<Response> createTransaction(
             @Valid @BeanParam CommonHeader headers,
             @Valid
@@ -73,7 +74,7 @@ public class TransactionsResource {
     @GET
     @Path("/{transactionId}")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"NoticePayer", "SlavePos"})
+    @RolesAllowed({"PayWithIDPay"})
     public Uni<Response> getTransaction(@Valid @BeanParam CommonHeader headers,
                                           @Pattern(regexp = IdpayConstants.TRANSACTION_ID_REGEX,
                                                   message = "[" + ErrorCode.ERROR_TRANSACTION_ID_MUST_MATCH_REGEXP + "] transactionId must match \"{regexp}\"")
@@ -94,7 +95,7 @@ public class TransactionsResource {
     @DELETE
     @Path("/{transactionId}")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"NoticePayer", "SlavePos"})
+    @RolesAllowed({"PayWithIDPay"})
     public Uni<Response> cancelTransaction(@Valid @BeanParam CommonHeader headers,
                                         @Pattern(regexp = IdpayConstants.TRANSACTION_ID_REGEX,
                                                 message = "[" + ErrorCode.ERROR_TRANSACTION_ID_MUST_MATCH_REGEXP + "] transactionId must match \"{regexp}\"")
@@ -111,6 +112,34 @@ public class TransactionsResource {
     private URI getTransactionURI(String milTransactionId) {
         return URI.create(idpayTransactionLocationBaseURL + "/transactions/" + milTransactionId);
     }
+/*
+    @POST
+    @Path("/{transactionId}/verifyCie")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({"PayWithIDPay"})
+    public Uni<Response> verifyCie(
+            @Valid @BeanParam CommonHeader headers,
+            @Pattern(regexp = IdpayConstants.TRANSACTION_ID_REGEX,
+                    message = "[" + ErrorCode.ERROR_TRANSACTION_ID_MUST_MATCH_REGEXP + "] transactionId must match \"{regexp}\"")
+            @PathParam(value = "transactionId") String transactionId,
+            @Valid
+            @NotNull(message = "[" + ErrorCode.VERIFY_CIE_MUST_NOT_BE_EMPTY + "] request must not be empty")
+            VerifyCie verifyCie) {
 
+        Log.debugf("TransactionsResource -> verifyCie - Input verifyCie: %s, %s", headers, verifyCie);
+
+        return transactionsService.verifyCie(headers, transactionId, verifyCie).chain(res -> {
+            Log.debugf("TransactionsResource -> TransactionsService -> verifyCie - Response %s", res);
+
+            Response.ResponseBuilder responseBuilder = Response.status(Status.CREATED);
+            responseBuilder
+                    .location(getTransactionURI(transactionId))
+                    .header("Retry-After", idpayTransactionRetryAfter)
+                    .header("Max-Retries", idpayTransactionMaxRetry);
+
+            return Uni.createFrom().item(responseBuilder.entity(res).build());
+        });
+    }*/
 
 }

@@ -114,6 +114,7 @@ public final class TransactionsTestData {
         res.setInitiativeId("initiativeId1");
         res.setRewardCents(123L);
         res.setStatus(TransactionStatus.CREATED);
+        res.setSecondFactor("483efab359c1");
 
         return res;
     }

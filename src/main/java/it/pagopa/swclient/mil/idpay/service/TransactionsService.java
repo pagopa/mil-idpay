@@ -5,22 +5,26 @@ import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.bean.Errors;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
-import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
-import it.pagopa.swclient.mil.idpay.bean.Transaction;
-import it.pagopa.swclient.mil.idpay.bean.TransactionStatus;
+import it.pagopa.swclient.mil.idpay.bean.*;
+import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayTransactionsRestClient;
+import it.pagopa.swclient.mil.idpay.client.IpzsVerifyCieRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.SyncTrxStatus;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionCreationRequest;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
+import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieRequest;
+import it.pagopa.swclient.mil.idpay.client.bean.ipzs.Outcome;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransaction;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.resteasy.reactive.ClientWebApplicationException;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -37,6 +41,12 @@ public class TransactionsService {
 
     @RestClient
     IdpayTransactionsRestClient idpayTransactionsRestClient;
+
+    @RestClient
+    IpzsVerifyCieRestClient ipzsVerifyCieRestClient;
+
+    @RestClient
+    AzureADRestClient azureADRestClient;
 
     public Uni<Transaction> createTransaction(CommonHeader headers, CreateTransaction createTransaction) {
 
@@ -72,7 +82,7 @@ public class TransactionsService {
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
                                         .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
                                         .build());
-                            }).map(this::createTransactionFromIdpayTransactionEntity);
+                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, null));
                 });
     }
 
@@ -107,7 +117,7 @@ public class TransactionsService {
         return entity;
     }
 
-    protected Transaction createTransactionFromIdpayTransactionEntity(IdpayTransactionEntity entity) {
+    protected Transaction createTransactionFromIdpayTransactionEntity(IdpayTransactionEntity entity, String secondFactor) {
 
         Transaction transaction = new Transaction();
 
@@ -122,6 +132,7 @@ public class TransactionsService {
         transaction.setCoveredAmount(entity.idpayTransaction.getCoveredAmount());
         transaction.setStatus(entity.idpayTransaction.getStatus());
         transaction.setLastUpdate(entity.idpayTransaction.getLastUpdate());
+        transaction.setSecondFactor(secondFactor);
 
         return transaction;
     }
@@ -170,7 +181,7 @@ public class TransactionsService {
                                             Log.errorf(err, "TransactionsService -> getTransaction: Error while updating transaction %s on db", entity.transactionId);
 
                                             return updEntity;
-                                        }).map(this::createTransactionFromIdpayTransactionEntity);//update ok, invio la risposta al client
+                                        }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, res.getSecondFactor()));//update ok, invio la risposta al client
                             });
                 });
     }
@@ -243,5 +254,91 @@ public class TransactionsService {
         entity.idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
 
         return entity;
+    }
+
+    /*
+    public Uni<PublicKey> verifyCie(CommonHeader headers, String transactionId, VerifyCie verifyCie) {
+
+        Log.debugf("TransactionsService -> verifyCie - Input parameters: %s, %s, %s", headers, transactionId, verifyCie);
+
+        return idpayTransactionRepository.findById(transactionId) //looking for MilTransactionID in DB
+                .onFailure().transform(t -> {
+                    Log.errorf(t, "[%s] TransactionsService -> verifyCie: Error while retrieving mil transaction [%s] from DB",
+                            ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB, transactionId);
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB), List.of(ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB_MSG)))
+                            .build());
+                })
+                .onItem().ifNull().failWith(() -> {
+                    // if no transaction is found return TRANSACTION_NOT_FOUND
+                    Log.errorf("TransactionsService -> verifyCie: transaction [%s] not found on mil DB", transactionId);
+
+                    return new NotFoundException(Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_TRANSACTION_NOT_FOUND_MIL_DB), List.of(ErrorCode.ERROR_TRANSACTION_NOT_FOUND_MIL_DB_MSG)))
+                            .build());
+                }).chain(entity -> { //Transaction found
+                    Log.debugf("TransactionsService -> verifyCie: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+
+                    if (!TransactionStatus.CREATED.equals(entity.idpayTransaction.getStatus())) {
+                        throw new BadRequestException(Response
+                                .status(Response.Status.BAD_REQUEST)
+                                .entity(new Errors(List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB), List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB_MSG)))
+                                .build());
+                    } else {
+                        //call ipzs to retrieve CIE state
+                        return ipzsVerifyCieRestClient.identitycards(entity.idpayTransaction.getIdpayTransactionId(), this.createIpzsVerifyCieRequest(verifyCie, entity.idpayTransaction.getTrxCode()))
+                                .onFailure().transform(t -> {
+                                    if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {//IPZS respond NOT FOUND - trasforming in BAD_REQUEST
+                                        Log.errorf(t, " TransactionsService -> verifyCie: IPZS NOT FOUND for mil transaction [%s]", transactionId);
+
+                                        return new NotFoundException(Response
+                                                .status(Response.Status.BAD_REQUEST)
+                                                .entity(new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IPZS_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IPZS_REST_SERVICES_MSG)))
+                                                .build());
+                                    } else {
+                                        Log.errorf(t, "TransactionsService -> verifyCie: IPZS error response for mil transaction [%s]", transactionId);
+
+                                        return new InternalServerErrorException(Response
+                                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IPZS_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IPZS_REST_SERVICES_MSG)))
+                                                .build());
+                                    }
+                                }).chain(res -> {//response ok
+                                    Log.debugf("TransactionsService -> verifyCie: IPZS identitycards service returned a 200 status, response: [%s]", res);
+
+                                    if (!Outcome.OK.equals(res.getOutcome())) {//if ipzs answers with HTTP 200 and outcome = LOST, STOLEN or EXPIRED, return HTTP 400 (bad request) with error body
+                                        throw new BadRequestException(Response
+                                                .status(Response.Status.BAD_REQUEST)
+                                                .entity(this.decodeIpzsOutcome(res.getOutcome()))
+                                                .build());
+                                    } else {
+
+                                    }
+                                });
+                            }
+                });
+    }*/
+
+    protected IpzsVerifyCieRequest createIpzsVerifyCieRequest(VerifyCie verifyCie, String trxCode) {
+        IpzsVerifyCieRequest req = new IpzsVerifyCieRequest();
+        req.setNis(verifyCie.getNis());
+        req.setSod(verifyCie.getSod());
+        req.setKpubint(verifyCie.getCiePublicKey());
+        req.setChallenge(trxCode);
+        req.setChallengeSignature(verifyCie.getSignature());
+        return req;
+    }
+
+    private Errors decodeIpzsOutcome(Outcome outcome) {
+        return (
+            switch (outcome) {
+                case LOST -> new Errors(List.of(ErrorCode.ERROR_LOST_IPZS_REST_SERVICES), List.of(ErrorCode.ERROR_LOST_IPZS_REST_SERVICES_MSG));
+                case STOLEN -> new Errors(List.of(ErrorCode.ERROR_STOLEN_IPZS_REST_SERVICES), List.of(ErrorCode.ERROR_STOLEN_IPZS_REST_SERVICES_MSG));
+                case EXPIRED -> new Errors(List.of(ErrorCode.ERROR_EXPIRED_IPZS_REST_SERVICES), List.of(ErrorCode.ERROR_EXPIRED_IPZS_REST_SERVICES_MSG));
+                default -> new Errors(List.of(ErrorCode.ERROR_UNKNOWN_IPZS_REST_SERVICES), List.of(ErrorCode.ERROR_UNKNOWN_IPZS_REST_SERVICES_MSG));
+            }
+        );
     }
 }

@@ -171,10 +171,10 @@
 					}
 				],
 				"url": {
-					"raw": "http://milURL/initiatives",
+					"raw": "http://{{milURL}}/initiatives",
 					"protocol": "http",
 					"host": [
-						"milURL"
+						"{{milURL}}"
 					],
 					"path": [
 						"initiatives"
@@ -239,6 +239,225 @@
 					],
 					"cookie": [],
 					"body": "[\n\t{\n\t\t\"initiativeId\": \"111\",\n\t\t\"initiativeName\": \"Iniziative name11\",\n\t\t\"organizationName\": \"Iniziative organization1\",\n\t\t\"status\": \"PUBLISHED\",\n\t\t\"startDate\": \"2020-01-08\",\n\t\t\"endDate\": \"2023-08-02\",\n\t\t\"serviceId\": \"serviceId1\",\n\t\t\"enabled\": true\n\t},\n\t{\n\t\t\"initiativeId\": \"222\",\n\t\t\"initiativeName\": \"Iniziative name2\",\n\t\t\"organizationName\": \"Iniziative organization2\",\n\t\t\"status\": \"PUBLISHED\",\n\t\t\"startDate\": \"2023-01-08\",\n\t\t\"endDate\": \"2024-01-08\",\n\t\t\"serviceId\": \"serviceId2\",\n\t\t\"enabled\": true\n\t}\n]"
+				}
+			]
+		},
+		{
+			"name": "Recupero dello stato della transazione",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "TerminalId",
+						"value": "999",
+						"type": "text"
+					},
+					{
+						"key": "AcquirerId",
+						"value": "222",
+						"type": "text"
+					},
+					{
+						"key": "MerchantId",
+						"value": "111",
+						"type": "text"
+					},
+					{
+						"key": "RequestId",
+						"value": "12345678-1111-1234-1234-123456789012",
+						"type": "text"
+					},
+					{
+						"key": "Channel",
+						"value": "POS",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://{{milURL}}/transactions/:transactionId",
+					"protocol": "http",
+					"host": [
+						"{{milURL}}"
+					],
+					"path": [
+						"transactions",
+						":transactionId"
+					],
+					"variable": [
+						{
+							"key": "transactionId",
+							"value": "facb5574-88c3-4ce5-a58c-50381c0de842"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Recupero dello stato della transazione idpay response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"value": "a8d1e9e023734e3e89abf1fa83a7755f",
+								"type": "text"
+							},
+							{
+								"key": "x-acquirer-id",
+								"value": "222",
+								"type": "text"
+							},
+							{
+								"key": "x-merchant-fiscalcode",
+								"value": "111",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://1cb54e4c-ea9a-4465-becc-b5d15fcd63bf.mock.pstmn.io/status/:id",
+							"protocol": "https",
+							"host": [
+								"1cb54e4c-ea9a-4465-becc-b5d15fcd63bf",
+								"mock",
+								"pstmn",
+								"io"
+							],
+							"path": [
+								"status",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "4490eea8-9c81-4879-9720-22222222333"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json;charset=UTF-8"
+						},
+						{
+							"key": "content-length",
+							"value": "345"
+						}
+					],
+					"cookie": [],
+					"body": "{\n\t\"id\": \"4490eea8-9c81-4879-9720-22222222333\",\n\t\"idTrxIssuer\": \"IdTrxIssuer1\",\n\t\"trxCode\": \"trxCodetrxCodetrxCode\",\n\t\"trxDate\": \"2023-08-03T14:29:01\",\n\t\"authDate\": \"2023-08-05T10:29:01\",\n\t\"operationType\": \"CHARGE\",\n\t\"amountCents\": 99999999999,\n\t\"amountCurrency\": \"EUR\",\n\t\"mcc\": \"mcc1\",\n\t\"acquirerId\": \"222\",\n\t\"merchantId\": \"111\",\n\t\"initiativeId\": \"initiativeId1\",\n\t\"rewardCents\": 50,\n\t\"status\": \"CREATED\",\n    \"secondFactor\": \"483efab359c1\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Cancellazione della transazione",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "TerminalId",
+						"value": "999",
+						"type": "text"
+					},
+					{
+						"key": "AcquirerId",
+						"value": "222",
+						"type": "text"
+					},
+					{
+						"key": "MerchantId",
+						"value": "111",
+						"type": "text"
+					},
+					{
+						"key": "RequestId",
+						"value": "12345678-1111-1234-1234-123456789012",
+						"type": "text"
+					},
+					{
+						"key": "Channel",
+						"value": "POS",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://{{milURL}}/transactions/:transactionId",
+					"protocol": "http",
+					"host": [
+						"{{milURL}}"
+					],
+					"path": [
+						"transactions",
+						":transactionId"
+					],
+					"variable": [
+						{
+							"key": "transactionId",
+							"value": "facb5574-88c3-4ce5-a58c-50381c0de842"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Cancellazione della transazione idpay response",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"value": "a8d1e9e023734e3e89abf1fa83a7755f",
+								"type": "text"
+							},
+							{
+								"key": "x-acquirer-id",
+								"value": "222",
+								"type": "text"
+							},
+							{
+								"key": "x-merchant-fiscalcode",
+								"value": "111",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://1cb54e4c-ea9a-4465-becc-b5d15fcd63bf.mock.pstmn.io/:id",
+							"protocol": "https",
+							"host": [
+								"1cb54e4c-ea9a-4465-becc-b5d15fcd63bf",
+								"mock",
+								"pstmn",
+								"io"
+							],
+							"path": [
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "4490eea8-9c81-4879-9720-22222222333"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json;charset=UTF-8"
+						},
+						{
+							"key": "content-length",
+							"value": "345"
+						}
+					],
+					"cookie": [],
+					"body": ""
 				}
 			]
 		}

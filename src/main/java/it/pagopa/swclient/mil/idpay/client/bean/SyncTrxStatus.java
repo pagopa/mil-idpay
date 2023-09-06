@@ -13,7 +13,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString
+@ToString(exclude = {"secondFactor"})
 public class SyncTrxStatus {
 
     private String id;
@@ -31,4 +31,5 @@ public class SyncTrxStatus {
     private Long rewardCents;
     private List<String> rejectionReasons;
     private TransactionStatus status;
+    private String secondFactor;
 }
