@@ -1,5 +1,6 @@
 package it.pagopa.swclient.mil.idpay.bean;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @ToString
+@RegisterForReflection
 public class Transaction {
 
     @NotNull
