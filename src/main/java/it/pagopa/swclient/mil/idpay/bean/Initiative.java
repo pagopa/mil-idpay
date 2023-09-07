@@ -1,5 +1,6 @@
 package it.pagopa.swclient.mil.idpay.bean;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
@@ -9,6 +10,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
+@RegisterForReflection
 public class Initiative {
     @NotNull
     @Pattern(regexp = "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$")
