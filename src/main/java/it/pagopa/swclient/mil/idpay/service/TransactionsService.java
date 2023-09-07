@@ -338,6 +338,8 @@ public class TransactionsService {
                                                 }).chain(token -> {
                                                     Log.debugf("TransactionsService -> verifyCie: Azure AD service returned a 200 status, response: [%s]", token);
 
+                                                    String keyName = "idpay-wrap-key-".concat(headers.getAcquirerId()).concat("POS".equals(headers.getChannel()) ? headers.getMerchantId() : "").concat(headers.getTerminalId());
+
                                                 });
                                     }
                                 });
