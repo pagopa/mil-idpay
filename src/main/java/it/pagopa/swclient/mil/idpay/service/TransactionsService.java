@@ -23,6 +23,7 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 
@@ -47,6 +48,15 @@ public class TransactionsService {
 
     @RestClient
     AzureADRestClient azureADRestClient;
+
+    @ConfigProperty(name="azuread.client-id")
+    String azureADClientId;
+
+    @ConfigProperty(name="azuread.client-secret")
+    String azureADClientSecret;
+
+    @ConfigProperty(name="azuread.tenant-id")
+    String azureADTenantId;
 
     public Uni<Transaction> createTransaction(CommonHeader headers, CreateTransaction createTransaction) {
 
@@ -314,7 +324,21 @@ public class TransactionsService {
                                                 .entity(this.decodeIpzsOutcome(res.getOutcome()))
                                                 .build());
                                     } else {
+                                        String azureAdRequest = String.format("client_id=%s&grant_type=client_credentials&client_secret=%s&scope=https://vault.azure.net/.default",
+                                                azureADClientId, azureADClientSecret);
 
+                                        return azureADRestClient.token(azureADTenantId, azureAdRequest)
+                                                .onFailure().transform(t -> {
+                                                    Log.errorf(t, "TransactionsService -> verifyCie: Azure AD error response for mil transaction [%s]", transactionId);
+
+                                                    return new InternalServerErrorException(Response
+                                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                            .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES_MSG)))
+                                                            .build());
+                                                }).chain(token -> {
+                                                    Log.debugf("TransactionsService -> verifyCie: Azure AD service returned a 200 status, response: [%s]", token);
+
+                                                });
                                     }
                                 });
                             }

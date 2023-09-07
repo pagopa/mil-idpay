@@ -40,6 +40,10 @@ public final class ErrorCode {
     public static final String ERROR_EXPIRED_IPZS_REST_SERVICES 							            = MODULE_ID + "000074";
     public static final String ERROR_UNKNOWN_IPZS_REST_SERVICES 							            = MODULE_ID + "000075";
 
+    // integration errors azure (AD e Key Vault) - rest clients
+    public static final String ERROR_CALLING_AZUREAD_REST_SERVICES 							            = MODULE_ID + "000080";
+
+
     /*
      * Error descriptions
      */
@@ -55,6 +59,8 @@ public final class ErrorCode {
     public static final String ERROR_STOLEN_IPZS_REST_SERVICES_DESCR = "IPZS rest service STOLEN response";
     public static final String ERROR_EXPIRED_IPZS_REST_SERVICES_DESCR = "IPZS rest service EXPIRED response";
     public static final String ERROR_UNKNOWN_IPZS_REST_SERVICES_DESCR = "IPZS rest service EXPIRED response";
+
+    public static final String ERROR_CALLING_AZUREAD_REST_SERVICES_DESCR = "Error calling Azure AD rest service";
 
 
     /*
@@ -72,6 +78,8 @@ public final class ErrorCode {
     public static final String ERROR_STOLEN_IPZS_REST_SERVICES_MSG = "[" + ERROR_STOLEN_IPZS_REST_SERVICES + "] " + ERROR_STOLEN_IPZS_REST_SERVICES_DESCR;
     public static final String ERROR_EXPIRED_IPZS_REST_SERVICES_MSG = "[" + ERROR_EXPIRED_IPZS_REST_SERVICES + "] " + ERROR_EXPIRED_IPZS_REST_SERVICES_DESCR;
     public static final String ERROR_UNKNOWN_IPZS_REST_SERVICES_MSG = "[" + ERROR_UNKNOWN_IPZS_REST_SERVICES + "] " + ERROR_UNKNOWN_IPZS_REST_SERVICES_DESCR;
+
+    public static final String ERROR_CALLING_AZUREAD_REST_SERVICES_MSG = "[" + ERROR_CALLING_AZUREAD_REST_SERVICES + "] " + ERROR_CALLING_AZUREAD_REST_SERVICES_DESCR;
 
     private ErrorCode() {
     }

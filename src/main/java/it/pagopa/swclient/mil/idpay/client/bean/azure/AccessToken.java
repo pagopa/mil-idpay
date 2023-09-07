@@ -8,7 +8,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString
+@ToString(exclude = {"access_token"})
 public class AccessToken {
     private String token_type;
     private int expires_in;
