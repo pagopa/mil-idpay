@@ -93,7 +93,7 @@ public class TransactionsService {
         idpayTransaction.setGoodsCost(createTransaction.getGoodsCost());
         idpayTransaction.setChallenge(null);
         idpayTransaction.setTrxCode(res.getTrxCode());
-        idpayTransaction.setQrCode(null);
+        idpayTransaction.setQrCode(res.getQrcodeTxtUrl());
         idpayTransaction.setCoveredAmount(null);
         idpayTransaction.setStatus(res.getStatus());
         idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
