@@ -256,7 +256,7 @@ public class TransactionsService {
         return entity;
     }
 
-    /*
+
     public Uni<PublicKey> verifyCie(CommonHeader headers, String transactionId, VerifyCie verifyCie) {
 
         Log.debugf("TransactionsService -> verifyCie - Input parameters: %s, %s, %s", headers, transactionId, verifyCie);
@@ -319,7 +319,7 @@ public class TransactionsService {
                                 });
                             }
                 });
-    }*/
+    }
 
     protected IpzsVerifyCieRequest createIpzsVerifyCieRequest(VerifyCie verifyCie, String trxCode) {
         IpzsVerifyCieRequest req = new IpzsVerifyCieRequest();

@@ -112,7 +112,7 @@ public class TransactionsResource {
     private URI getTransactionURI(String milTransactionId) {
         return URI.create(idpayTransactionLocationBaseURL + "/transactions/" + milTransactionId);
     }
-/*
+
     @POST
     @Path("/{transactionId}/verifyCie")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -140,6 +140,6 @@ public class TransactionsResource {
 
             return Uni.createFrom().item(responseBuilder.entity(res).build());
         });
-    }*/
+    }
 
 }
