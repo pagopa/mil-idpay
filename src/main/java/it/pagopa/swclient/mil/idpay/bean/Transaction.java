@@ -1,5 +1,6 @@
 package it.pagopa.swclient.mil.idpay.bean;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,7 +10,8 @@ import lombok.ToString;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(exclude = {"secondFactor"})
+@ToString
+@RegisterForReflection
 public class Transaction {
 
     @NotNull
@@ -55,8 +57,5 @@ public class Transaction {
     @NotNull
     @Pattern(regexp = "\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2]\\d|3[0-1])T(2[0-3]|[01]\\d):[0-5]\\d:[0-5]\\d")
     private String lastUpdate;
-
-    @Pattern(regexp = "^[a-fA-F0-9]{12}$")
-    private String secondFactor;
 
 }
