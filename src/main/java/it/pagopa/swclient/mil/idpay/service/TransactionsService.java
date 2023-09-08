@@ -13,6 +13,7 @@ import it.pagopa.swclient.mil.idpay.client.bean.SyncTrxStatus;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionCreationRequest;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieRequest;
+import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieResponse;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.Outcome;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransaction;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
@@ -336,7 +337,7 @@ public class TransactionsService {
                                                             .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES_MSG)))
                                                             .build());
                                                 }).chain(token -> {
-                                                    Log.debugf("TransactionsService -> verifyCie: Azure AD service returned a 200 status, response: [%s]", token);
+                                                    Log.debugf("TransactionsService -> verifyCie:  Azure AD service returned a 200 status, response: [%s]", token);
 
                                                     String keyName = "idpay-wrap-key-".concat(headers.getAcquirerId()).concat("POS".equals(headers.getChannel()) ? headers.getMerchantId() : "").concat(headers.getTerminalId());
 
@@ -366,5 +367,34 @@ public class TransactionsService {
                 default -> new Errors(List.of(ErrorCode.ERROR_UNKNOWN_IPZS_REST_SERVICES), List.of(ErrorCode.ERROR_UNKNOWN_IPZS_REST_SERVICES_MSG));
             }
         );
+    }
+
+    private Uni<IpzsVerifyCieResponse> callIpzs(IdpayTransactionEntity entity, VerifyCie verifyCie, String transactionId) {
+        if (!TransactionStatus.CREATED.equals(entity.idpayTransaction.getStatus())) {
+            throw new BadRequestException(Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(new Errors(List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB), List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB_MSG)))
+                    .build());
+        } else {
+            //call ipzs to retrieve CIE state
+            return ipzsVerifyCieRestClient.identitycards(entity.idpayTransaction.getIdpayTransactionId(), this.createIpzsVerifyCieRequest(verifyCie, entity.idpayTransaction.getTrxCode()))
+                    .onFailure().transform(t -> {
+                        if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {//IPZS respond NOT FOUND - trasforming in BAD_REQUEST
+                            Log.errorf(t, " TransactionsService -> verifyCie: IPZS NOT FOUND for mil transaction [%s]", transactionId);
+
+                            return new NotFoundException(Response
+                                    .status(Response.Status.BAD_REQUEST)
+                                    .entity(new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IPZS_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IPZS_REST_SERVICES_MSG)))
+                                    .build());
+                        } else {
+                            Log.errorf(t, "TransactionsService -> verifyCie: IPZS error response for mil transaction [%s]", transactionId);
+
+                            return new InternalServerErrorException(Response
+                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                    .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IPZS_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IPZS_REST_SERVICES_MSG)))
+                                    .build());
+                        }
+                    });
+        }
     }
 }
