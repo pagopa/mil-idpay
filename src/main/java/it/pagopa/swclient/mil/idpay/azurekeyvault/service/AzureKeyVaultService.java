@@ -15,15 +15,14 @@ import it.pagopa.swclient.mil.idpay.bean.PublicKeyUse;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.InternalServerErrorException;
-import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -59,39 +58,31 @@ public class AzureKeyVaultService {
                     .build());
         }
 
+        ArrayList<KeyOp> keyOps = new ArrayList<>();
+        keyOps.add(KeyOp.wrapKey);
+
         String keyName = "idpay-wrap-key-".concat(headers.getAcquirerId()).concat("POS".equals(headers.getChannel()) ? headers.getMerchantId() : "").concat(headers.getTerminalId());
 
         Log.debugf("AzureKeyVaultService -> getAzureKVKey: call Azure Key Vault for keyName: [%s]", keyName);
 
         return azureKeyVaultClient.getKey(BEARER + accessToken, keyName)
                 .onItemOrFailure()
-                .transformToUni((getKeyResponse, error) -> {
-                    if (error != null && !(error instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404)) {
-                        Log.errorf(error, "AzureKeyVaultService -> getAzureKVKey: Azure Key Vault error response for keyName [%s]", keyName);
+                    .transformToUni((getKeyResponse, error) -> {
+                        if (error != null && !(error instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404)) {
+                            Log.errorf(error, "AzureKeyVaultService -> getAzureKVKey: Azure Key Vault error response for keyName [%s]", keyName);
 
-                        return new InternalServerErrorException(Response
-                                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
-                                .build());
-                    }
-                });
+                            throw new InternalServerErrorException(Response
+                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                    .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
+                                    .build());
+                        } else if (error != null || (getKeyResponse != null && !isKeyNotYetExpired(getKeyResponse.getKey()))) {//Se NOT FOUND o Expired chiamo CreatKey
+                            return createAzureKVKey(accessToken, keyName);
+                        } else if (getKeyResponse != null) {
+                            return getPublicKey(getKeyResponse.getKey());
+                        }
 
+                    });
 
-
-                /*.onFailure().transform(t -> {
-                    if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {//Azure KV respond NOT FOUND - trasforming in BAD_REQUEST
-                        Log.debugf(t, " AzureKeyVaultService -> getAzureKVKey: Azure Key Vault NOT FOUND for keyName [%s]", keyName);
-
-
-                    } else {
-                        Log.errorf(t, "AzureKeyVaultService -> getAzureKVKey: Azure Key Vault error response for keyName [%s]", keyName);
-
-                        return new InternalServerErrorException(Response
-                                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
-                                .build());
-                    }
-                })*/
     }
 
 
@@ -104,7 +95,7 @@ public class AzureKeyVaultService {
                     .build());
         }
 
-        Log.debugf("TransactionsService -> verifyCie -> createAzureKVKey: call Azure Key Vault create key for keyName: [%s]", keyName);
+        Log.debugf("AzureKeyVaultService -> createAzureKVKey: call Azure Key Vault create key for keyName: [%s]", keyName);
 
         long now = Instant.now().getEpochSecond();
         KeyAttributes attributes = new KeyAttributes(now, now + cryptoperiod, now, now, true, PURGEABLE, 0, false);
@@ -112,45 +103,14 @@ public class AzureKeyVaultService {
         CreateKeyRequest createKeyRequest = new CreateKeyRequest(RSA, keysize, OPS, attributes);
 
         return azureKeyVaultClient.createKey(BEARER + accessToken, keyName, createKeyRequest)
+                .map(resp -> getPublicKey(resp.getKey()))
                 .onFailure().transform(t -> {
-                    Log.errorf(t, "AzureKeyVaultService -> createAzureKVKey: error generating key pair for keyName: [%s]", keyName);
-
-                    return new InternalServerErrorException(Response
+                    Log.errorf(t, "[%s] AzureKeyVaultService -> createAzureKVKey: Azure Key Vault error response for keyName [%s]", keyName);
+                    throw new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR), List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR_MSG)))
                             .build());
-                }).map(resp -> {
-                    if (isKeyValid(resp.getKey())) {
-                        KeyDetails key = resp.getKey();
-                        KeyNameAndVersion keyNameAndVersion = kidUtil.getNameAndVersionFromAzureKid(key.getKid());
-                        if (keyNameAndVersion.isValid()) {
-                            return new PublicKey(
-                                    key.getExponent(),
-                                    PublicKeyUse.enc,
-                                    kidUtil.getMyKidFromNameAndVersion(keyNameAndVersion),
-                                    key.getModulus(),
-                                    KeyType.RSA,
-                                    key.getAttributes().getExp(),
-                                    key.getAttributes().getCreated(),
-                                    Arrays.asList(KeyOp.wrapKey));
-                        } else {
-                            String message = String.format("[%s] Error generating the key pair: kid doesn't contain name and version.", ErrorCode.ERROR_GENERATING_KEY_PAIR);
-                            Log.fatal(message);
-                            return new InternalServerErrorException(Response
-                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                    .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR), List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR_MSG)))
-                                    .build());
-                        }
-                    } else {
-                        String message = String.format("[%s] Error generating the key pair: invalid key pair has been generated.", ErrorCode.ERROR_GENERATING_KEY_PAIR);
-                        Log.fatal(message);
-                        return new InternalServerErrorException(Response
-                                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR), List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR_MSG)))
-                                .build());
-                    }
                 });
-
     }
 
     private boolean isKeyValid(KeyDetails key) {
@@ -224,6 +184,40 @@ public class AzureKeyVaultService {
         } else {
             Log.warnf("The key [%s] is expired. Found [%s], expected a value greater than [%d].", key.getKid(), key.getAttributes().getExp(), now);
             return false;
+        }
+    }
+
+    private PublicKey getPublicKey(KeyDetails key) {
+        ArrayList<KeyOp> keyOps = new ArrayList<>();
+        keyOps.add(KeyOp.wrapKey);
+
+        if (isKeyValid(key)) {
+            KeyNameAndVersion keyNameAndVersion = kidUtil.getNameAndVersionFromAzureKid(key.getKid());
+            if (keyNameAndVersion.isValid()) {
+                return new PublicKey(
+                        key.getExponent(),
+                        PublicKeyUse.enc,
+                        kidUtil.getMyKidFromNameAndVersion(keyNameAndVersion),
+                        key.getModulus(),
+                        KeyType.RSA,
+                        key.getAttributes().getExp(),
+                        key.getAttributes().getCreated(),
+                        keyOps);
+            } else {
+                String message = String.format("[%s] Error generating the key pair: kid doesn't contain name and version.", ErrorCode.ERROR_GENERATING_KEY_PAIR);
+                Log.fatal(message);
+                throw new InternalServerErrorException(Response
+                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR), List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR_MSG)))
+                        .build());
+            }
+        } else {
+            String message = String.format("[%s] Error generating the key pair: invalid key pair has been generated.", ErrorCode.ERROR_GENERATING_KEY_PAIR);
+            Log.fatal(message);
+            throw new InternalServerErrorException(Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR), List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR_MSG)))
+                    .build());
         }
     }
 }
