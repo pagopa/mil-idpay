@@ -5,6 +5,9 @@ import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.bean.Errors;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
+import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.CreateKeyRequest;
+import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.CreateKeyResponse;
+import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.bean.*;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayTransactionsRestClient;
@@ -58,6 +61,10 @@ public class TransactionsService {
 
     @ConfigProperty(name="azuread.tenant-id")
     String azureADTenantId;
+
+    private static final String CLIENT_CREDENTIALS = "client_credentials";
+
+    private static final String VAULT = "https://vault.azure.net/.default";
 
     public Uni<Transaction> createTransaction(CommonHeader headers, CreateTransaction createTransaction) {
 
@@ -291,61 +298,35 @@ public class TransactionsService {
                             .build());
                 }).chain(entity -> { //Transaction found
                     Log.debugf("TransactionsService -> verifyCie: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                    return this.callIpzs(entity, verifyCie, transactionId);
+                    }).chain(res -> {//response ok
+                        Log.debugf("TransactionsService -> verifyCie: IPZS identitycards service returned a 200 status, response: [%s]", res);
 
-                    if (!TransactionStatus.CREATED.equals(entity.idpayTransaction.getStatus())) {
-                        throw new BadRequestException(Response
-                                .status(Response.Status.BAD_REQUEST)
-                                .entity(new Errors(List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB), List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB_MSG)))
-                                .build());
-                    } else {
-                        //call ipzs to retrieve CIE state
-                        return ipzsVerifyCieRestClient.identitycards(entity.idpayTransaction.getIdpayTransactionId(), this.createIpzsVerifyCieRequest(verifyCie, entity.idpayTransaction.getTrxCode()))
-                                .onFailure().transform(t -> {
-                                    if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {//IPZS respond NOT FOUND - trasforming in BAD_REQUEST
-                                        Log.errorf(t, " TransactionsService -> verifyCie: IPZS NOT FOUND for mil transaction [%s]", transactionId);
+                        if (!Outcome.OK.equals(res.getOutcome())) {//if ipzs answers with HTTP 200 and outcome = LOST, STOLEN or EXPIRED, return HTTP 400 (bad request) with error body
+                            throw new BadRequestException(Response
+                                    .status(Response.Status.BAD_REQUEST)
+                                    .entity(this.decodeIpzsOutcome(res.getOutcome()))
+                                    .build());
+                        } else {
+                            String azureAdRequest = String.format("client_id=%s&grant_type=client_credentials&client_secret=%s&scope=https://vault.azure.net/.default",
+                                    azureADClientId, azureADClientSecret);
 
-                                        return new NotFoundException(Response
-                                                .status(Response.Status.BAD_REQUEST)
-                                                .entity(new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IPZS_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IPZS_REST_SERVICES_MSG)))
-                                                .build());
-                                    } else {
-                                        Log.errorf(t, "TransactionsService -> verifyCie: IPZS error response for mil transaction [%s]", transactionId);
+                            return azureADRestClient.getAccessToken(azureADTenantId, CLIENT_CREDENTIALS, azureADClientId, azureADClientSecret, VAULT)
+                                    .onFailure().transform(t -> {
+                                        Log.errorf(t, "TransactionsService -> verifyCie: Azure AD error response for mil transaction [%s]", transactionId);
 
                                         return new InternalServerErrorException(Response
                                                 .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IPZS_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IPZS_REST_SERVICES_MSG)))
+                                                .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES_MSG)))
                                                 .build());
-                                    }
-                                }).chain(res -> {//response ok
-                                    Log.debugf("TransactionsService -> verifyCie: IPZS identitycards service returned a 200 status, response: [%s]", res);
+                                    }).chain(token -> {
+                                        Log.debugf("TransactionsService -> verifyCie:  Azure AD service returned a 200 status, response: [%s]", token);
 
-                                    if (!Outcome.OK.equals(res.getOutcome())) {//if ipzs answers with HTTP 200 and outcome = LOST, STOLEN or EXPIRED, return HTTP 400 (bad request) with error body
-                                        throw new BadRequestException(Response
-                                                .status(Response.Status.BAD_REQUEST)
-                                                .entity(this.decodeIpzsOutcome(res.getOutcome()))
-                                                .build());
-                                    } else {
-                                        String azureAdRequest = String.format("client_id=%s&grant_type=client_credentials&client_secret=%s&scope=https://vault.azure.net/.default",
-                                                azureADClientId, azureADClientSecret);
 
-                                        return azureADRestClient.token(azureADTenantId, azureAdRequest)
-                                                .onFailure().transform(t -> {
-                                                    Log.errorf(t, "TransactionsService -> verifyCie: Azure AD error response for mil transaction [%s]", transactionId);
 
-                                                    return new InternalServerErrorException(Response
-                                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                            .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES_MSG)))
-                                                            .build());
-                                                }).chain(token -> {
-                                                    Log.debugf("TransactionsService -> verifyCie:  Azure AD service returned a 200 status, response: [%s]", token);
-
-                                                    String keyName = "idpay-wrap-key-".concat(headers.getAcquirerId()).concat("POS".equals(headers.getChannel()) ? headers.getMerchantId() : "").concat(headers.getTerminalId());
-
-                                                });
-                                    }
-                                });
-                            }
-                });
+                                    });
+                        }
+                    });
     }
 
     protected IpzsVerifyCieRequest createIpzsVerifyCieRequest(VerifyCie verifyCie, String trxCode) {
@@ -371,6 +352,7 @@ public class TransactionsService {
 
     private Uni<IpzsVerifyCieResponse> callIpzs(IdpayTransactionEntity entity, VerifyCie verifyCie, String transactionId) {
         if (!TransactionStatus.CREATED.equals(entity.idpayTransaction.getStatus())) {
+            Log.warnf(" TransactionsService -> verifyCie: Transacton status [%s] not allowed for mil transaction [%s]", entity.idpayTransaction.getStatus(), transactionId);
             throw new BadRequestException(Response
                     .status(Response.Status.BAD_REQUEST)
                     .entity(new Errors(List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB), List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB_MSG)))
@@ -397,4 +379,7 @@ public class TransactionsService {
                     });
         }
     }
+
+
+
 }
