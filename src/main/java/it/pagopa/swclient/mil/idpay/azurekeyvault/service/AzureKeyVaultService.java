@@ -58,9 +58,6 @@ public class AzureKeyVaultService {
                     .build());
         }
 
-        ArrayList<KeyOp> keyOps = new ArrayList<>();
-        keyOps.add(KeyOp.wrapKey);
-
         String keyName = "idpay-wrap-key-".concat(headers.getAcquirerId()).concat("POS".equals(headers.getChannel()) ? headers.getMerchantId() : "").concat(headers.getTerminalId());
 
         Log.debugf("AzureKeyVaultService -> getAzureKVKey: call Azure Key Vault for keyName: [%s]", keyName);
@@ -78,7 +75,12 @@ public class AzureKeyVaultService {
                         } else if (error != null || (getKeyResponse != null && !isKeyNotYetExpired(getKeyResponse.getKey()))) {//Se NOT FOUND o Expired chiamo CreatKey
                             return createAzureKVKey(accessToken, keyName);
                         } else if (getKeyResponse != null) {
-                            return getPublicKey(getKeyResponse.getKey());
+                            return Uni.createFrom().item(getPublicKey(getKeyResponse.getKey()));
+                        } else {
+                            throw new InternalServerErrorException(Response
+                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                    .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
+                                    .build());
                         }
 
                     });

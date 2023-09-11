@@ -8,6 +8,7 @@ import it.pagopa.swclient.mil.idpay.ErrorCode;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.CreateKeyRequest;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.CreateKeyResponse;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
+import it.pagopa.swclient.mil.idpay.azurekeyvault.service.AzureKeyVaultService;
 import it.pagopa.swclient.mil.idpay.bean.*;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayTransactionsRestClient;
@@ -43,6 +44,9 @@ public class TransactionsService {
 
     @Inject
     IdpayTransactionRepository idpayTransactionRepository;
+
+    @Inject
+    AzureKeyVaultService azureKeyVaultService;
 
     @RestClient
     IdpayTransactionsRestClient idpayTransactionsRestClient;
@@ -322,8 +326,15 @@ public class TransactionsService {
                                     }).chain(token -> {
                                         Log.debugf("TransactionsService -> verifyCie:  Azure AD service returned a 200 status, response: [%s]", token);
 
+                                        return azureKeyVaultService.getAzureKVKey(token, headers)
+                                                .onFailure().transform(t -> {
+                                                    Log.errorf(t, "TransactionsService -> verifyCie: Azure Key Vault error for mil transaction [%s]", transactionId);
 
-
+                                                    return new InternalServerErrorException(Response
+                                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
+                                                            .build());
+                                                });
                                     });
                         }
                     });
