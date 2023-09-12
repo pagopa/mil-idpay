@@ -480,8 +480,10 @@ components:
     SecondFactor:
       description: Second factor to build authorization code block
       type: string
-      pattern: "^[a-fA-F0-9]{12}$"
-      example: "483efab359c1"
+      format: byte # Base64 URL safe
+      minLength: 6 # bytes -> 8 chars when encoded with Base64
+      maxLength: 6 # bytes -> 8 chars when encoded with Base64
+      example: "SD76s1nB"
     
     Signature:
       description: Signature of the challenge calculated by the CIE
@@ -606,8 +608,6 @@ components:
           $ref: '#/components/schemas/TransactionCode'
         qrCode:
           $ref: '#/components/schemas/QrCode'
-        secondFactor:
-          $ref: '#/components/schemas/SecondFactor'
         status:
           $ref: '#/components/schemas/TransactionStatus'
       required:
@@ -619,7 +619,6 @@ components:
         - challenge
         - trxCode
         - qrCode
-        - secondFactor
         - status
       example:
         idpayTransactionId: "613691ec-15d5-456e-a41c-e469fa4dd060_QRCODE_1694181289491"
@@ -630,7 +629,6 @@ components:
         challenge: "NzI3NzZCNkQ2NTZCMzE3OA=="
         trxCode: "rwkmek1x"
         qrCode: "https://continua.io.pagopa.it/idpay/auth/rwkmek1x"
-        secondFactor: "483efab359c1"
         status: "CREATED"
       
     Errors:
@@ -756,6 +754,8 @@ components:
           $ref: '#/components/schemas/TransactionCode'
         coveredAmount:
           $ref: '#/components/schemas/CoveredAmount'
+        secondFactor:
+          $ref: '#/components/schemas/SecondFactor'
         status:
           $ref: '#/components/schemas/TransactionStatus'
       required:
@@ -774,6 +774,7 @@ components:
         goodsCost: 50054
         trxCode: "rwkmek1x"
         coveredAmount: 10012
+        secondFactor: ""
         status: "IDENTIFIED"
     
     Transactions:
