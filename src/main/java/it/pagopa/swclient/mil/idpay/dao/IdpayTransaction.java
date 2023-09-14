@@ -14,12 +14,13 @@ import lombok.ToString;
 @RegisterForReflection
 public class IdpayTransaction {
 
+    private String milTransactionId;
     private String acquirerId;
     private String channel;
     private String merchantId;
     private String terminalId;
+    private String idpayMerchantId;
     private String idpayTransactionId;
-    private String milTransactionId;
     private String initiativeId;
     private String timestamp;
     private Long goodsCost;

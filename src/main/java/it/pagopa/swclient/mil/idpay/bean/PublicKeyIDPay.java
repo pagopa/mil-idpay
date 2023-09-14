@@ -1,7 +1,6 @@
 package it.pagopa.swclient.mil.idpay.bean;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -9,7 +8,7 @@ import java.util.ArrayList;
 @RegisterForReflection
 @Data
 @AllArgsConstructor
-public class PublicKey {
+public class PublicKeyIDPay {
     /*
      * Public exponent
      */

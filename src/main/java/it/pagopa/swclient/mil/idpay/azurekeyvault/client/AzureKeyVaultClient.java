@@ -5,19 +5,11 @@
  */
 package it.pagopa.swclient.mil.idpay.azurekeyvault.client;
 
+import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.*;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import io.quarkus.rest.client.reactive.ClientQueryParam;
 import io.smallrye.mutiny.Uni;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.CreateKeyRequest;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.CreateKeyResponse;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.GetKeyResponse;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.GetKeyVersionsResponse;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.GetKeysResponse;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.SignRequest;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.SignResponse;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.VerifySignatureRequest;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.VerifySignatureResponse;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
@@ -144,4 +136,23 @@ public interface AzureKeyVaultClient {
             @PathParam("keyName") String keyName,
             @PathParam("keyVersion") String keyVersion,
             VerifySignatureRequest verifySignatureRequest);
+
+    /**
+     *
+     * @param authorization
+     * @param keyName
+     * @param keyVersion
+     * @param unwrapKeyRequest
+     * @return
+     */
+    @Path("/keys/{keyName}/{keyVersion}/unwrapkey")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ClientQueryParam(name = "api-version", value = "${azure-key-vault-api.version}")
+    Uni<SignResponse> unwrapKey(
+            @HeaderParam("Authorization") String authorization,
+            @PathParam("keyName") String keyName,
+            @PathParam("keyVersion") String keyVersion,
+            UnwrapKeyRequest unwrapKeyRequest);
 }

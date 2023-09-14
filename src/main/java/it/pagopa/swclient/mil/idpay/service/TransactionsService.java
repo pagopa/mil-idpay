@@ -2,20 +2,27 @@ package it.pagopa.swclient.mil.idpay.service;
 
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.unchecked.Unchecked;
 import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.bean.Errors;
+import it.pagopa.swclient.mil.idpay.CryptoException;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.CreateKeyRequest;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.CreateKeyResponse;
+import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.KeyNameAndVersion;
+import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.SignResponse;
+import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyRequest;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.service.AzureKeyVaultService;
+import it.pagopa.swclient.mil.idpay.azurekeyvault.util.EncryptUtil;
+import it.pagopa.swclient.mil.idpay.azurekeyvault.util.KidUtil;
 import it.pagopa.swclient.mil.idpay.bean.*;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
+import it.pagopa.swclient.mil.idpay.client.IdpayAuthorizeTransactionRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayTransactionsRestClient;
 import it.pagopa.swclient.mil.idpay.client.IpzsVerifyCieRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.SyncTrxStatus;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionCreationRequest;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
+import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieRequest;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieResponse;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.Outcome;
@@ -32,6 +39,12 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -40,10 +53,16 @@ import java.util.UUID;
 @ApplicationScoped
 public class TransactionsService {
 
-    private SimpleDateFormat lastUpdateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    private final SimpleDateFormat lastUpdateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     @Inject
     IdpayTransactionRepository idpayTransactionRepository;
+
+    @Inject
+    KidUtil kidUtil;
+
+    @Inject
+    EncryptUtil encryptUtil;
 
     @Inject
     AzureKeyVaultService azureKeyVaultService;
@@ -56,6 +75,12 @@ public class TransactionsService {
 
     @RestClient
     AzureADRestClient azureADRestClient;
+
+    @RestClient
+    AzureKeyVaultClient azureKeyVaultClient;
+
+    @RestClient
+    IdpayAuthorizeTransactionRestClient idpayAuthorizeTransactionRestClient;
 
     @ConfigProperty(name="azuread.client-id")
     String azureADClientId;
@@ -279,7 +304,7 @@ public class TransactionsService {
     }
 
 
-    public Uni<PublicKey> verifyCie(CommonHeader headers, String transactionId, VerifyCie verifyCie) {
+    public Uni<PublicKeyIDPay> verifyCie(CommonHeader headers, String transactionId, VerifyCie verifyCie) {
 
         Log.debugf("TransactionsService -> verifyCie - Input parameters: %s, %s, %s", headers, transactionId, verifyCie);
 
@@ -312,8 +337,6 @@ public class TransactionsService {
                                     .entity(this.decodeIpzsOutcome(res.getOutcome()))
                                     .build());
                         } else {
-                            String azureAdRequest = String.format("client_id=%s&grant_type=client_credentials&client_secret=%s&scope=https://vault.azure.net/.default",
-                                    azureADClientId, azureADClientSecret);
 
                             return azureADRestClient.getAccessToken(azureADTenantId, CLIENT_CREDENTIALS, azureADClientId, azureADClientSecret, VAULT)
                                     .onFailure().transform(t -> {
@@ -391,6 +414,171 @@ public class TransactionsService {
         }
     }
 
+    public Uni<Response> authorizeTransaction(CommonHeader headers, AuthorizeTransaction authorizeTransaction, String milTransactionId) {
+        Log.debugf("TransactionsService -> authorizeTransaction - Input parameters: %s, %s, %s", headers, milTransactionId, authorizeTransaction);
 
+        return idpayTransactionRepository.findById(milTransactionId) // Looking for MilTransactionID in DB
+                .onFailure().transform(Unchecked.function(t -> {
 
+                    // If an error occurred, return INTERNAL_SERVER_ERROR
+                    Log.errorf(t, "[%s] TransactionsService -> authorizeTransaction: Error while retrieving mil transaction [%s] from DB",
+                            ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB, milTransactionId);
+
+                    throw new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB), List.of(ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB_MSG)))
+                            .build());
+                }))
+                .onItem().ifNull().failWith(Unchecked.supplier(() -> {
+
+                    // If no transaction is found return TRANSACTION_NOT_FOUND
+                    Log.errorf("TransactionsService -> authorizeTransaction: transaction [%s] not found on mil DB", milTransactionId);
+
+                    throw new NotFoundException(Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_TRANSACTION_NOT_FOUND_MIL_DB), List.of(ErrorCode.ERROR_TRANSACTION_NOT_FOUND_MIL_DB_MSG)))
+                            .build());
+                }))
+                .chain(Unchecked.function(dbData -> {
+
+                    // Transaction found
+                    Log.debugf("TransactionsService -> authorizeTransaction: found idpay transaction [%s] for mil transaction [%s]", dbData.idpayTransaction.getIdpayTransactionId(), milTransactionId);
+
+                    return transactionIdentified(dbData, milTransactionId, authorizeTransaction);
+                }));
+    }
+
+    private Uni<Response> transactionIdentified(IdpayTransactionEntity dbData, String milTransactionId, AuthorizeTransaction authorizeTransaction) {
+        if (!dbData.idpayTransaction.getStatus().equals(TransactionStatus.IDENTIFIED)) {
+            // If transaction is NOT IDENTIFIED, return BAD_REQUEST
+
+            throw new BadRequestException(Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(new Errors(List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB), List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB_MSG)))
+                    .build());
+        } else {
+            // If transaction is IDENTIFIED, start retrieving azure access token
+
+            return azureADRestClient.getAccessToken(azureADTenantId, CLIENT_CREDENTIALS, azureADClientId, azureADClientSecret, VAULT)
+                    .onFailure().transform(Unchecked.function(t -> {
+
+                        // If retrieve access token fails, return INTERNAL_SERVER_ERROR
+                        Log.errorf(t, "TransactionsService -> authorizeTransaction: Azure AD error response for mil transaction [%s]", milTransactionId);
+
+                        throw new InternalServerErrorException(Response
+                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES_MSG)))
+                                .build());
+                    })).chain(token -> {
+
+                        // If retrieve access token success, start unwrapping key
+                        Log.debugf("TransactionsService -> authorizeTransaction: Azure AD service returned a 200 status, response: [%s]", token);
+
+                        return unwrapKey(dbData, authorizeTransaction, token);
+                    });
+        }
+    }
+
+    private Uni<Response> unwrapKey(IdpayTransactionEntity dbData, AuthorizeTransaction authorizeTransaction, AccessToken token) {
+        UnwrapKeyRequest unwrapKeyRequest = UnwrapKeyRequest
+                .builder()
+                .alg("RSA-OAEP-256")
+                .value(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey())
+                .build();
+
+        KeyNameAndVersion keyNameAndVersion = kidUtil.getNameAndVersionFromAzureKid(authorizeTransaction.getAuthCodeBlockData().getKid());
+        return azureKeyVaultClient.unwrapKey(token.getAccess_token(), keyNameAndVersion.getName(), keyNameAndVersion.getVersion(), unwrapKeyRequest)
+                .onFailure().transform(Unchecked.function(t -> {
+
+                    // If unwrap key kails, return INTERNAL_SERVER_ERROR
+                    Log.errorf(t, "TransactionsService -> authorizeTransaction: Azure KV error response while unwrapping session key [%s]", authorizeTransaction.getAuthCodeBlockData().getEncSessionKey());
+
+                    throw new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
+                            .build());
+                })).chain(unwrappedKey -> {
+
+                    // Unwrap key success, start retrieving id pay public key
+                    Log.debugf("TransactionsService -> authorizeTransaction: Azure KV unwrapping service returned a 200 status, response: [%s]", unwrappedKey);
+
+                    return retrieveIdpayPublicKey(dbData, authorizeTransaction, unwrappedKey);
+                });
+    }
+
+    private Uni<Response> retrieveIdpayPublicKey(IdpayTransactionEntity dbData, AuthorizeTransaction authorizeTransaction, SignResponse unwrappedKey) {
+        return idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey()
+                .onFailure().transform(Unchecked.function(t -> {
+
+                    // If idpay public key retrieval fails, return INTERNAL_SERVER_ERROR
+                    Log.errorf(t, "TransactionsService -> authorizeTransaction: IDPay error response while retrieving public key.");
+
+                    throw new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
+                            .build());
+                })).chain(Unchecked.function(publicKeyIDPay -> {
+
+                    // If idpay public key retrieval success, starth authorize transaction
+                    Log.debugf("TransactionsService -> authorizeTransaction: IDPay returned a 200 status, response with public key: [%s]", publicKeyIDPay);
+
+                    return authorize(dbData, authorizeTransaction, unwrappedKey, publicKeyIDPay);
+                }));
+    }
+
+    private Uni<Response> authorize(IdpayTransactionEntity dbData, AuthorizeTransaction authorizeTransaction, SignResponse unwrappedKey, PublicKeyIDPay publicKeyIDPay) {
+        try {
+            String encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getSignature());
+            AuthCodeBlockData authCodeBlockData = AuthCodeBlockData.builder()
+                    .kid(publicKeyIDPay.getKid())
+                    .encSessionKey(encryptedSessionKey)
+                    .authCodeBlock(authorizeTransaction.getAuthCodeBlockData().getAuthCodeBlock())
+                    .build();
+
+            AuthorizeTransaction authorize = AuthorizeTransaction.builder()
+                    .authCodeBlockData(authCodeBlockData)
+                    .build();
+
+            return idpayAuthorizeTransactionRestClient.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), authorize)
+                    .onFailure().transform(Unchecked.function(t -> {
+
+                        // Error 500 while trying to authorize transaction
+                        Log.errorf(t, "TransactionsService -> authorizeTransaction: error response while authorizing transaction.");
+                        Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES_MSG));
+
+                        throw new InternalServerErrorException(Response
+                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(errors)
+                                .build());
+                    }))
+                    .chain(finalResult -> {
+                        if (finalResult.getAuthTransactionResponseOk() != null) {
+
+                            // If all went ok, send 200 OK to client
+                            Log.debugf("TransactionsService -> authorizeTransaction: call toauthorize returned a 200 status, response with public key: [%s]", finalResult.getAuthTransactionResponseOk());
+
+                            return Uni.createFrom().item(Response.status(Response.Status.OK).build());
+                        } else if (finalResult.getAuthTransactionResponseWrong() != null) {
+
+                            // If IDPay responds with WRONG_AUTH_CODE, send BAD_REQUEST to client
+                            Log.errorf("TransactionsService -> authorizeTransaction: error response while authorizing transaction: [%s]");
+                            Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES_MSG));
+
+                            return Uni.createFrom().item((Response
+                                    .status(Response.Status.BAD_REQUEST)
+                                    .entity(errors)
+                                    .build()));
+                        } else {
+
+                            // If any other from IDPay, send INTERNAL_SERVER_ERROR to client
+                            return Uni.createFrom().item((Response
+                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                    .build()));
+                        }
+                    });
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException |
+                 InvalidKeyException | IllegalBlockSizeException | BadPaddingException error) {
+            throw new CryptoException("Error during encrypting session key using IDPay public key", error);
+        }
+    }
 }

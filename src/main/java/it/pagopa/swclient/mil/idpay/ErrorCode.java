@@ -16,6 +16,9 @@ public final class ErrorCode {
     public static final String ERROR_GOODSCOST_MUST_BE_GREATER_THAN 							        = MODULE_ID + "000005";
     public static final String ERROR_GOODSCOST_MUST_BE_LESS_THAN 							            = MODULE_ID + "000006";
     public static final String ERROR_TRANSACTION_ID_MUST_MATCH_REGEXP 							        = MODULE_ID + "000007";
+    public static final String ERROR_KID_MUST_NOT_BE_NULL 							                    = MODULE_ID + "000008";
+    public static final String ERROR_ENCSESSIONKEY_MUST_NOT_BE_NULL 							        = MODULE_ID + "000009";
+    public static final String ERROR_AUTHCODEBLOCK_MUST_NOT_BE_NULL 							        = MODULE_ID + "000010";
 
     // rest server validation errors
     public static final String CREATE_TRANSACTION_MUST_NOT_BE_EMPTY 							        = MODULE_ID + "000030";
@@ -24,6 +27,7 @@ public final class ErrorCode {
     // integration errors idpay - rest client
     public static final String ERROR_CALLING_IDPAY_REST_SERVICES 							            = MODULE_ID + "000050";
     public static final String ERROR_NOT_FOUND_IDPAY_REST_SERVICES 							            = MODULE_ID + "000051";
+    public static final String ERROR_CALLING_AUTHORIZE_REST_SERVICES 							        = MODULE_ID + "000052";
 
 
     // db errors
@@ -66,6 +70,7 @@ public final class ErrorCode {
     public static final String AZUREAD_ACCESS_TOKEN_IS_NULL_DESCR = "Azure AD sent NULL access token";
     public static final String ERROR_GENERATING_KEY_PAIR_DESCR = "Azure KV key pair generation error";
     public static final String ERROR_RETRIEVING_KEY_PAIR_DESCR = "Azure KV key pair retrieving error";
+    public static final String ERROR_CALLING_AUTHORIZE_REST_SERVICES_DESCR = "Error calling IdPay rest service with authorize transaction";
 
 
     /*
@@ -87,6 +92,7 @@ public final class ErrorCode {
     public static final String AZUREAD_ACCESS_TOKEN_IS_NULL_MSG = "[" + AZUREAD_ACCESS_TOKEN_IS_NULL + "] " + AZUREAD_ACCESS_TOKEN_IS_NULL_DESCR;
     public static final String ERROR_GENERATING_KEY_PAIR_MSG = "[" + ERROR_GENERATING_KEY_PAIR + "] " + ERROR_GENERATING_KEY_PAIR_DESCR;
     public static final String ERROR_RETRIEVING_KEY_PAIR_MSG = "[" + ERROR_RETRIEVING_KEY_PAIR + "] " + ERROR_RETRIEVING_KEY_PAIR_DESCR;
+    public static final String ERROR_CALLING_AUTHORIZE_REST_SERVICES_MSG = "[" + ERROR_CALLING_AUTHORIZE_REST_SERVICES + "] " + ERROR_CALLING_AUTHORIZE_REST_SERVICES_DESCR;
 
     private ErrorCode() {
     }

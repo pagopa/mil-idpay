@@ -10,7 +10,7 @@ import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.util.KidUtil;
 import it.pagopa.swclient.mil.idpay.bean.KeyOp;
 import it.pagopa.swclient.mil.idpay.bean.KeyType;
-import it.pagopa.swclient.mil.idpay.bean.PublicKey;
+import it.pagopa.swclient.mil.idpay.bean.PublicKeyIDPay;
 import it.pagopa.swclient.mil.idpay.bean.PublicKeyUse;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -49,7 +49,7 @@ public class AzureKeyVaultService {
     @Inject
     KidUtil kidUtil;
 
-    public Uni<PublicKey> getAzureKVKey(AccessToken accessToken, CommonHeader headers) {
+    public Uni<PublicKeyIDPay> getAzureKVKey(AccessToken accessToken, CommonHeader headers) {
 
         if (accessToken.getAccess_token() == null) {
             throw new InternalServerErrorException(Response
@@ -88,7 +88,7 @@ public class AzureKeyVaultService {
     }
 
 
-    public Uni<PublicKey> createAzureKVKey(AccessToken accessToken, String keyName) {
+    public Uni<PublicKeyIDPay> createAzureKVKey(AccessToken accessToken, String keyName) {
 
         if (accessToken.getAccess_token() == null) {
             throw new InternalServerErrorException(Response
@@ -189,14 +189,14 @@ public class AzureKeyVaultService {
         }
     }
 
-    private PublicKey getPublicKey(KeyDetails key) {
+    private PublicKeyIDPay getPublicKey(KeyDetails key) {
         ArrayList<KeyOp> keyOps = new ArrayList<>();
         keyOps.add(KeyOp.wrapKey);
 
         if (isKeyValid(key)) {
             KeyNameAndVersion keyNameAndVersion = kidUtil.getNameAndVersionFromAzureKid(key.getKid());
             if (keyNameAndVersion.isValid()) {
-                return new PublicKey(
+                return new PublicKeyIDPay(
                         key.getExponent(),
                         PublicKeyUse.enc,
                         kidUtil.getMyKidFromNameAndVersion(keyNameAndVersion),

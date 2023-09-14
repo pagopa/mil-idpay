@@ -5,6 +5,7 @@ import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
 import it.pagopa.swclient.mil.idpay.IdpayConstants;
+import it.pagopa.swclient.mil.idpay.bean.AuthorizeTransaction;
 import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
 import it.pagopa.swclient.mil.idpay.bean.VerifyCie;
 import it.pagopa.swclient.mil.idpay.service.TransactionsService;
@@ -43,7 +44,6 @@ public class TransactionsResource {
      */
     @ConfigProperty(name="idpay.transaction.location.base-url")
     String idpayTransactionLocationBaseURL;
-
 
     @POST
     @Path("/")
@@ -139,6 +139,25 @@ public class TransactionsResource {
                     .header("Max-Retries", idpayTransactionMaxRetry);
 
             return Uni.createFrom().item(responseBuilder.entity(res).build());
+        });
+    }
+
+    @POST
+    @Path("/{milTransactionId}/authorize")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({"PayWithIDPay"})
+    public Uni<Response> authorizeTransaction(
+            @Valid @BeanParam CommonHeader headers,
+            @Valid @NotNull AuthorizeTransaction authorizeTransaction,
+            @PathParam(value = "milTransactionId") String milTransactionId) {
+
+        Log.debugf("TransactionsResource -> authorizeTransaction - Input authorizeTransaction: %s, %s", headers, authorizeTransaction);
+
+        return transactionsService.authorizeTransaction(headers, authorizeTransaction, milTransactionId).chain(res -> {
+            Log.debugf("TransactionsResource -> TransactionsService -> authorizeTransaction - Response %s", res);
+
+            return Uni.createFrom().item(res);
         });
     }
 
