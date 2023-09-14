@@ -70,8 +70,9 @@ public final class TransactionsTestData {
 
         idpayTransaction.setAcquirerId(headers.get("AcquirerId"));
         idpayTransaction.setChannel(headers.get("Channel"));
-        idpayTransaction.setMerchantId(res.getMerchantId());
+        idpayTransaction.setMerchantId(headers.get("MerchantId"));
         idpayTransaction.setTerminalId(headers.get("TerminalId"));
+        idpayTransaction.setIdpayMerchantId(res.getMerchantId());
         idpayTransaction.setIdpayTransactionId(res.getId());
 
         idpayTransaction.setMilTransactionId(res.getIdTrxAcquirer());
@@ -79,12 +80,8 @@ public final class TransactionsTestData {
         idpayTransaction.setInitiativeId(res.getInitiativeId());
         idpayTransaction.setTimestamp(createTransaction.getTimestamp());
         idpayTransaction.setGoodsCost(createTransaction.getGoodsCost());
-        idpayTransaction.setChallenge(null);
         idpayTransaction.setTrxCode(res.getTrxCode());
-        idpayTransaction.setQrCode(null);
-        idpayTransaction.setCoveredAmount(null);
         idpayTransaction.setStatus(res.getStatus());
-        idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
 
         IdpayTransactionEntity entity = new IdpayTransactionEntity();
 
@@ -113,6 +110,28 @@ public final class TransactionsTestData {
         res.setMerchantId("111");
         res.setInitiativeId("initiativeId1");
         res.setRewardCents(123L);
+        res.setStatus(TransactionStatus.CREATED);
+
+        return res;
+    }
+
+    public static SyncTrxStatus getStatusTransactionResponseNotChanged() {
+
+        SyncTrxStatus res = new SyncTrxStatus();
+
+        res.setId("4490eea8-9c81-4879-9720-22222222333");
+        res.setIdTrxIssuer("IdTrxIssuer1");
+        res.setTrxCode("trxCodetrxCodetrxCode");
+        res.setTrxDate(new Date());
+        res.setAuthDate(new Date());
+        res.setOperationType(OperationType.CHARGE);
+        res.setAmountCents(99999999999L);
+        res.setAmountCurrency("EUR");
+        res.setMcc("mcc1");
+        res.setAcquirerId("4585625");
+        res.setMerchantId("111");
+        res.setInitiativeId("initiativeId1");
+        //res.setRewardCents(123L);
         res.setStatus(TransactionStatus.CREATED);
 
         return res;

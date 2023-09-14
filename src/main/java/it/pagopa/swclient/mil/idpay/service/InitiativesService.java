@@ -10,6 +10,7 @@ import it.pagopa.swclient.mil.idpay.bean.InitiativesResponse;
 import it.pagopa.swclient.mil.idpay.client.IdpayInitiativesRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.InitiativeStatus;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -25,11 +26,14 @@ public class InitiativesService {
     @RestClient
     IdpayInitiativesRestClient idpayInitiativesRestClient;
 
+    @Inject
+    TransactionsService transactionsService;
+
     public Uni<InitiativesResponse> getInitiatives(CommonHeader headers) {
 
         Log.debugf("InitiativesService -> getInitiatives - Input parameters: %s", headers);
 
-        return idpayInitiativesRestClient.getMerchantInitiativeList(headers.getMerchantId())
+        return idpayInitiativesRestClient.getMerchantInitiativeList(transactionsService.getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()))
                 .onFailure().transform(t -> {
                     if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
                         Log.errorf(t, " InitiativesService -> getInitiatives: idpay NOT FOUND for MerchantId [%s]", headers.getMerchantId());

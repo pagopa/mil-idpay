@@ -12,7 +12,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 @RegisterForReflection
-public class Transaction {
+public class CreateTransactionResp {
 
     @NotNull
     @Pattern(regexp = "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$")
@@ -35,17 +35,17 @@ public class Transaction {
     @Max(value = 99999999999L)
     private Long goodsCost;
 
+    @Size(min = 8, max = 16)
+    private byte[] challenge;
+
     @NotNull
     @Pattern(regexp = "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$")
     private String trxCode;
 
-    @Min(value = 0L)
-    @Max(value = 99999999999L)
-    private Long coveredAmount;
-
-    private byte[] secondFactor;
+    @NotNull
+    @Pattern(regexp = "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$")
+    private String qrCode;
 
     @NotNull
     private TransactionStatus status;
-
 }

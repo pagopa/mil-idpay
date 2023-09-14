@@ -17,5 +17,5 @@ public interface IdpayInitiativesRestClient {
     @GET
     @Path("/initiatives")
     @ClientHeaderParam(name = "Ocp-Apim-Subscription-Key", value = "${idpay-rest-client.apim-subscription-key}", required = false)
-    Uni<List<InitiativeDTO>> getMerchantInitiativeList(@HeaderParam("x-merchant-fiscalcode") @NotNull String xMerchantFiscalcode);
+    Uni<List<InitiativeDTO>> getMerchantInitiativeList(@HeaderParam("x-merchant-id") @NotNull String idpayMerchantId);
 }
