@@ -48,7 +48,7 @@ public class TransactionsResource {
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"NoticePayer", "SlavePos"})
+    @RolesAllowed({"PayWithIDPay"})
     public Uni<Response> createTransaction(
             @Valid @BeanParam CommonHeader headers,
             @Valid
@@ -73,7 +73,7 @@ public class TransactionsResource {
     @GET
     @Path("/{transactionId}")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"NoticePayer", "SlavePos"})
+    @RolesAllowed({"PayWithIDPay"})
     public Uni<Response> getTransaction(@Valid @BeanParam CommonHeader headers,
                                           @Pattern(regexp = IdpayConstants.TRANSACTION_ID_REGEX,
                                                   message = "[" + ErrorCode.ERROR_TRANSACTION_ID_MUST_MATCH_REGEXP + "] transactionId must match \"{regexp}\"")
@@ -94,7 +94,7 @@ public class TransactionsResource {
     @DELETE
     @Path("/{transactionId}")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"NoticePayer", "SlavePos"})
+    @RolesAllowed({"PayWithIDPay"})
     public Uni<Response> cancelTransaction(@Valid @BeanParam CommonHeader headers,
                                         @Pattern(regexp = IdpayConstants.TRANSACTION_ID_REGEX,
                                                 message = "[" + ErrorCode.ERROR_TRANSACTION_ID_MUST_MATCH_REGEXP + "] transactionId must match \"{regexp}\"")

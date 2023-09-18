@@ -23,7 +23,7 @@ public class InitiativesResource {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"NoticePayer", "SlavePos"})
+    @RolesAllowed({"PayWithIDPay"})
     public Uni<Response> getInitiatives(@Valid @BeanParam CommonHeader headers) {
 
         Log.debugf("InitiativesResource -> getInitiatives - Input parameters: %s", headers);

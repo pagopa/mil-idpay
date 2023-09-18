@@ -1,0 +1,498 @@
+{
+	"info": {
+		"_postman_id": "3ac45a22-40f3-4644-b376-c05b5ba50992",
+		"name": "mil-idpay qrcode",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "4131675",
+		"_collection_link": "https://crimson-zodiac-456704.postman.co/workspace/Personal-Workspace~7804a326-503c-4623-9152-3f4c38f2d060/collection/4131675-3ac45a22-40f3-4644-b376-c05b5ba50992?action=share&source=collection_link&creator=4131675"
+	},
+	"item": [
+		{
+			"name": "Creazione transazione",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiIzMDYxMTY5My1jNzVlLTRjMDEtOGVjMi1jYWFlYmU2Yzc2YTgiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIzOTY1ZGY1Ni1jYTlhLTQ5ZTUtOTdlOC0wNjE0MzNkNGEyNWIiLCJjbGllbnRJZCI6IjM5NjVkZjU2LWNhOWEtNDllNS05N2U4LTA2MTQzM2Q0YTI1YiIsIm1lcmNoYW50SWQiOiIyODQwNWZIZms3M3g4OEQiLCJjaGFubmVsIjoiUE9TIiwiZ3JvdXBzIjpbIk5vdGljZVBheWVyIiwiU2xhdmVQb3MiLCJQYXlXaXRoSURQYXkiXSwidGVybWluYWxJZCI6IjAxMjM0NTY3IiwiZXhwIjoxNjk0NjE2MDk5LCJhY3F1aXJlcklkIjoiNDU4NTYyNSIsImlhdCI6MTY5NDYxNTE5OX0.GLYt1JYgZg5vhvVGaxr40sk3c9-qwWp4o28gMCeTcxTAKbNqrpxGBCJjBX-QKXUiNIxje-k_xu_RJqkxseSuMX9og2GzzMkz066qqflrzwETrhh7kTJ8QsPD98Qfgv2CTRQHWsFGoiOHdOLDpfKbyS2Fm4ZpQrcMX6VhJmhjRFrEoNRfGmkNdN_HrZOsq5Kne0XeGCtDq6nVS4SyR4N8WFK2isM14IoYWge_ExtwFumsvOaaleLjYQSVvPkCVAIg5rMs4ji2-VWV5kGRJ5kvDhUkzfpcRp9SQD6Xbs-aBFSGkvXP3wzOM35C7eiRKBSCoUY-xvYtP9tGtLqaUOE1mnjigUX6Eg2ywlL1qvxnbDQrauhL6L_lJWXb9dSv8upRkNUGw9Vxl_mQ4yjcO0ClaMkkpqfBaZEzds6qIaEoM2vOnE9HnT9C7zrxfCKjWfaySGtXEWRIWNpkYZMCgslCJJsln_sMKqNVjm-XfNkeOhoG_PlLVy6kBCjoNncKMlnzksktnEEicDX8_MZDUp9QOEa4C9HhNkzJ4ZqraE0k9IEN3HX_PBvrUu3gDQZrrcUTN7iSF0u17WvCH4zE4z5kgSB1NEBUvNLN14Qr8vRnyC3pjyPBJoZY8NI6H5SWAq7k8A_gsXvekbEm825SUUd8BL6Gg_2f4h5Wjqb70dmuFSE",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "TerminalId",
+						"value": "999",
+						"type": "text"
+					},
+					{
+						"key": "AcquirerId",
+						"value": "222",
+						"type": "text"
+					},
+					{
+						"key": "MerchantId",
+						"value": "111",
+						"type": "text"
+					},
+					{
+						"key": "RequestId",
+						"value": "12345678-1111-1234-1234-123456789012",
+						"type": "text"
+					},
+					{
+						"key": "Channel",
+						"value": "POS",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"initiativeId\": \"aaaaaaaaaaaaaaaaaa\",\r\n  \"timestamp\": \"2023-07-30T14:27:38\",\r\n  \"goodsCost\": 333\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{milURL}}/transactions",
+					"host": [
+						"{{milURL}}"
+					],
+					"path": [
+						"transactions"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Creazione transazione idpay response",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "TerminalId",
+								"value": "999",
+								"type": "text"
+							},
+							{
+								"key": "AcquirerId",
+								"value": "222",
+								"type": "text"
+							},
+							{
+								"key": "MerchantId",
+								"value": "111",
+								"type": "text"
+							},
+							{
+								"key": "RequestId",
+								"value": "12345678-1111-1234-1234-123456789012",
+								"type": "text"
+							},
+							{
+								"key": "Channel",
+								"value": "POS",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"initiativeId\": \"aaaaaaaaaaaaaaaaaa\",\r\n  \"timestamp\": \"2023-07-28T14:27:38\",\r\n  \"goodsCost\": 99999999999\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://1cb54e4c-ea9a-4465-becc-b5d15fcd63bf.mock.pstmn.io/",
+							"protocol": "https",
+							"host": [
+								"1cb54e4c-ea9a-4465-becc-b5d15fcd63bf",
+								"mock",
+								"pstmn",
+								"io"
+							],
+							"path": [
+								""
+							]
+						}
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json;charset=UTF-8"
+						},
+						{
+							"key": "content-length",
+							"value": "491"
+						},
+						{
+							"key": "Location",
+							"value": "https://mil-d-apim.azure-api.net/mil-idpay/payments/milTransactionId1"
+						},
+						{
+							"key": "Max-Retries",
+							"value": "3"
+						},
+						{
+							"key": "Retry-After",
+							"value": "30"
+						}
+					],
+					"cookie": [],
+					"body": "{\n\t\"id\": \"4490eea8-9c81-4879-9720-22222222333\",\n\t\"trxCode\": \"trxCodetrxCodetrxCode\",\n\t\"initiativeId\": \"initiativeId1\",\n\t\"merchantId\": \"111\",\n\t\"idTrxAcquirer\": \"4490eea8-9c81-4879-9720-9578de10ff4e\",\n\t\"trxDate\": \"2023-08-03T14:29:01\",\n\t\"trxExpirationMinutes\": 14235426,\n\t\"amountCents\": 99999999999,\n\t\"amountCurrency\": \"EUR\",\n\t\"mcc\": \"mcc1\",\n\t\"acquirerId\": \"222\",\n\t\"status\": \"CREATED\",\n\t\"merchantFiscalCode\": \"112331234\",\n\t\"vat\": \"vat1\",\n\t\"splitPayment\": false,\n\t\"residualAmountCents\": 0,\n\t\"qrcodePngUrl\": \"qrcodePngUrl\",\n\t\"qrcodeTxtUrl\": \"qrcodeTxtUrl\"\n}\t"
+				}
+			]
+		},
+		{
+			"name": "Recupero delle iniziative",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiIzMDYxMTY5My1jNzVlLTRjMDEtOGVjMi1jYWFlYmU2Yzc2YTgiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIzOTY1ZGY1Ni1jYTlhLTQ5ZTUtOTdlOC0wNjE0MzNkNGEyNWIiLCJjbGllbnRJZCI6IjM5NjVkZjU2LWNhOWEtNDllNS05N2U4LTA2MTQzM2Q0YTI1YiIsIm1lcmNoYW50SWQiOiIyODQwNWZIZms3M3g4OEQiLCJjaGFubmVsIjoiUE9TIiwiZ3JvdXBzIjpbIk5vdGljZVBheWVyIiwiU2xhdmVQb3MiLCJQYXlXaXRoSURQYXkiXSwidGVybWluYWxJZCI6IjAxMjM0NTY3IiwiZXhwIjoxNjk0NjE2MDk5LCJhY3F1aXJlcklkIjoiNDU4NTYyNSIsImlhdCI6MTY5NDYxNTE5OX0.GLYt1JYgZg5vhvVGaxr40sk3c9-qwWp4o28gMCeTcxTAKbNqrpxGBCJjBX-QKXUiNIxje-k_xu_RJqkxseSuMX9og2GzzMkz066qqflrzwETrhh7kTJ8QsPD98Qfgv2CTRQHWsFGoiOHdOLDpfKbyS2Fm4ZpQrcMX6VhJmhjRFrEoNRfGmkNdN_HrZOsq5Kne0XeGCtDq6nVS4SyR4N8WFK2isM14IoYWge_ExtwFumsvOaaleLjYQSVvPkCVAIg5rMs4ji2-VWV5kGRJ5kvDhUkzfpcRp9SQD6Xbs-aBFSGkvXP3wzOM35C7eiRKBSCoUY-xvYtP9tGtLqaUOE1mnjigUX6Eg2ywlL1qvxnbDQrauhL6L_lJWXb9dSv8upRkNUGw9Vxl_mQ4yjcO0ClaMkkpqfBaZEzds6qIaEoM2vOnE9HnT9C7zrxfCKjWfaySGtXEWRIWNpkYZMCgslCJJsln_sMKqNVjm-XfNkeOhoG_PlLVy6kBCjoNncKMlnzksktnEEicDX8_MZDUp9QOEa4C9HhNkzJ4ZqraE0k9IEN3HX_PBvrUu3gDQZrrcUTN7iSF0u17WvCH4zE4z5kgSB1NEBUvNLN14Qr8vRnyC3pjyPBJoZY8NI6H5SWAq7k8A_gsXvekbEm825SUUd8BL6Gg_2f4h5Wjqb70dmuFSE",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "TerminalId",
+						"value": "abc",
+						"type": "default"
+					},
+					{
+						"key": "AcquirerId",
+						"value": "4585625",
+						"type": "default"
+					},
+					{
+						"key": "MerchantId",
+						"value": "28405fHfk73x88D",
+						"type": "default"
+					},
+					{
+						"key": "RequestId",
+						"value": "00000000-0000-0000-0000-00000000000b",
+						"type": "default"
+					},
+					{
+						"key": "Channel",
+						"value": "POS",
+						"type": "default"
+					}
+				],
+				"url": {
+					"raw": "{{milURL}}/initiatives",
+					"host": [
+						"{{milURL}}"
+					],
+					"path": [
+						"initiatives"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Recupero delle iniziative idpay response+",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "TerminalId",
+								"value": "111",
+								"type": "default"
+							},
+							{
+								"key": "AcquirerId",
+								"value": "333",
+								"type": "default"
+							},
+							{
+								"key": "MerchantId",
+								"value": "123",
+								"type": "default"
+							},
+							{
+								"key": "RequestId",
+								"value": "12345678-1234-1234-1234-123456789012",
+								"type": "default"
+							},
+							{
+								"key": "Channel",
+								"value": "POS",
+								"type": "default"
+							}
+						],
+						"url": {
+							"raw": "https://1cb54e4c-ea9a-4465-becc-b5d15fcd63bf.mock.pstmn.io/initiatives",
+							"protocol": "https",
+							"host": [
+								"1cb54e4c-ea9a-4465-becc-b5d15fcd63bf",
+								"mock",
+								"pstmn",
+								"io"
+							],
+							"path": [
+								"initiatives"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json;charset=UTF-8"
+						},
+						{
+							"key": "content-length",
+							"value": "179"
+						}
+					],
+					"cookie": [],
+					"body": "[\n\t{\n\t\t\"initiativeId\": \"111\",\n\t\t\"initiativeName\": \"Iniziative name11\",\n\t\t\"organizationName\": \"Iniziative organization1\",\n\t\t\"status\": \"PUBLISHED\",\n\t\t\"startDate\": \"2020-01-08\",\n\t\t\"endDate\": \"2023-08-02\",\n\t\t\"serviceId\": \"serviceId1\",\n\t\t\"enabled\": true\n\t},\n\t{\n\t\t\"initiativeId\": \"222\",\n\t\t\"initiativeName\": \"Iniziative name2\",\n\t\t\"organizationName\": \"Iniziative organization2\",\n\t\t\"status\": \"PUBLISHED\",\n\t\t\"startDate\": \"2023-01-08\",\n\t\t\"endDate\": \"2024-01-08\",\n\t\t\"serviceId\": \"serviceId2\",\n\t\t\"enabled\": true\n\t},\n    {\n        \"initiativeId\": \"333\",\n        \"initiativeName\": \"Iniziative name3\",\n        \"organizationName\": \"Iniziative organization3\",\n        \"status\": \"PUBLISHED\",\n        \"startDate\": \"2023-01-08\",\n        \"endDate\": \"2024-01-08\",\n        \"serviceId\": \"serviceId3\",\n        \"enabled\": true\n    },\n    {\n        \"initiativeId\": \"4444\",\n        \"initiativeName\": \"Iniziative name4\",\n        \"organizationName\": \"Iniziative organization4\",\n        \"status\": \"PUBLISHED\",\n        \"startDate\": \"2023-01-08\",\n        \"endDate\": \"2024-01-08\",\n        \"serviceId\": \"serviceId4\",\n        \"enabled\": true\n    }\n]"
+				}
+			]
+		},
+		{
+			"name": "Recupero dello stato della transazione",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiIzMDYxMTY5My1jNzVlLTRjMDEtOGVjMi1jYWFlYmU2Yzc2YTgiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIzOTY1ZGY1Ni1jYTlhLTQ5ZTUtOTdlOC0wNjE0MzNkNGEyNWIiLCJjbGllbnRJZCI6IjM5NjVkZjU2LWNhOWEtNDllNS05N2U4LTA2MTQzM2Q0YTI1YiIsIm1lcmNoYW50SWQiOiIyODQwNWZIZms3M3g4OEQiLCJjaGFubmVsIjoiUE9TIiwiZ3JvdXBzIjpbIk5vdGljZVBheWVyIiwiU2xhdmVQb3MiLCJQYXlXaXRoSURQYXkiXSwidGVybWluYWxJZCI6IjAxMjM0NTY3IiwiZXhwIjoxNjk0NjE2MDk5LCJhY3F1aXJlcklkIjoiNDU4NTYyNSIsImlhdCI6MTY5NDYxNTE5OX0.GLYt1JYgZg5vhvVGaxr40sk3c9-qwWp4o28gMCeTcxTAKbNqrpxGBCJjBX-QKXUiNIxje-k_xu_RJqkxseSuMX9og2GzzMkz066qqflrzwETrhh7kTJ8QsPD98Qfgv2CTRQHWsFGoiOHdOLDpfKbyS2Fm4ZpQrcMX6VhJmhjRFrEoNRfGmkNdN_HrZOsq5Kne0XeGCtDq6nVS4SyR4N8WFK2isM14IoYWge_ExtwFumsvOaaleLjYQSVvPkCVAIg5rMs4ji2-VWV5kGRJ5kvDhUkzfpcRp9SQD6Xbs-aBFSGkvXP3wzOM35C7eiRKBSCoUY-xvYtP9tGtLqaUOE1mnjigUX6Eg2ywlL1qvxnbDQrauhL6L_lJWXb9dSv8upRkNUGw9Vxl_mQ4yjcO0ClaMkkpqfBaZEzds6qIaEoM2vOnE9HnT9C7zrxfCKjWfaySGtXEWRIWNpkYZMCgslCJJsln_sMKqNVjm-XfNkeOhoG_PlLVy6kBCjoNncKMlnzksktnEEicDX8_MZDUp9QOEa4C9HhNkzJ4ZqraE0k9IEN3HX_PBvrUu3gDQZrrcUTN7iSF0u17WvCH4zE4z5kgSB1NEBUvNLN14Qr8vRnyC3pjyPBJoZY8NI6H5SWAq7k8A_gsXvekbEm825SUUd8BL6Gg_2f4h5Wjqb70dmuFSE",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "TerminalId",
+						"value": "999",
+						"type": "text"
+					},
+					{
+						"key": "AcquirerId",
+						"value": "222",
+						"type": "text"
+					},
+					{
+						"key": "MerchantId",
+						"value": "111",
+						"type": "text"
+					},
+					{
+						"key": "RequestId",
+						"value": "12345678-1111-1234-1234-123456789012",
+						"type": "text"
+					},
+					{
+						"key": "Channel",
+						"value": "POS",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{milURL}}/transactions/:transactionId",
+					"host": [
+						"{{milURL}}"
+					],
+					"path": [
+						"transactions",
+						":transactionId"
+					],
+					"variable": [
+						{
+							"key": "transactionId",
+							"value": "c23a0eff-7b2d-416e-8d0f-2f48c6cf3be1"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Recupero dello stato della transazione idpay response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"value": "a8d1e9e023734e3e89abf1fa83a7755f",
+								"type": "text"
+							},
+							{
+								"key": "x-acquirer-id",
+								"value": "222",
+								"type": "text"
+							},
+							{
+								"key": "x-merchant-fiscalcode",
+								"value": "111",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://1cb54e4c-ea9a-4465-becc-b5d15fcd63bf.mock.pstmn.io/status/:id",
+							"protocol": "https",
+							"host": [
+								"1cb54e4c-ea9a-4465-becc-b5d15fcd63bf",
+								"mock",
+								"pstmn",
+								"io"
+							],
+							"path": [
+								"status",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "4490eea8-9c81-4879-9720-22222222333"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json;charset=UTF-8"
+						},
+						{
+							"key": "content-length",
+							"value": "345"
+						}
+					],
+					"cookie": [],
+					"body": "{\n\t\"id\": \"4490eea8-9c81-4879-9720-22222222333\",\n\t\"idTrxIssuer\": \"IdTrxIssuer1\",\n\t\"trxCode\": \"trxCodetrxCodetrxCode\",\n\t\"trxDate\": \"2023-08-03T14:29:01\",\n\t\"authDate\": \"2023-08-05T10:29:01\",\n\t\"operationType\": \"CHARGE\",\n\t\"amountCents\": 99999999999,\n\t\"amountCurrency\": \"EUR\",\n\t\"mcc\": \"mcc1\",\n\t\"acquirerId\": \"222\",\n\t\"merchantId\": \"111\",\n\t\"initiativeId\": \"initiativeId1\",\n\t\"rewardCents\": 50,\n\t\"status\": \"CREATED\",\n    \"secondFactor\": \"483efab359c1\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Cancellazione della transazione",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "TerminalId",
+						"value": "999",
+						"type": "text"
+					},
+					{
+						"key": "AcquirerId",
+						"value": "222",
+						"type": "text"
+					},
+					{
+						"key": "MerchantId",
+						"value": "111",
+						"type": "text"
+					},
+					{
+						"key": "RequestId",
+						"value": "12345678-1111-1234-1234-123456789012",
+						"type": "text"
+					},
+					{
+						"key": "Channel",
+						"value": "POS",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{milURL}}/transactions/:transactionId",
+					"host": [
+						"{{milURL}}"
+					],
+					"path": [
+						"transactions",
+						":transactionId"
+					],
+					"variable": [
+						{
+							"key": "transactionId",
+							"value": "c23a0eff-7b2d-416e-8d0f-2f48c6cf3be1"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Cancellazione della transazione idpay response",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"value": "a8d1e9e023734e3e89abf1fa83a7755f",
+								"type": "text"
+							},
+							{
+								"key": "x-acquirer-id",
+								"value": "222",
+								"type": "text"
+							},
+							{
+								"key": "x-merchant-fiscalcode",
+								"value": "111",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://1cb54e4c-ea9a-4465-becc-b5d15fcd63bf.mock.pstmn.io/:id",
+							"protocol": "https",
+							"host": [
+								"1cb54e4c-ea9a-4465-becc-b5d15fcd63bf",
+								"mock",
+								"pstmn",
+								"io"
+							],
+							"path": [
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "4490eea8-9c81-4879-9720-22222222333"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json;charset=UTF-8"
+						},
+						{
+							"key": "content-length",
+							"value": "345"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				}
+			]
+		}
+	]
+}
