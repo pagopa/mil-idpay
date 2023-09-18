@@ -58,7 +58,7 @@ public class AzureKeyVaultService {
                     .build());
         }
 
-        String keyName = "idpay-wrap-key-".concat(headers.getAcquirerId()).concat("POS".equals(headers.getChannel()) ? headers.getMerchantId() : "").concat(headers.getTerminalId());
+        String keyName = "idpay-wrap-key-".concat(headers.getAcquirerId()).concat("-").concat("POS".equals(headers.getChannel()) ? headers.getMerchantId().concat("-") : "").concat(headers.getTerminalId());
 
         Log.debugf("AzureKeyVaultService -> getAzureKVKey: call Azure Key Vault for keyName: [%s]", keyName);
 
@@ -72,30 +72,17 @@ public class AzureKeyVaultService {
                                     .status(Response.Status.INTERNAL_SERVER_ERROR)
                                     .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
                                     .build());
-                        } else if (error != null || (getKeyResponse != null && !isKeyNotYetExpired(getKeyResponse.getKey()))) {//Se NOT FOUND o Expired chiamo CreatKey
+                        } else if (error != null || (getKeyResponse != null && (!isKeyValid(getKeyResponse.getKey()) || !isKeyNotYetExpired(getKeyResponse.getKey())))) {//Se NOT FOUND o Expired chiamo CreateKey
                             return createAzureKVKey(accessToken, keyName);
-                        } else if (getKeyResponse != null) {
-                            return Uni.createFrom().item(getPublicKey(getKeyResponse.getKey()));
                         } else {
-                            throw new InternalServerErrorException(Response
-                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                    .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
-                                    .build());
+                            return Uni.createFrom().item(getPublicKey(getKeyResponse.getKey()));
                         }
-
                     });
 
     }
 
 
-    public Uni<PublicKeyIDPay> createAzureKVKey(AccessToken accessToken, String keyName) {
-
-        if (accessToken.getAccess_token() == null) {
-            throw new InternalServerErrorException(Response
-                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new Errors(List.of(ErrorCode.AZUREAD_ACCESS_TOKEN_IS_NULL), List.of(ErrorCode.AZUREAD_ACCESS_TOKEN_IS_NULL_MSG)))
-                    .build());
-        }
+    private Uni<PublicKeyIDPay> createAzureKVKey(AccessToken accessToken, String keyName) {
 
         Log.debugf("AzureKeyVaultService -> createAzureKVKey: call Azure Key Vault create key for keyName: [%s]", keyName);
 
@@ -105,14 +92,14 @@ public class AzureKeyVaultService {
         CreateKeyRequest createKeyRequest = new CreateKeyRequest(RSA, keysize, OPS, attributes);
 
         return azureKeyVaultClient.createKey(BEARER + accessToken, keyName, createKeyRequest)
-                .map(resp -> getPublicKey(resp.getKey()))
                 .onFailure().transform(t -> {
-                    Log.errorf(t, "[%s] AzureKeyVaultService -> createAzureKVKey: Azure Key Vault error response for keyName [%s]", keyName);
+                    Log.errorf(t, "[%s] AzureKeyVaultService -> createAzureKVKey: Azure Key Vault error response for keyName [%s]", ErrorCode.ERROR_GENERATING_KEY_PAIR, keyName);
                     throw new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR), List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR_MSG)))
                             .build());
-                });
+                })
+                .map(resp -> getPublicKey(resp.getKey()));
     }
 
     private boolean isKeyValid(KeyDetails key) {

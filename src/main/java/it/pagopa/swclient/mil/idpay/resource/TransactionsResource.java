@@ -132,7 +132,7 @@ public class TransactionsResource {
         return transactionsService.verifyCie(headers, transactionId, verifyCie).chain(res -> {
             Log.debugf("TransactionsResource -> TransactionsService -> verifyCie - Response %s", res);
 
-            Response.ResponseBuilder responseBuilder = Response.status(Status.CREATED);
+            Response.ResponseBuilder responseBuilder = Response.status(Status.OK);
             responseBuilder
                     .location(getTransactionURI(transactionId))
                     .header("Retry-After", idpayTransactionRetryAfter)

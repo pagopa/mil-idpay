@@ -42,7 +42,6 @@ public final class ErrorCode {
     public static final String ERROR_LOST_IPZS_REST_SERVICES 							                = MODULE_ID + "000072";
     public static final String ERROR_STOLEN_IPZS_REST_SERVICES 							                = MODULE_ID + "000073";
     public static final String ERROR_EXPIRED_IPZS_REST_SERVICES 							            = MODULE_ID + "000074";
-    public static final String ERROR_UNKNOWN_IPZS_REST_SERVICES 							            = MODULE_ID + "000075";
 
     // integration errors azure (AD e Key Vault) - rest clients
     public static final String ERROR_CALLING_AZUREAD_REST_SERVICES 							            = MODULE_ID + "000080";
@@ -65,7 +64,6 @@ public final class ErrorCode {
     public static final String ERROR_LOST_IPZS_REST_SERVICES_DESCR = "IPZS rest service LOST response";
     public static final String ERROR_STOLEN_IPZS_REST_SERVICES_DESCR = "IPZS rest service STOLEN response";
     public static final String ERROR_EXPIRED_IPZS_REST_SERVICES_DESCR = "IPZS rest service EXPIRED response";
-    public static final String ERROR_UNKNOWN_IPZS_REST_SERVICES_DESCR = "IPZS rest service EXPIRED response";
     public static final String ERROR_CALLING_AZUREAD_REST_SERVICES_DESCR = "Error calling Azure AD rest service";
     public static final String AZUREAD_ACCESS_TOKEN_IS_NULL_DESCR = "Azure AD sent NULL access token";
     public static final String ERROR_GENERATING_KEY_PAIR_DESCR = "Azure KV key pair generation error";
@@ -87,7 +85,6 @@ public final class ErrorCode {
     public static final String ERROR_LOST_IPZS_REST_SERVICES_MSG = "[" + ERROR_LOST_IPZS_REST_SERVICES + "] " + ERROR_LOST_IPZS_REST_SERVICES_DESCR;
     public static final String ERROR_STOLEN_IPZS_REST_SERVICES_MSG = "[" + ERROR_STOLEN_IPZS_REST_SERVICES + "] " + ERROR_STOLEN_IPZS_REST_SERVICES_DESCR;
     public static final String ERROR_EXPIRED_IPZS_REST_SERVICES_MSG = "[" + ERROR_EXPIRED_IPZS_REST_SERVICES + "] " + ERROR_EXPIRED_IPZS_REST_SERVICES_DESCR;
-    public static final String ERROR_UNKNOWN_IPZS_REST_SERVICES_MSG = "[" + ERROR_UNKNOWN_IPZS_REST_SERVICES + "] " + ERROR_UNKNOWN_IPZS_REST_SERVICES_DESCR;
     public static final String ERROR_CALLING_AZUREAD_REST_SERVICES_MSG = "[" + ERROR_CALLING_AZUREAD_REST_SERVICES + "] " + ERROR_CALLING_AZUREAD_REST_SERVICES_DESCR;
     public static final String AZUREAD_ACCESS_TOKEN_IS_NULL_MSG = "[" + AZUREAD_ACCESS_TOKEN_IS_NULL + "] " + AZUREAD_ACCESS_TOKEN_IS_NULL_DESCR;
     public static final String ERROR_GENERATING_KEY_PAIR_MSG = "[" + ERROR_GENERATING_KEY_PAIR + "] " + ERROR_GENERATING_KEY_PAIR_DESCR;

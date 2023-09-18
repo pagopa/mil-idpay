@@ -25,25 +25,14 @@ public class KidUtil {
      */
     private Pattern patternForAzureKidWithNameAndVersion;
 
-    /*
-     *
-     */
-    private Pattern patternForAzureKidWithName;
-
-    /*
-     *
-     */
-    private Pattern patternForMyKid;
 
     /**
      *
      */
     @PostConstruct
     void init() {
-        String temp = (vaultBaseUrl + "/keys/").replaceAll("//keys", "/keys");
+        String temp = (vaultBaseUrl + "/keys/").replace("//keys", "/keys");
         patternForAzureKidWithNameAndVersion = Pattern.compile("^" + Pattern.quote(temp) + "(?<name>\\w+)\\/(?<version>\\w+)$");
-        patternForAzureKidWithName = Pattern.compile("^" + Pattern.quote(temp) + "(?<name>\\w+)$");
-        patternForMyKid = Pattern.compile("^(?<name>\\w+)\\/(?<version>\\w+)$");
     }
 
     /**
@@ -63,36 +52,6 @@ public class KidUtil {
         return nameAndVersion;
     }
 
-    /**
-     *
-     * @param kid
-     * @return
-     */
-    public KeyNameAndVersion getNameFromAzureKid(String kid) {
-        KeyNameAndVersion nameAndVersion = new KeyNameAndVersion();
-        if (kid != null) {
-            Matcher m = patternForAzureKidWithName.matcher(kid);
-            if (m.find()) {
-                nameAndVersion.setName(m.group("name"));
-            }
-        }
-        return nameAndVersion;
-    }
-
-    /**
-     *
-     * @param kid
-     * @return
-     */
-    public KeyNameAndVersion getNameAndVersionFromMyKid(String kid) {
-        KeyNameAndVersion nameAndVersion = new KeyNameAndVersion();
-        Matcher m = patternForMyKid.matcher(kid);
-        if (m.find()) {
-            nameAndVersion.setName(m.group("name"));
-            nameAndVersion.setVersion(m.group("version"));
-        }
-        return nameAndVersion;
-    }
 
     /**
      *
