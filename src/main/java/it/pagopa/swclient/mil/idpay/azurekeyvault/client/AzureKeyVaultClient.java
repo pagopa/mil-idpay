@@ -37,7 +37,7 @@ public interface AzureKeyVaultClient {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ClientQueryParam(name = "api-version", value = "${azure-key-vault-api.version}")
-    Uni<CreateKeyResponse> createKey(
+    Uni<DetailedKey> createKey(
             @HeaderParam("Authorization") String authorization,
             @PathParam("keyName") String keyName,
             CreateKeyRequest createKeyRequest);
@@ -54,7 +54,7 @@ public interface AzureKeyVaultClient {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ClientQueryParam(name = "api-version", value = "${azure-key-vault-api.version}")
-    Uni<GetKeyResponse> getKey(
+    Uni<DetailedKey> getKey(
             @HeaderParam("Authorization") String authorization,
             @PathParam("keyName") String keyName);
 

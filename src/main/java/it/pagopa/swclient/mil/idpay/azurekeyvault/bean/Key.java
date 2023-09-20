@@ -30,12 +30,6 @@ public class Key {
     /*
      *
      */
-    @JsonProperty("kid")
-    private String kid;
-
-    /*
-     *
-     */
     @JsonProperty("attributes")
     private KeyAttributes attributes;
 }

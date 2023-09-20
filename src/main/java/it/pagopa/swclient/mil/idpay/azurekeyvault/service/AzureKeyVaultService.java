@@ -72,10 +72,10 @@ public class AzureKeyVaultService {
                                     .status(Response.Status.INTERNAL_SERVER_ERROR)
                                     .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
                                     .build());
-                        } else if (error != null || (getKeyResponse != null && (!isKeyValid(getKeyResponse.getKey()) || !isKeyNotYetExpired(getKeyResponse.getKey())))) {//Se NOT FOUND o Expired chiamo CreateKey
+                        } else if (error != null || (getKeyResponse != null && (!isKeyValid(getKeyResponse) || !isKeyNotYetExpired(getKeyResponse.getDetails().getKid(), getKeyResponse.getAttributes())))) {//Se NOT FOUND o Expired chiamo CreateKey
                             return createAzureKVKey(accessToken, keyName);
                         } else {
-                            return Uni.createFrom().item(getPublicKey(getKeyResponse.getKey()));
+                            return Uni.createFrom().item(getPublicKey(getKeyResponse));
                         }
                     });
 
@@ -99,11 +99,16 @@ public class AzureKeyVaultService {
                             .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR), List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR_MSG)))
                             .build());
                 })
-                .map(resp -> getPublicKey(resp.getKey()));
+                .map(this::getPublicKey);
     }
 
-    private boolean isKeyValid(KeyDetails key) {
-        return isKeyValid((Key) key) && isKeyTypeRsa(key) && isKeySuitableForWrap(key);
+    private boolean isKeyValid(DetailedKey key) {
+        if (key.getDetails() != null) {
+            return isKeyValid(key.getDetails().getKid(), key.getAttributes()) && isKeyTypeRsa(key.getDetails()) && isKeySuitableForWrap(key.getDetails());
+        } else {
+            Log.warn("Received key without details.");
+            return false;
+        }
     }
 
     private boolean isKeyTypeRsa(KeyDetails key) {
@@ -133,73 +138,82 @@ public class AzureKeyVaultService {
         }
     }
 
-    private boolean isKeyValid(Key key) {
-        if (key.getAttributes() == null) {
-            Log.errorf("The key [%s] has null attributes.", key.getKid());
+    /**
+     * @param kid
+     * @param attributes
+     * @return
+     */
+    private boolean isKeyValid(String kid, KeyAttributes attributes) {
+        if (attributes == null) {
+            Log.errorf("The key [%s] has null attributes.", kid);
             return false;
         } else {
-            return isKeyEnabled(key)
-                    && isKeyCreationTimestampCoherent(key)
-                    && isKeyNotYetExpired(key);
+            return isKeyEnabled(kid, attributes)
+                    && isKeyCreationTimestampCoherent(kid, attributes)
+                    && isKeyNotYetExpired(kid, attributes)
+                    && isKeyNotBeforeMet(kid, attributes);
         }
     }
 
-    private boolean isKeyEnabled(Key key) {
-        if (key.getAttributes().getEnabled() != null && key.getAttributes().getEnabled()) {
-            Log.debugf("The key [%s] is enabled.", key.getKid());
+    private boolean isKeyEnabled(String kid, KeyAttributes attributes) {
+        if (attributes.getEnabled() != null && attributes.getEnabled()) {
+            Log.debugf("The key [%s] is enabled.", kid);
             return true;
         } else {
-            Log.warnf("The key [%s] is not enabled.", key.getKid());
+            Log.warnf("The key [%s] is not enabled.", kid);
             return false;
         }
     }
 
-    private boolean isKeyCreationTimestampCoherent(Key key) {
+    private boolean isKeyCreationTimestampCoherent(String kid, KeyAttributes attributes) {
         long now = Instant.now().getEpochSecond();
-        if (key.getAttributes().getCreated() != null && key.getAttributes().getCreated() <= now) {
-            Log.debugf("The creation timestamp of [%s] is valid.", key.getKid());
+        if (attributes.getCreated() != null && attributes.getCreated() <= now) {
+            Log.debugf("The creation timestamp of [%s] is valid.", kid);
             return true;
         } else {
-            Log.warnf("The creation timestamp of [%s] is not valid. Found [%s], expected a value less than [%d].", key.getKid(), key.getAttributes().getCreated(), now);
+            Log.warnf("The creation timestamp of [%s] is not valid. Found [%s], expected a value less than [%d].", kid, attributes.getCreated(), now);
             return false;
         }
     }
 
-    private boolean isKeyNotYetExpired(Key key) {
+    private boolean isKeyNotYetExpired(String kid, KeyAttributes attributes) {
         long now = Instant.now().getEpochSecond();
-        if (key.getAttributes().getExp() != null && key.getAttributes().getExp() > now) {
-            Log.debugf("The key [%s] is not expired.", key.getKid());
+        if (attributes.getExp() != null && attributes.getExp() > now) {
+            Log.debugf("The key [%s] is not expired.", kid);
             return true;
         } else {
-            Log.warnf("The key [%s] is expired. Found [%s], expected a value greater than [%d].", key.getKid(), key.getAttributes().getExp(), now);
+            Log.warnf("The key [%s] is expired. Found [%s], expected a value greater than [%d].", kid, attributes.getExp(), now);
             return false;
         }
     }
 
-    private PublicKeyIDPay getPublicKey(KeyDetails key) {
+    private boolean isKeyNotBeforeMet(String kid, KeyAttributes attributes) {
+        long now = Instant.now().getEpochSecond();
+        if (attributes.getNbf() != null && attributes.getNbf() <= now) {
+            Log.debugf("The 'not before' timestamp of [%s] is valid.", kid);
+            return true;
+        } else {
+            Log.warnf("The 'not before' timestamp of [%s] is not valid. Found [%s], expected a value less than [%d].", kid, attributes.getNbf(), now);
+            return false;
+        }
+    }
+
+    private PublicKeyIDPay getPublicKey(DetailedKey key) {
         ArrayList<KeyOp> keyOps = new ArrayList<>();
         keyOps.add(KeyOp.wrapKey);
 
         if (isKeyValid(key)) {
-            KeyNameAndVersion keyNameAndVersion = kidUtil.getNameAndVersionFromAzureKid(key.getKid());
-            if (keyNameAndVersion.isValid()) {
-                return new PublicKeyIDPay(
-                        key.getExponent(),
-                        PublicKeyUse.enc,
-                        kidUtil.getMyKidFromNameAndVersion(keyNameAndVersion),
-                        key.getModulus(),
-                        KeyType.RSA,
-                        key.getAttributes().getExp(),
-                        key.getAttributes().getCreated(),
-                        keyOps);
-            } else {
-                String message = String.format("[%s] Error generating the key pair: kid doesn't contain name and version.", ErrorCode.ERROR_GENERATING_KEY_PAIR);
-                Log.fatal(message);
-                throw new InternalServerErrorException(Response
-                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                        .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR), List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR_MSG)))
-                        .build());
-            }
+            KeyNameAndVersion keyNameAndVersion = kidUtil.getNameAndVersionFromAzureKid(key.getDetails().getKid());
+
+            return new PublicKeyIDPay(
+                    key.getDetails().getExponent(),
+                    PublicKeyUse.enc,
+                    kidUtil.getMyKidFromNameAndVersion(keyNameAndVersion),
+                    key.getDetails().getModulus(),
+                    KeyType.RSA,
+                    key.getAttributes().getExp(),
+                    key.getAttributes().getCreated(),
+                    keyOps);
         } else {
             String message = String.format("[%s] Error generating the key pair: invalid key pair has been generated.", ErrorCode.ERROR_GENERATING_KEY_PAIR);
             Log.fatal(message);

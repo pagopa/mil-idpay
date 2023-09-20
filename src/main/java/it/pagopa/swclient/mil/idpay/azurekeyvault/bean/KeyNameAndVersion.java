@@ -24,12 +24,4 @@ public class KeyNameAndVersion {
      *
      */
     private String version;
-
-    /**
-     *
-     * @return
-     */
-    public boolean isValid() {
-        return name != null && version != null;
-    }
 }

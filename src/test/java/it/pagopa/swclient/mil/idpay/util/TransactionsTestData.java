@@ -21,9 +21,10 @@ import java.util.*;
 
 public final class TransactionsTestData {
 
+    //valore vaultUrl deve coincidere con valore del parametro %test.quarkus.rest-client.azure-key-vault-api.url del application.properties
+    private static final String vaultUrl = "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io";
     private static SimpleDateFormat lastUpdateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
-    private static final String KEY_URL = "https://quarkus-azure-test-kv.vault.azure.net/keys/";
     private static final String KEY_NAME = "0709643f49394529b92c19a68c8e184a";
     private static final String KEY_VERSION = "6581c704deda4979943c3b34468df7c2";
     //private static final String KID = KEY_NAME + "/" + KEY_VERSION;
@@ -157,11 +158,13 @@ public final class TransactionsTestData {
         return token;
     }
 
-    public static GetKeyResponse getAzureKVGetKeyResponse() {
+    public static DetailedKey getAzureKVGetKeyResponse() {
         long now = Instant.now().getEpochSecond();
         KeyAttributes keyAttributes = new KeyAttributes(now - 300, now + 600, now - 300, now - 300, Boolean.TRUE, KEY_RECOVERY_LEVEL, 0, Boolean.FALSE);
 
-        return new GetKeyResponse(new KeyDetails(KEY_URL + KEY_NAME + "/" + KEY_VERSION, KEY_TYPE, KEY_OPS, MODULUS, PUBLIC_EXPONENT, keyAttributes));
+        KeyDetails details = new KeyDetails(vaultUrl + "/keys/" + KEY_NAME + "/" + KEY_VERSION, KEY_TYPE, KEY_OPS, MODULUS, PUBLIC_EXPONENT);
+
+        return new DetailedKey(details, keyAttributes);
     }
 
     public static VerifyCie getVerifyCieRequest() {
@@ -182,18 +185,21 @@ public final class TransactionsTestData {
         return res;
     }
 
-    public static CreateKeyResponse getAzureKVCreateKeyResponse() {
+    public static DetailedKey getAzureKVCreateKeyResponse() {
         long now = Instant.now().getEpochSecond();
         KeyAttributes keyAttributes = new KeyAttributes(now - 300, now + 600, now - 300, now - 300, Boolean.TRUE, KEY_RECOVERY_LEVEL, 0, Boolean.FALSE);
 
-        return new CreateKeyResponse(new KeyDetails(KEY_URL + KEY_NAME + "/" + KEY_VERSION, KEY_TYPE, KEY_OPS, MODULUS, PUBLIC_EXPONENT, keyAttributes));
+        KeyDetails details = new KeyDetails(vaultUrl + "/keys/" + KEY_NAME + "/" + KEY_VERSION, KEY_TYPE, KEY_OPS, MODULUS, PUBLIC_EXPONENT);
+
+        return new DetailedKey(details, keyAttributes);
     }
 
-    public static GetKeyResponse getAzureKVGetKeyResponseAttrNull() {
+    public static DetailedKey getAzureKVGetKeyResponseAttrNull() {
         //long now = Instant.now().getEpochSecond();
         //KeyAttributes keyAttributes = new KeyAttributes(now - 300, now + 600, now - 300, now - 300, Boolean.TRUE, KEY_RECOVERY_LEVEL, 0, Boolean.FALSE);
 
-        return new GetKeyResponse(new KeyDetails(KEY_URL + KEY_NAME + "/" + KEY_VERSION, KEY_TYPE, KEY_OPS, MODULUS, PUBLIC_EXPONENT, null));
+        KeyDetails details = new KeyDetails(vaultUrl + "/keys/" + KEY_NAME + "/" + KEY_VERSION, KEY_TYPE, KEY_OPS, MODULUS, PUBLIC_EXPONENT);
+        return new DetailedKey(details, null);
     }
 
     public static Map<String, String> getMilHeadersNonPOS() {

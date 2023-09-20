@@ -9,22 +9,29 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
 /**
- *
  * @author Antonio Tarricone
  */
 @RegisterForReflection
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class KeyDetails extends Key {
+public class KeyDetails {
+    /*
+     *
+     */
+    @JsonProperty("kid")
+    private String kid;
+
     /*
      *
      */
@@ -48,21 +55,4 @@ public class KeyDetails extends Key {
      */
     @JsonProperty("e")
     private String exponent;
-
-    /**
-     *
-     * @param kid
-     * @param kty
-     * @param keyOps
-     * @param modulus
-     * @param exponent
-     * @param attributes
-     */
-    public KeyDetails(String kid, String kty, String[] keyOps, String modulus, String exponent, KeyAttributes attributes) {
-        super(kid, attributes);
-        this.kty = kty;
-        this.keyOps = keyOps;
-        this.modulus = modulus;
-        this.exponent = exponent;
-    }
 }
