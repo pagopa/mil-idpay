@@ -131,6 +131,7 @@ public final class TransactionsTestData {
         res.setInitiativeId("initiativeId1");
         res.setRewardCents(123L);
         res.setStatus(TransactionStatus.CREATED);
+        res.setSecondFactor("483efab359c1".getBytes(StandardCharsets.UTF_8));
 
         return res;
     }
@@ -151,7 +152,7 @@ public final class TransactionsTestData {
         res.setAcquirerId("4585625");
         res.setMerchantId("111");
         res.setInitiativeId("initiativeId1");
-        //res.setRewardCents(123L);
+        res.setRewardCents(30L);
         res.setStatus(TransactionStatus.CREATED);
         res.setSecondFactor("483efab359c1".getBytes(StandardCharsets.UTF_8));
 

@@ -13,7 +13,6 @@ import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
 import it.pagopa.swclient.mil.idpay.bean.TransactionStatus;
 import it.pagopa.swclient.mil.idpay.bean.VerifyCie;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
-import it.pagopa.swclient.mil.idpay.client.IdpayAuthorizeTransactionRestClient;
 import it.pagopa.swclient.mil.idpay.client.IpzsVerifyCieRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
@@ -42,10 +41,6 @@ import static io.restassured.RestAssured.given;
 @TestHTTPEndpoint(TransactionsResource.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TransactionResourceCIETest {
-
-    @InjectMock
-    @RestClient
-    IdpayAuthorizeTransactionRestClient idpayAuthorizeTransactionRestClient;
 
     @InjectMock
     @RestClient
@@ -91,18 +86,6 @@ class TransactionResourceCIETest {
         verifyCieRequest = TransactionsTestData.getVerifyCieRequest();
         createKeyResponse = TransactionsTestData.getAzureKVCreateKeyResponse();
     }
-
-    /*
-    @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
-
-    void authorizeTransactionTest_OK() {
-
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
-                .thenReturn(Uni.createFrom().item(transactionResponse));
-
-        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
-    }*/
 
     @Test
     @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
