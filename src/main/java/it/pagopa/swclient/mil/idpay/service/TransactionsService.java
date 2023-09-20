@@ -5,9 +5,7 @@ import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.unchecked.Unchecked;
 import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.bean.Errors;
-import it.pagopa.swclient.mil.idpay.CryptoException;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.KeyNameAndVersion;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.SignResponse;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyRequest;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
@@ -57,9 +55,6 @@ public class TransactionsService {
 
     @Inject
     IdpayTransactionRepository idpayTransactionRepository;
-
-    @Inject
-    KidUtil kidUtil;
 
     @Inject
     EncryptUtil encryptUtil;
@@ -394,13 +389,61 @@ public class TransactionsService {
                     // Transaction found
                     Log.debugf("TransactionsService -> authorizeTransaction: found idpay transaction [%s] for mil transaction [%s]", dbData.idpayTransaction.getIdpayTransactionId(), milTransactionId);
 
-                    return transactionIdentified(dbData, milTransactionId, authorizeTransaction);
+                    return transactionIdentified(dbData, milTransactionId)
+                            .chain(accessToken -> {
+
+                                // If retrieve access token success, start unwrapping key
+                                Log.debugf("TransactionsService -> authorizeTransaction: Azure AD service returned a 200 status, response: [%s]", accessToken);
+
+                                return unwrapKey(authorizeTransaction, accessToken)
+                                        .chain(unwrappedKey -> {
+
+                                            // Unwrap key success, start retrieving id pay public key
+                                            Log.debugf("TransactionsService -> authorizeTransaction: Azure KV unwrapping service returned a 200 status, response: [%s]", unwrappedKey);
+
+                                            return retrieveIdpayPublicKey()
+                                                    .chain(Unchecked.function(publicKeyIDPay -> {
+
+                                                        // If idpay public key retrieval success, starth authorize transaction
+                                                        Log.debugf("TransactionsService -> authorizeTransaction: IDPay returned a 200 status, response with public key: [%s]", publicKeyIDPay);
+
+                                                        try {
+
+                                                            // Start trying to encrypt session key with public key retrieved
+                                                            String encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getSignature());
+                                                            AuthCodeBlockData authCodeBlockData = AuthCodeBlockData.builder()
+                                                                    .kid(publicKeyIDPay.getKid())
+                                                                    .encSessionKey(encryptedSessionKey)
+                                                                    .authCodeBlock(authorizeTransaction.getAuthCodeBlockData().getAuthCodeBlock())
+                                                                    .build();
+
+                                                            AuthorizeTransaction authorize = AuthorizeTransaction.builder()
+                                                                    .authCodeBlockData(authCodeBlockData)
+                                                                    .build();
+
+                                                            return authorize(dbData, authorize);
+                                                        } catch (NoSuchAlgorithmException | InvalidKeySpecException |
+                                                                 NoSuchPaddingException | InvalidKeyException |
+                                                                 IllegalBlockSizeException | BadPaddingException error) {
+
+                                                            // If encrypt retrieve some error, return INTERNAL_SERVER_ERROR
+                                                            Log.errorf("Error during encrypting session key using IDPay public key [%s]", publicKeyIDPay);
+
+                                                            throw new InternalServerErrorException(Response
+                                                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                                    .entity(new Errors(List.of(ErrorCode.ERROR_ENCRYPTING_SESSION_KEY), List.of(ErrorCode.ERROR_ENCRYPTING_SESSION_KEY_MSG)))
+                                                                    .build());
+                                                        }
+                                                    }));
+                                        });
+                            });
                 }));
     }
 
-    private Uni<Response> transactionIdentified(IdpayTransactionEntity dbData, String milTransactionId, AuthorizeTransaction authorizeTransaction) {
+    private Uni<AccessToken> transactionIdentified(IdpayTransactionEntity dbData, String milTransactionId) {
         if (!dbData.idpayTransaction.getStatus().equals(TransactionStatus.IDENTIFIED)) {
             // If transaction is NOT IDENTIFIED, return BAD_REQUEST
+            Log.errorf("TransactionsService -> authorizeTransaction: idpay transaction with id [%s] is NOT IDENTIFIED", dbData.idpayTransaction.getIdpayTransactionId());
 
             throw new BadRequestException(Response
                     .status(Response.Status.BAD_REQUEST)
@@ -419,25 +462,19 @@ public class TransactionsService {
                                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                                 .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES_MSG)))
                                 .build());
-                    })).chain(token -> {
-
-                        // If retrieve access token success, start unwrapping key
-                        Log.debugf("TransactionsService -> authorizeTransaction: Azure AD service returned a 200 status, response: [%s]", token);
-
-                        return unwrapKey(dbData, authorizeTransaction, token);
-                    });
+                    }))
+                    .chain(token -> Uni.createFrom().item(token));
         }
     }
 
-    private Uni<Response> unwrapKey(IdpayTransactionEntity dbData, AuthorizeTransaction authorizeTransaction, AccessToken token) {
+    private Uni<SignResponse> unwrapKey(AuthorizeTransaction authorizeTransaction, AccessToken token) {
         UnwrapKeyRequest unwrapKeyRequest = UnwrapKeyRequest
                 .builder()
                 .alg("RSA-OAEP-256")
                 .value(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey())
                 .build();
 
-        KeyNameAndVersion keyNameAndVersion = kidUtil.getNameAndVersionFromAzureKid(authorizeTransaction.getAuthCodeBlockData().getKid());
-        return azureKeyVaultClient.unwrapKey(token.getAccess_token(), keyNameAndVersion.getName(), keyNameAndVersion.getVersion(), unwrapKeyRequest)
+        return azureKeyVaultClient.unwrapKey(token.getAccess_token(), authorizeTransaction.getAuthCodeBlockData().getKid(), unwrapKeyRequest)
                 .onFailure().transform(Unchecked.function(t -> {
 
                     // If unwrap key kails, return INTERNAL_SERVER_ERROR
@@ -447,16 +484,10 @@ public class TransactionsService {
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
                             .build());
-                })).chain(unwrappedKey -> {
-
-                    // Unwrap key success, start retrieving id pay public key
-                    Log.debugf("TransactionsService -> authorizeTransaction: Azure KV unwrapping service returned a 200 status, response: [%s]", unwrappedKey);
-
-                    return retrieveIdpayPublicKey(dbData, authorizeTransaction, unwrappedKey);
-                });
+                })).chain(unwrappedKey -> Uni.createFrom().item(unwrappedKey));
     }
 
-    private Uni<Response> retrieveIdpayPublicKey(IdpayTransactionEntity dbData, AuthorizeTransaction authorizeTransaction, SignResponse unwrappedKey) {
+    private Uni<PublicKeyIDPay> retrieveIdpayPublicKey() {
         return idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey()
                 .onFailure().transform(Unchecked.function(t -> {
 
@@ -465,30 +496,12 @@ public class TransactionsService {
 
                     throw new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
+                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_PUBLIC_KEY_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_PUBLIC_KEY_IDPAY_MSG)))
                             .build());
-                })).chain(Unchecked.function(publicKeyIDPay -> {
-
-                    // If idpay public key retrieval success, starth authorize transaction
-                    Log.debugf("TransactionsService -> authorizeTransaction: IDPay returned a 200 status, response with public key: [%s]", publicKeyIDPay);
-
-                    return authorize(dbData, authorizeTransaction, unwrappedKey, publicKeyIDPay);
-                }));
+                })).chain(publicKeyIDPay -> Uni.createFrom().item(publicKeyIDPay));
     }
 
-    private Uni<Response> authorize(IdpayTransactionEntity dbData, AuthorizeTransaction authorizeTransaction, SignResponse unwrappedKey, PublicKeyIDPay publicKeyIDPay) {
-        try {
-            String encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getSignature());
-            AuthCodeBlockData authCodeBlockData = AuthCodeBlockData.builder()
-                    .kid(publicKeyIDPay.getKid())
-                    .encSessionKey(encryptedSessionKey)
-                    .authCodeBlock(authorizeTransaction.getAuthCodeBlockData().getAuthCodeBlock())
-                    .build();
-
-            AuthorizeTransaction authorize = AuthorizeTransaction.builder()
-                    .authCodeBlockData(authCodeBlockData)
-                    .build();
-
+    private Uni<Response> authorize(IdpayTransactionEntity dbData, AuthorizeTransaction authorize) {
             return idpayAuthorizeTransactionRestClient.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), authorize)
                     .onFailure().transform(Unchecked.function(t -> {
 
@@ -505,14 +518,15 @@ public class TransactionsService {
                         if (finalResult.getAuthTransactionResponseOk() != null) {
 
                             // If all went ok, send 200 OK to client
-                            Log.debugf("TransactionsService -> authorizeTransaction: call toauthorize returned a 200 status, response with public key: [%s]", finalResult.getAuthTransactionResponseOk());
+                            Log.debugf("TransactionsService -> authorizeTransaction: call to authorize returned a 200 status, response with public key: [%s]", finalResult.getAuthTransactionResponseOk());
 
-                            return Uni.createFrom().item(Response.status(Response.Status.OK).build());
+                            Response response = Response.status(Response.Status.OK).build();
+                            return Uni.createFrom().item(response);
                         } else if (finalResult.getAuthTransactionResponseWrong() != null) {
 
                             // If IDPay responds with WRONG_AUTH_CODE, send BAD_REQUEST to client
-                            Log.errorf("TransactionsService -> authorizeTransaction: error response while authorizing transaction: [%s]");
-                            Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES_MSG));
+                            Log.errorf("TransactionsService -> authorizeTransaction: error IDPay responds with WRONG_AUTH_CODE for transaction: [%s]", dbData.transactionId);
+                            Errors errors = new Errors(List.of(ErrorCode.ERROR_IDPAY_WRONG_AUTH_CODE), List.of(ErrorCode.ERROR_IDPAY_WRONG_AUTH_CODE_MSG));
 
                             return Uni.createFrom().item((Response
                                     .status(Response.Status.BAD_REQUEST)
@@ -521,15 +535,15 @@ public class TransactionsService {
                         } else {
 
                             // If any other from IDPay, send INTERNAL_SERVER_ERROR to client
+                            Log.errorf("TransactionsService -> authorizeTransaction: IDPay responds with unknown error 500 for transaction: [%s]", dbData.transactionId);
+                            Errors errors = new Errors(List.of(ErrorCode.ERROR_IDPAY_UNKNOWN_ERROR_CODE), List.of(ErrorCode.ERROR_IDPAY_UNKNOWN_ERROR_MSG));
+
                             return Uni.createFrom().item((Response
                                     .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                    .entity(errors)
                                     .build()));
                         }
                     });
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException |
-                 InvalidKeyException | IllegalBlockSizeException | BadPaddingException error) {
-            throw new CryptoException("Error during encrypting session key using IDPay public key", error);
-        }
     }
 
     public Uni<IdpayTransactionEntity> getIdpayTransactionEntity(String transactionId) {

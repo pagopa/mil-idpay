@@ -3,10 +3,12 @@ package it.pagopa.swclient.mil.idpay.bean;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.*;
 
-import java.util.ArrayList;
+import java.util.List;
 
 @RegisterForReflection
 @Data
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class PublicKeyIDPay {
     /*
@@ -44,5 +46,5 @@ public class PublicKeyIDPay {
      */
     private long iat;
 
-    private ArrayList<KeyOp> keyOps;
+    private List<KeyOp> keyOps;
 }

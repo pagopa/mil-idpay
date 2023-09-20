@@ -20,7 +20,7 @@ import javax.crypto.NoSuchPaddingException;
 @ApplicationScoped
 public class EncryptUtil {
 
-    public String encryptSessionKeyForIdpay(PublicKeyIDPay publicKeyIDPay, String sessionKey) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {// Chiave pubblica RSA codificata in base64 (sostituisci con la tua chiave pubblica)
+    public String encryptSessionKeyForIdpay(PublicKeyIDPay publicKeyIDPay, String sessionKey) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         String modulusBase64 = publicKeyIDPay.getN();
         String exponentBase64 = publicKeyIDPay.getE();
 

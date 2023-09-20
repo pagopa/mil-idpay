@@ -62,19 +62,17 @@ public interface AzureKeyVaultClient {
     /**
      *
      * @param authorization
-     * @param keyName
-     * @param keyVersion
+     * @param kid
      * @param unwrapKeyRequest
-     * @return
+     * @return signResponse
      */
-    @Path("/keys/{keyName}/{keyVersion}/unwrapkey")
+    @Path("/keys/{kid}/unwrapkey")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ClientQueryParam(name = "api-version", value = "${azure-key-vault-api.version}")
     Uni<SignResponse> unwrapKey(
             @HeaderParam("Authorization") String authorization,
-            @PathParam("keyName") String keyName,
-            @PathParam("keyVersion") String keyVersion,
+            @PathParam("kid") String kid,
             UnwrapKeyRequest unwrapKeyRequest);
 }

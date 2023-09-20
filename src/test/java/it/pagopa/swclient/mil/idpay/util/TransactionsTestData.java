@@ -1,10 +1,7 @@
 package it.pagopa.swclient.mil.idpay.util;
 
 import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.*;
-import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
-import it.pagopa.swclient.mil.idpay.bean.OperationType;
-import it.pagopa.swclient.mil.idpay.bean.TransactionStatus;
-import it.pagopa.swclient.mil.idpay.bean.VerifyCie;
+import it.pagopa.swclient.mil.idpay.bean.*;
 import it.pagopa.swclient.mil.idpay.client.bean.SyncTrxStatus;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
@@ -12,7 +9,6 @@ import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieResponse;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.Outcome;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransaction;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -23,14 +19,14 @@ public final class TransactionsTestData {
 
     //valore vaultUrl deve coincidere con valore del parametro %test.quarkus.rest-client.azure-key-vault-api.url del application.properties
     private static final String vaultUrl = "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io";
-    private static SimpleDateFormat lastUpdateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    private static final SimpleDateFormat lastUpdateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     private static final String KEY_NAME = "0709643f49394529b92c19a68c8e184a";
     private static final String KEY_VERSION = "6581c704deda4979943c3b34468df7c2";
     //private static final String KID = KEY_NAME + "/" + KEY_VERSION;
     private static final String KEY_RECOVERY_LEVEL = "Purgeable";
     private static final String KEY_TYPE = "RSA";
-    private static final String[] KEY_OPS = new String[] {
+    private static final String[] KEY_OPS = new String[]{
             "wrapKey", "unwrapKey"
     };
     private static final String MODULUS = "AKnFsF5Y16TB9qkmoOyDXG3ulenUWYoW78U7mcGBoYKRpMlswxhc_ZiKcC65vIrCP6hbS5Cx88IbQG2DWH-nE329OLzUbzcdraDLR-7V2BX0nNwmwXxhkd4ofzzjKyhWjV8AkxFpqJPtFG09YCyCpaC8YluVPbHUpWJ1wrOsavdc_YM1W1XuaGvJv4SkilM8vBa81zOLEVhbEE5msHxPNLwVyC_0PIE6OFL9RY4YP1U1q7gjTMmKDc9qgEYkdziMnlxWp_EkKTZOERbEatP0fditFt-zWKlXw0qO4FKFlmj9n5tbB55vaopB71Kv6LcsAY1Q-fgOuoM41HldLppzfDOPwLGyCQF9ODJt1xaKkup6i_BxZum7-QckibwPaj3ODZbYsPuNZ_npQiR6NJZ_q_31YMlyuGdqltawluYLJidw3EzkpTN__bHdio892WbY29PRwbrG486IJ_88qP3lWs1TfzohVa1czUOZwQHqp0ixVBi_SK3jICk-V65DbwzgS5zwBFaqfWO3XVOf6tmWFMZ6ly7wtOnYWoMR15rudsD5xXWwqE-s7IP1lVZuIOdMfLH7-1Pgn-YJuPsBLbZri9_M4KtflYbqnuDckSyFNBynTwoSvSSuBhpkmNgiSQ-WBXHHss5Wy-pr-YjNK7JYppPOHvfHSY96XnJl9SPWcnwx";
@@ -94,6 +90,7 @@ public final class TransactionsTestData {
         idpayTransaction.setMerchantId(res.getMerchantId());
         idpayTransaction.setTerminalId(headers.get("TerminalId"));
         idpayTransaction.setIdpayTransactionId(res.getId());
+        idpayTransaction.setIdpayMerchantId("IdPayMerchantId");
 
         idpayTransaction.setMilTransactionId(res.getIdTrxAcquirer());
 
@@ -214,4 +211,70 @@ public final class TransactionsTestData {
         return headerMap;
     }
 
+    public static SignResponse getUnwrapKey() {
+        SignResponse signResponse = new SignResponse();
+
+        signResponse.setKid(vaultUrl + "/keys/0709643f49394529b92c19a68c8e184a/6581c704deda4979943c3b34468df7c2");
+        signResponse.setSignature("sessionKey");
+
+        return signResponse;
+    }
+
+    public static AuthorizeTransaction getAuthorizeTransaction() {
+        AuthorizeTransaction authorizeTransaction = new AuthorizeTransaction();
+        AuthCodeBlockData authCodeBlockData = new AuthCodeBlockData();
+
+        authCodeBlockData.setAuthCodeBlock("MDAwMTAyMDMwNDA1MDYwNzA4MDkwQTBCMEMwRDBFMEY=");
+        authCodeBlockData.setKid(vaultUrl + "/keys/0709643f49394529b92c19a68c8e184a/6581c704deda4979943c3b34468df7c2");
+        authCodeBlockData.setEncSessionKey("et2j4kthRmeuc5uzCLi9dE9LeQKCsqbTNxNDwrJ-mBFA4UZQaXS1hdRw6ygXoH6Ra1uciDMDHpbg7DJoYfis_foMzk3gIQxrGkmcbsPkC2ieklIpOf021smzd_pSFJ580XQzwOJCli762aRByuNQAVFismcRhkSCad8fcRe7TgevephXcrbrjr25eCRgvmACESfrydnopO5g6yIkINpzuK9wP4ljDZTO90hP-_uRrfrgjwdxa6vv-qilYqvC4RPL7HR7eEbxkHFvsri7F7J9QDp5GsAJK1Bh4EdaLyl6MwYW1sEFnpQ-27_xtvFbwFANdB70cxsosvNsRueMjh9s-2rhgPZIT_YyHn3s394OOOKql5Umamn6pvcejPgXnXY0nRmSHCDoSUzNzEnQb1sxhuDpvQLQpWsKD3DESIjaDBq7sSvpBsoOg1ybnMccWiaIIRXCpYJU8aPhrkVTR-AczxwfwKtcCipLk3CiEjv6iu6PxfO62BGGRSUpe_m_HfU02DmT4qa6wUHbg0Sy3NBwBNvBVOVVIfwzmxZcQ6D5MhJaPSlfzcp4iTLk2a3eQU0bvJ3WsTdKhwuK6VgB2IV99i4ZX_bnxBaqKOzc1I3StTPGVAVCMjsTXGy0OyHDOtJv5A4N18r8rHyIVfzOuBEDa05_cp3ceHtrE8Dl5KzjFbY");
+
+        authorizeTransaction.setAuthCodeBlockData(authCodeBlockData);
+
+        return authorizeTransaction;
+    }
+
+    public static TransactionResponse getIdentifiedTransaction() {
+
+        TransactionResponse res = getCreatedTransaction();
+        res.setStatus(TransactionStatus.IDENTIFIED);
+
+        return res;
+    }
+
+    public static AuthTransactionResponse getAuthTransactionResponse() {
+        AuthTransactionResponse authTransactionResponse = new AuthTransactionResponse();
+        AuthTransactionResponseOk authTransactionResponseOk = AuthTransactionResponseOk
+                .builder()
+                .id("1")
+                .idTrxIssuer("IdTrxIssuer2")
+                .trxCode("trxCodetrxCodetrxCode")
+                .trxDate(new Date())
+                .operationType(OperationType.CHARGE)
+                .amountCents(99999999999L)
+                .amountCurrency("EUR")
+                .acquirerId("AcquirerId")
+                .merchantId("IdPayMerchantId")
+                .initiativeId("InitiativeId2")
+                .status(TransactionStatus.AUTHORIZED)
+                .rewardCents(123L)
+                .build();
+
+        authTransactionResponse.setAuthTransactionResponseOk(authTransactionResponseOk);
+
+        return authTransactionResponse;
+    }
+
+    public static PublicKeyIDPay getPublicKeyIdPay() {
+        return PublicKeyIDPay
+                .builder()
+                .keyOps(List.of(KeyOp.wrapKey))
+                .e("AQAB")
+                .n("x9Rbax8IZ6yld9vAu3AQjEBd9Q6fyx29rTkqghK7y4t93TrfTPf0E5Uh3fdZjzCzCDrZUitvGJU4RJObn8dxFGHNXdZaRSZ7uk1kM9E1YjFrHwwXDgCeQl6U6wNL5lTjOrjRm6sj5fgvbQnO61F9zZKpKdoxPrIYpJH8YPfI9owTP1ADfPXj53hwt39DcRV9tY2fjlk3jrs1z1oJFYskTpkq7Ihtmdnq0bGgNwNhEaEoP0BcvYowKLwE4V2y9SUX6LqRzB7VzjucHnxlCc2Ms92Zj0P")
+                .kid(vaultUrl + "/keys/0709643f49394529b92c19a68c8e184a/6581c704deda4979943c3b34468df7c2")
+                .exp(1671523199)
+                .iat(1629999999)
+                .kty(KeyType.RSA)
+                .use(PublicKeyUse.enc)
+                .build();
+    }
 }
