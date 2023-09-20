@@ -11,6 +11,7 @@ import it.pagopa.swclient.mil.idpay.dao.IdpayTransaction;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
@@ -152,7 +153,7 @@ public final class TransactionsTestData {
         res.setInitiativeId("initiativeId1");
         //res.setRewardCents(123L);
         res.setStatus(TransactionStatus.CREATED);
-        res.setSecondFactor("483efab359c1");
+        res.setSecondFactor("483efab359c1".getBytes(StandardCharsets.UTF_8));
 
         return res;
     }

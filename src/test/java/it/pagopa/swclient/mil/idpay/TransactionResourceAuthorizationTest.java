@@ -3,6 +3,7 @@ package it.pagopa.swclient.mil.idpay;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
@@ -87,6 +88,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void authorizeTransactionTest_OK() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -121,6 +123,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void authorizeTransactionTest_KOIdPayFind500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
@@ -146,6 +149,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void authorizeTransactionTest_KOIdPayFind404() {
 
         idpayTransactionEntity = null;
@@ -174,6 +178,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void authorizeTransactionTest_KOTransactionNotIdentified() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.REWARDED);
@@ -202,6 +207,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void authorizeTransactionTest_KOAccessToken500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -230,6 +236,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void authorizeTransactionTest_KOUnwrapKey500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -261,6 +268,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void authorizeTransactionTest_KORetrievePublicKey500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -295,6 +303,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void authorizeTransactionTest_KOAuthorize500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -332,6 +341,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void authorizeTransactionTest_KOAuthorize400() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -379,6 +389,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void authorizeTransactionTest_KOAuthorizeOther500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -421,6 +432,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void authorizeTransactionTest_KOEncryptingSessionKey() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));

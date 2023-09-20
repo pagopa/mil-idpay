@@ -11,7 +11,6 @@ import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyRequest;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.service.AzureKeyVaultService;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.util.EncryptUtil;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.util.KidUtil;
 import it.pagopa.swclient.mil.idpay.bean.*;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayAuthorizeTransactionRestClient;
@@ -124,7 +123,7 @@ public class TransactionsService {
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
                                         .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
                                         .build());
-                            }).map(ent -> createTransactionRespFromIdpayTransactionEntity(ent, res.getQrcodeTxtUrl()));
+                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, null, res.getQrcodeTxtUrl()));
                 });
     }
 
@@ -154,7 +153,7 @@ public class TransactionsService {
         return entity;
     }
 
-    protected Transaction createTransactionFromIdpayTransactionEntity(IdpayTransactionEntity entity, String secondFactor, String qrCode) {
+    protected Transaction createTransactionFromIdpayTransactionEntity(IdpayTransactionEntity entity, byte[] secondFactor, String qrCode) {
 
         Transaction transaction = new Transaction();
 
@@ -163,7 +162,7 @@ public class TransactionsService {
         transaction.setInitiativeId(entity.idpayTransaction.getInitiativeId());
         transaction.setTimestamp(entity.idpayTransaction.getTimestamp());
         transaction.setGoodsCost(entity.idpayTransaction.getGoodsCost());
-        transaction.setChallenge(entity.idpayTransaction.getChallenge());
+        transaction.setChallenge(entity.idpayTransaction.getTrxCode().getBytes(StandardCharsets.UTF_8));
         transaction.setTrxCode(entity.idpayTransaction.getTrxCode());
         transaction.setQrCode(qrCode);
         transaction.setCoveredAmount(entity.idpayTransaction.getCoveredAmount());
@@ -198,7 +197,7 @@ public class TransactionsService {
 
                                 if (updEntity.idpayTransaction.equals(entity.idpayTransaction)) {
                                     Log.debugf("TransactionsService -> getTransaction: transaction situation is NOT changed");
-                                    return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(updEntity, res.getSecondFactor()));
+                                    return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(updEntity, res.getSecondFactor(), null));
                                 } else {
                                     Log.debugf("TransactionsService -> getTransaction: transaction situation is changed, make an update");
                                     return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
@@ -206,7 +205,7 @@ public class TransactionsService {
                                                 Log.errorf(err, "TransactionsService -> getTransaction: Error while updating transaction %s on db", entity.transactionId);
 
                                                 return updEntity;
-                                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, res.getSecondFactor()));//update ok, send response to a client
+                                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, res.getSecondFactor(), null));//update ok, send response to a client
                                 }
                             });
                 });
@@ -378,28 +377,7 @@ public class TransactionsService {
     public Uni<Response> authorizeTransaction(CommonHeader headers, AuthorizeTransaction authorizeTransaction, String milTransactionId) {
         Log.debugf("TransactionsService -> authorizeTransaction - Input parameters: %s, %s, %s", headers, milTransactionId, authorizeTransaction);
 
-        return idpayTransactionRepository.findById(milTransactionId) // Looking for MilTransactionID in DB
-                .onFailure().transform(Unchecked.function(t -> {
-
-                    // If an error occurred, return INTERNAL_SERVER_ERROR
-                    Log.errorf(t, "[%s] TransactionsService -> authorizeTransaction: Error while retrieving mil transaction [%s] from DB",
-                            ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB, milTransactionId);
-
-                    throw new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB), List.of(ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB_MSG)))
-                            .build());
-                }))
-                .onItem().ifNull().failWith(Unchecked.supplier(() -> {
-
-                    // If no transaction is found return TRANSACTION_NOT_FOUND
-                    Log.errorf("TransactionsService -> authorizeTransaction: transaction [%s] not found on mil DB", milTransactionId);
-
-                    throw new NotFoundException(Response
-                            .status(Response.Status.NOT_FOUND)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_TRANSACTION_NOT_FOUND_MIL_DB), List.of(ErrorCode.ERROR_TRANSACTION_NOT_FOUND_MIL_DB_MSG)))
-                            .build());
-                }))
+        return getIdpayTransactionEntity(milTransactionId) //looking for MilTransactionID in DB
                 .chain(Unchecked.function(dbData -> {
 
                     // Transaction found
@@ -584,26 +562,7 @@ public class TransactionsService {
     }
 
     public String getIdpayMerchantId(String merchantId, String acquirerId) {
-        String idpayMerchantId = merchantId;
-        Log.debugf("TransactionsService -> getIdpayMerchantId: idpayMerchantId [%s] retrieved for merchantId [%s] and acquirerId [%s]", idpayMerchantId, merchantId, acquirerId);
-        return idpayMerchantId;
-    }
-
-    private Transaction createTransactionFromIdpayTransactionEntity(IdpayTransactionEntity entity, byte[] secondFactor) {
-
-        Transaction transaction = new Transaction();
-
-        transaction.setIdpayTransactionId(entity.idpayTransaction.getIdpayTransactionId());
-        transaction.setMilTransactionId(entity.idpayTransaction.getMilTransactionId());
-        transaction.setInitiativeId(entity.idpayTransaction.getInitiativeId());
-        transaction.setTimestamp(entity.idpayTransaction.getTimestamp());
-        transaction.setGoodsCost(entity.idpayTransaction.getGoodsCost());
-        transaction.setTrxCode(entity.idpayTransaction.getTrxCode());
-        transaction.setCoveredAmount(entity.idpayTransaction.getCoveredAmount());
-        transaction.setSecondFactor(secondFactor);
-
-        transaction.setStatus(entity.idpayTransaction.getStatus());
-
-        return transaction;
+        Log.debugf("TransactionsService -> getIdpayMerchantId: idpayMerchantId [%s] retrieved for merchantId [%s] and acquirerId [%s]", merchantId, merchantId, acquirerId);
+        return merchantId;
     }
 }

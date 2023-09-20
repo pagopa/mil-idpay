@@ -3,6 +3,7 @@ package it.pagopa.swclient.mil.idpay;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
@@ -93,6 +94,8 @@ class TransactionResourceCIETest {
 
     /*
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+
     void authorizeTransactionTest_OK() {
 
         Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
@@ -102,6 +105,7 @@ class TransactionResourceCIETest {
     }*/
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_OK() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -138,6 +142,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOIdpayStatus() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.IDENTIFIED);
@@ -163,6 +168,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOIPZS404() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -191,6 +197,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOIPZS500() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -219,6 +226,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOIPZSTimeout() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -247,6 +255,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOIPZSLost() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -279,6 +288,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOIPZSStolen() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -311,6 +321,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOIPZSExpired() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -341,6 +352,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureAD() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -374,6 +386,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVTimeout() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -410,6 +423,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVTokenNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -442,6 +456,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_OK_AzureKV404ForCreateKey() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -477,6 +492,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KO_AzureKVCreateKey404() {
         //Log.debugf(">>>>>>>> START ");
 
@@ -517,6 +533,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKeyInvalid() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -558,6 +575,7 @@ class TransactionResourceCIETest {
 
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKeyVersionInvalid() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -597,6 +615,7 @@ class TransactionResourceCIETest {
 
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVKidNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -636,6 +655,7 @@ class TransactionResourceCIETest {
 
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVKeyOpsNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -676,6 +696,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVKeyOpsWrap() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -720,6 +741,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVKeyOpsUnwrap() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -764,6 +786,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVKeyAttrNull() {
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -802,6 +825,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVKeyEnabledNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -842,6 +866,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVKeyEnabledFalse() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -881,6 +906,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVKeyCreatedInFuture() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -922,6 +948,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVKeyCreatedNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -962,6 +989,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVKeyExpired() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1002,6 +1030,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVKeyExpiredNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1043,6 +1072,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVForbidden() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1079,6 +1109,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVGetKeyNullResponse() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1115,6 +1146,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_OK_NoPOS() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1150,6 +1182,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KO_AzureKVCreateKeyDSA() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1188,48 +1221,8 @@ class TransactionResourceCIETest {
         Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_KEY_PAIR));
     }
 
-    /*
     @Test
-    void verifyCIETest_KOAzureKeyNameVersionInvalid() {
-
-        idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
-        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
-
-        ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
-
-        azureAdAccessToken.setAccess_token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
-        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
-                .thenReturn(Uni.createFrom().item(azureAdAccessToken));
-
-        getKeyResponse.getKey().setKid(vaultUrl + "/keys/");
-        Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
-
-
-
-        Response response = given()
-                .contentType(ContentType.JSON)
-                .headers(validMilHeaders)
-                .and()
-                .body(verifyCieRequest)
-                .pathParam("transactionId", transactionId)
-                .when()
-                .post("/{transactionId}/verifyCie")
-                .then()
-                .extract()
-                .response();
-
-        getKeyResponse = TransactionsTestData.getAzureKVGetKeyResponse();
-
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
-        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
-
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_KEY_PAIR));
-
-    }*/
-
-    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVNotBeforeFuture() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1270,6 +1263,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVNotBeforeNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1310,6 +1304,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void verifyCIETest_KOAzureKVKeyDetailsNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
