@@ -3,6 +3,7 @@ package it.pagopa.swclient.mil.idpay;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.InjectMock;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.bean.Errors;
@@ -45,6 +46,7 @@ class InitiativesResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void getMerchantInitiativeListTest_OK() {
 
         Mockito.when(idpayInitiativesRestClient.getMerchantInitiativeList(Mockito.any(String.class)))
@@ -64,6 +66,7 @@ class InitiativesResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void getMerchantInitiativeListTest_KO404() {
 
         Mockito.when(idpayInitiativesRestClient.getMerchantInitiativeList(Mockito.any(String.class)))
@@ -84,6 +87,7 @@ class InitiativesResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void getMerchantInitiativeListTest_KO500() {
 
         Mockito.when(idpayInitiativesRestClient.getMerchantInitiativeList(Mockito.any(String.class)))
@@ -104,6 +108,7 @@ class InitiativesResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void getMerchantInitiativeListTest_KO500RuntimeEx() {
 
         Mockito.when(idpayInitiativesRestClient.getMerchantInitiativeList(Mockito.any(String.class)))

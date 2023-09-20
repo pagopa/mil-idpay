@@ -37,6 +37,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 
+import java.nio.charset.StandardCharsets;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -101,8 +102,7 @@ public class TransactionsService {
 
         Log.debugf("TransactionsService -> createTransaction: REQUEST to idpay [%s]", req);
 
-
-        return idpayTransactionsRestClient.createTransaction(headers.getMerchantId(), headers.getAcquirerId(), req)
+        return idpayTransactionsRestClient.createTransaction(getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId(), req)
                 .onFailure().transform(t -> {
                     Log.errorf(t, "TransactionsService -> createTransaction: idpay error response for MerchantId [%s] e timestamp [%s]", headers.getMerchantId(), createTransaction.getTimestamp());
 
@@ -124,7 +124,7 @@ public class TransactionsService {
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
                                         .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
                                         .build());
-                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, null));
+                            }).map(ent -> createTransactionRespFromIdpayTransactionEntity(ent, res.getQrcodeTxtUrl()));
                 });
     }
 
@@ -132,23 +132,18 @@ public class TransactionsService {
 
         IdpayTransaction idpayTransaction = new IdpayTransaction();
 
+        idpayTransaction.setMilTransactionId(req.getIdTrxAcquirer());
         idpayTransaction.setAcquirerId(res.getAcquirerId());
         idpayTransaction.setChannel(headers.getChannel());
-        idpayTransaction.setMerchantId(res.getMerchantId());
+        idpayTransaction.setMerchantId(headers.getMerchantId());
         idpayTransaction.setTerminalId(headers.getTerminalId());
+        idpayTransaction.setIdpayMerchantId(res.getMerchantId());
         idpayTransaction.setIdpayTransactionId(res.getId());
-
-        idpayTransaction.setMilTransactionId(req.getIdTrxAcquirer());
-
         idpayTransaction.setInitiativeId(res.getInitiativeId());
         idpayTransaction.setTimestamp(createTransaction.getTimestamp());
         idpayTransaction.setGoodsCost(createTransaction.getGoodsCost());
-        idpayTransaction.setChallenge(null);
         idpayTransaction.setTrxCode(res.getTrxCode());
-        idpayTransaction.setQrCode(null);
-        idpayTransaction.setCoveredAmount(null);
         idpayTransaction.setStatus(res.getStatus());
-        idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
 
         IdpayTransactionEntity entity = new IdpayTransactionEntity();
 
@@ -159,7 +154,7 @@ public class TransactionsService {
         return entity;
     }
 
-    protected Transaction createTransactionFromIdpayTransactionEntity(IdpayTransactionEntity entity, String secondFactor) {
+    protected Transaction createTransactionFromIdpayTransactionEntity(IdpayTransactionEntity entity, String secondFactor, String qrCode) {
 
         Transaction transaction = new Transaction();
 
@@ -170,7 +165,7 @@ public class TransactionsService {
         transaction.setGoodsCost(entity.idpayTransaction.getGoodsCost());
         transaction.setChallenge(entity.idpayTransaction.getChallenge());
         transaction.setTrxCode(entity.idpayTransaction.getTrxCode());
-        transaction.setQrCode(entity.idpayTransaction.getQrCode());
+        transaction.setQrCode(qrCode);
         transaction.setCoveredAmount(entity.idpayTransaction.getCoveredAmount());
         transaction.setStatus(entity.idpayTransaction.getStatus());
         transaction.setLastUpdate(entity.idpayTransaction.getLastUpdate());
@@ -187,10 +182,10 @@ public class TransactionsService {
             .chain(entity -> { //Transaction found
                 Log.debugf("TransactionsService -> getTransaction: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
-                //call idpay to retrieve current state
-                return idpayTransactionsRestClient.getStatusTransaction(headers.getMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
-                        .onFailure().transform(t -> {
-                            Log.errorf(t, "TransactionsService -> getTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                    //call idpay to retrieve current state
+                    return idpayTransactionsRestClient.getStatusTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                            .onFailure().transform(t -> {
+                                Log.errorf(t, "TransactionsService -> getTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
                             return new InternalServerErrorException(Response
                                     .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -199,29 +194,50 @@ public class TransactionsService {
                         }).chain(res -> { //response ok
                             Log.debugf("TransactionsService -> getTransaction: idpay getStatusTransaction service returned a 200 status, response: [%s]", res);
 
-                            IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(entity, res);
+                                IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(headers, entity, res);
 
-                            //update ok, invio la risposta al client
-                            return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
-                                    .onFailure().recoverWithItem(err-> {
-                                        Log.errorf(err, "TransactionsService -> getTransaction: Error while updating transaction %s on db", entity.transactionId);
+                                if (updEntity.idpayTransaction.equals(entity.idpayTransaction)) {
+                                    Log.debugf("TransactionsService -> getTransaction: transaction situation is NOT changed");
+                                    return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(updEntity, res.getSecondFactor()));
+                                } else {
+                                    Log.debugf("TransactionsService -> getTransaction: transaction situation is changed, make an update");
+                                    return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
+                                            .onFailure().recoverWithItem(err -> {
+                                                Log.errorf(err, "TransactionsService -> getTransaction: Error while updating transaction %s on db", entity.transactionId);
 
-                                        return updEntity;
-                                    }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, res.getSecondFactor()));//update ok, invio la risposta al client
-                        });
-            });
+                                                return updEntity;
+                                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, res.getSecondFactor()));//update ok, send response to a client
+                                }
+                            });
+                });
     }
 
-    protected IdpayTransactionEntity updateIdpayTransactionEntity(IdpayTransactionEntity entity, SyncTrxStatus res) {
-        entity.idpayTransaction.setAcquirerId(res.getAcquirerId());
-        entity.idpayTransaction.setMerchantId(res.getMerchantId());
-        entity.idpayTransaction.setIdpayTransactionId(res.getId());
-        entity.idpayTransaction.setInitiativeId(res.getInitiativeId());
-        entity.idpayTransaction.setTrxCode(res.getTrxCode());
-        entity.idpayTransaction.setStatus(res.getStatus());
-        entity.idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
+    protected IdpayTransactionEntity updateIdpayTransactionEntity(CommonHeader headers, IdpayTransactionEntity entity, SyncTrxStatus res) {
 
-        return entity;
+        IdpayTransaction idpayTransaction = new IdpayTransaction();
+
+        idpayTransaction.setMilTransactionId(entity.idpayTransaction.getMilTransactionId());
+        idpayTransaction.setAcquirerId(res.getAcquirerId());
+        idpayTransaction.setChannel(headers.getChannel());
+        idpayTransaction.setMerchantId(headers.getMerchantId());
+        idpayTransaction.setTerminalId(headers.getTerminalId());
+        idpayTransaction.setIdpayMerchantId(res.getMerchantId());
+        idpayTransaction.setIdpayTransactionId(res.getId());
+        idpayTransaction.setInitiativeId(res.getInitiativeId());
+        idpayTransaction.setTimestamp(entity.idpayTransaction.getTimestamp());
+        idpayTransaction.setGoodsCost(entity.idpayTransaction.getGoodsCost());
+        idpayTransaction.setTrxCode(res.getTrxCode());
+        idpayTransaction.setStatus(res.getStatus());
+        idpayTransaction.setCoveredAmount(res.getRewardCents());
+        idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
+
+        IdpayTransactionEntity trEntity = new IdpayTransactionEntity();
+
+        trEntity.transactionId = entity.transactionId;
+
+        trEntity.idpayTransaction = idpayTransaction;
+
+        return trEntity;
     }
 
 
@@ -233,10 +249,10 @@ public class TransactionsService {
             .chain(entity -> { //Transaction found
                 Log.debugf("TransactionsService -> cancelTransaction: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
-                //call idpay to cancel transaction
-                return idpayTransactionsRestClient.deleteTransaction(headers.getMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
-                        .onFailure().transform(t -> {
-                            Log.errorf(t, "TransactionsService -> cancelTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                    //call idpay to cancel transaction
+                    return idpayTransactionsRestClient.deleteTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                            .onFailure().transform(t -> {
+                                Log.errorf(t, "TransactionsService -> cancelTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
                             return new InternalServerErrorException(Response
                                     .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -565,5 +581,29 @@ public class TransactionsService {
                             .entity(new Errors(List.of(ErrorCode.ERROR_TRANSACTION_NOT_FOUND_MIL_DB), List.of(ErrorCode.ERROR_TRANSACTION_NOT_FOUND_MIL_DB_MSG)))
                             .build());
                 });
+    }
+
+    public String getIdpayMerchantId(String merchantId, String acquirerId) {
+        String idpayMerchantId = merchantId;
+        Log.debugf("TransactionsService -> getIdpayMerchantId: idpayMerchantId [%s] retrieved for merchantId [%s] and acquirerId [%s]", idpayMerchantId, merchantId, acquirerId);
+        return idpayMerchantId;
+    }
+
+    private Transaction createTransactionFromIdpayTransactionEntity(IdpayTransactionEntity entity, byte[] secondFactor) {
+
+        Transaction transaction = new Transaction();
+
+        transaction.setIdpayTransactionId(entity.idpayTransaction.getIdpayTransactionId());
+        transaction.setMilTransactionId(entity.idpayTransaction.getMilTransactionId());
+        transaction.setInitiativeId(entity.idpayTransaction.getInitiativeId());
+        transaction.setTimestamp(entity.idpayTransaction.getTimestamp());
+        transaction.setGoodsCost(entity.idpayTransaction.getGoodsCost());
+        transaction.setTrxCode(entity.idpayTransaction.getTrxCode());
+        transaction.setCoveredAmount(entity.idpayTransaction.getCoveredAmount());
+        transaction.setSecondFactor(secondFactor);
+
+        transaction.setStatus(entity.idpayTransaction.getStatus());
+
+        return transaction;
     }
 }

@@ -31,5 +31,5 @@ public class SyncTrxStatus {
     private Long rewardCents;
     private List<String> rejectionReasons;
     private TransactionStatus status;
-    private String secondFactor;
+    private byte[] secondFactor;
 }

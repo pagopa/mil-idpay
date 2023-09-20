@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: IDPay Microservice
-  version: 1.1.1-RC
+  version: 2.0.0-RC
   description: IDPay Microservice for Multi-channel Integration Layer of SW Client Project
   contact:
     name: Antonio Tarricone
@@ -296,6 +296,7 @@ components:
       format: byte  # Base64 URL safe
       minLength: 16 # bytes
       maxLength: 16 # bytes
+      example: "MDAwMTAyMDMwNDA1MDYwNzA4MDkwQTBCMEMwRDBFMEY="
     
     Challenge:
       description: Challenge to authenticate the CIE
@@ -303,6 +304,7 @@ components:
       format: byte  # Base64 URL safe
       minLength:  8 # bytes
       maxLength: 16 # bytes
+      example: "NzI3NzZCNkQ2NTZCMzE3OA=="
       
     Channel:
       description: Channel originating the request
@@ -313,7 +315,7 @@ components:
         - CASH_REGISTER
         - CSA
       type: string
-      example: "ATM"
+      example: "POS"
     
     CiePublicKey:
       description: Public key read from the CIE
@@ -327,6 +329,7 @@ components:
       format: int64
       minimum: 0
       maximum: 99999999999
+      example: 10012
     
     EncryptedSessionKey:
       description: Encrypted session key
@@ -334,6 +337,7 @@ components:
       format: byte    # Base64 URL safe
       minLength:  256 # bytes  
       maxLength: 2048 # bytes
+      example: "et2j4kthRmeuc5uzCLi9dE9LeQKCsqbTNxNDwrJ-mBFA4UZQaXS1hdRw6ygXoH6Ra1uciDMDHpbg7DJoYfis_foMzk3gIQxrGkmcbsPkC2ieklIpOf021smzd_pSFJ580XQzwOJCli762aRByuNQAVFismcRhkSCad8fcRe7TgevephXcrbrjr25eCRgvmACESfrydnopO5g6yIkINpzuK9wP4ljDZTO90hP-_uRrfrgjwdxa6vv-qilYqvC4RPL7HR7eEbxkHFvsri7F7J9QDp5GsAJK1Bh4EdaLyl6MwYW1sEFnpQ-27_xtvFbwFANdB70cxsosvNsRueMjh9s-2rhgPZIT_YyHn3s394OOOKql5Umamn6pvcejPgXnXY0nRmSHCDoSUzNzEnQb1sxhuDpvQLQpWsKD3DESIjaDBq7sSvpBsoOg1ybnMccWiaIIRXCpYJU8aPhrkVTR-AczxwfwKtcCipLk3CiEjv6iu6PxfO62BGGRSUpe_m_HfU02DmT4qa6wUHbg0Sy3NBwBNvBVOVVIfwzmxZcQ6D5MhJaPSlfzcp4iTLk2a3eQU0bvJ3WsTdKhwuK6VgB2IV99i4ZX_bnxBaqKOzc1I3StTPGVAVCMjsTXGy0OyHDOtJv5A4N18r8rHyIVfzOuBEDa05_cp3ceHtrE8Dl5KzjFbY"
     
     Error:
       description: Error code
@@ -353,6 +357,7 @@ components:
       format: int64
       minimum: 0
       maximum: 99999999999
+      example: 50054
     
     Iat:
       description: Issued at timestamp (epoch millis) of master key
@@ -364,16 +369,19 @@ components:
       description: ID of the transaction for IDPay
       type: string
       pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+      example: "613691ec-15d5-456e-a41c-e469fa4dd060_QRCODE_1694181289491"
     
     InitiativeId:
       description: ID of the initiative.
       type: string
       pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+      example: "649c50b5a03f655e6543af06"
 
     InitiativeName:
       description: Name of the initiative.
       type: string
       pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+      example: "Test funzionali Sconto tipo 6"
     
     KeyOp:
       description: Operation that can be executed
@@ -396,12 +404,6 @@ components:
       pattern: "^[ -~]{1,2048}$"
       example: "d0d654e697da4848b56899fedccb642b/4536def850ac6e9830f"
       
-    LastUpdateTimestamp:
-      description: Timestamp of the last update of stored transaction data
-      type: string
-      format: date-time
-      maxLength: 19
-      
     MaxRetries:
       description: Max number of retries to check the status of the transaction
       type: integer
@@ -418,7 +420,8 @@ components:
     MilTransactionId:
       description: ID of the transaction for MIL
       type: string
-      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+      pattern: "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+      example: "ccadc1c4-3913-431e-a569-6cf2ce60946c"
     
     Modulus:
       description: Modulus of master key
@@ -431,11 +434,13 @@ components:
       description: Numero identificativo servizi read from the CIE
       type: string
       pattern: "^[0-9]{12}$"
+      example: "123456789012"
       
     Organization:
       description: Name of the governmental organization that makes the initiative
       type: string
       pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+      example: "Ente di test IDPay"
     
     PublicExponent:
       description: Public key exponent
@@ -456,6 +461,7 @@ components:
       description: String to be encoded in the QR-code
       type: string
       pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+      example: "https://continua.io.pagopa.it/idpay/auth/rwkmek1x"
 
     RequestId:
       description: ID of the request
@@ -474,8 +480,10 @@ components:
     SecondFactor:
       description: Second factor to build authorization code block
       type: string
-      pattern: "^[a-fA-F0-9]{12}$"
-      example: "483efab359c1"
+      format: byte # Base64 URL safe
+      minLength: 6 # bytes -> 8 chars when encoded with Base64
+      maxLength: 6 # bytes -> 8 chars when encoded with Base64
+      example: "SD76s1nB"
     
     Signature:
       description: Signature of the challenge calculated by the CIE
@@ -499,19 +507,21 @@ components:
       description: Fallback code to use when IO cannot read the QR-code
       type: string
       pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
+      example: "rwkmek1x"
     
     TransactionLocation:
       description: URL of the transaction
       type: string
       format: uri
       pattern: "^[ -~]{1,2048}$"
+      example: "https://mil-d-apim.azure-api.net/mil-idpay/transactions/c7a1b24b-0583-4772-92eb-dbaa92fd8f16"
     
     TransactionStatus:
       description: Status of the transaction
       type: string
       enum:
         - CREATED       # CREATED -> IDENTIFIED -> CREATED : Transaction has not been authorized by the User
-        - IDENTIFIED    # QR-code has been read by App IO or IPZS verified CIE successfully
+        - IDENTIFIED    # QR-code has been read by App IO or IPZS has verified CIE successfully
         - AUTHORIZED    # CREATED -> IDENTIFIED -> AUTHORIZED : Transaction has been authorized by the User
         - REJECTED
         - REWARDED
@@ -521,6 +531,7 @@ components:
       type: string
       format: date-time
       maxLength: 19
+      example: "2023-09-11T12:45:33"
     
     Version:
       description: Version of the required API
@@ -560,7 +571,7 @@ components:
       required:
         - authCodeBlockData
           
-    CreateTransaction:
+    CreateTransactionReq:
       description: Details to create a new IDPay transaction
       type: object
       additionalProperties: false
@@ -575,6 +586,50 @@ components:
         - initiativeId
         - timestamp
         - goodsCost
+
+    CreateTransactionResp:
+      description: Details returned when a new IDPay transaction has been created
+      type: object
+      additionalProperties: false
+      properties:
+        idpayTransactionId:
+          $ref: '#/components/schemas/IdPayTransactionId'
+        milTransactionId:
+          $ref: '#/components/schemas/MilTransactionId'
+        initiativeId:
+          $ref: '#/components/schemas/InitiativeId'
+        timestamp:
+          $ref: '#/components/schemas/TransactionTimestamp'
+        goodsCost:
+          $ref: '#/components/schemas/GoodsCost'
+        challenge:
+          $ref: '#/components/schemas/Challenge'
+        trxCode:
+          $ref: '#/components/schemas/TransactionCode'
+        qrCode:
+          $ref: '#/components/schemas/QrCode'
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+      required:
+        - idpayTransactionId
+        - milTransactionId
+        - initiativeId
+        - timestamp
+        - goodsCost
+        - challenge
+        - trxCode
+        - qrCode
+        - status
+      example:
+        idpayTransactionId: "613691ec-15d5-456e-a41c-e469fa4dd060_QRCODE_1694181289491"
+        milTransactionId: "ccadc1c4-3913-431e-a569-6cf2ce60946c"
+        initiativeId: "649c50b5a03f655e6543af06"
+        timestamp: "2023-09-11T12:45:33"
+        goodsCost: 50054
+        challenge: "NzI3NzZCNkQ2NTZCMzE3OA=="
+        trxCode: "rwkmek1x"
+        qrCode: "https://continua.io.pagopa.it/idpay/auth/rwkmek1x"
+        status: "CREATED"
       
     Errors:
       description: List of errors
@@ -695,30 +750,32 @@ components:
           $ref: '#/components/schemas/TransactionTimestamp'
         goodsCost:
           $ref: '#/components/schemas/GoodsCost'
-        challenge:
-          $ref: '#/components/schemas/Challenge'
         trxCode:
           $ref: '#/components/schemas/TransactionCode'
-        qrCode:
-          $ref: '#/components/schemas/QrCode'
         coveredAmount:
           $ref: '#/components/schemas/CoveredAmount'
-        status:
-          $ref: '#/components/schemas/TransactionStatus'
-        lastUpdate:
-          $ref: '#/components/schemas/LastUpdateTimestamp'
         secondFactor:
           $ref: '#/components/schemas/SecondFactor'
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
       required:
         - idpayTransactionId
         - milTransactionId
         - initiativeId
         - timestamp
         - goodsCost
-        - challenge
-        - qrCode
-        - coveredAmount
+        - trxCode
         - status
+      example:
+        idpayTransactionId: "613691ec-15d5-456e-a41c-e469fa4dd060_QRCODE_1694181289491"
+        milTransactionId: "ccadc1c4-3913-431e-a569-6cf2ce60946c"
+        initiativeId: "649c50b5a03f655e6543af06"
+        timestamp: "2023-09-11T12:45:33"
+        goodsCost: 50054
+        trxCode: "rwkmek1x"
+        coveredAmount: 10012
+        secondFactor: ""
+        status: "IDENTIFIED"
     
     Transactions:
       description: Details of transactions
@@ -768,7 +825,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CreateTransaction'
+            $ref: '#/components/schemas/CreateTransactionReq'
 
     VerifyCie:
       description: Request to verify CIE
@@ -858,7 +915,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Transaction'
+            $ref: '#/components/schemas/CreateTransactionResp'
     
     Error:
       description: Error response
