@@ -62,7 +62,7 @@ public class AzureKeyVaultService {
 
         Log.debugf("AzureKeyVaultService -> getAzureKVKey: call Azure Key Vault for keyName: [%s]", keyName);
 
-        return azureKeyVaultClient.getKey(BEARER + accessToken, keyName)
+        return azureKeyVaultClient.getKey(BEARER + accessToken.getAccess_token(), keyName)
                 .onItemOrFailure()
                     .transformToUni((getKeyResponse, error) -> {
                         if (error != null && !(error instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404)) {
@@ -91,7 +91,7 @@ public class AzureKeyVaultService {
 
         CreateKeyRequest createKeyRequest = new CreateKeyRequest(RSA, keysize, OPS, attributes);
 
-        return azureKeyVaultClient.createKey(BEARER + accessToken, keyName, createKeyRequest)
+        return azureKeyVaultClient.createKey(BEARER + accessToken.getAccess_token(), keyName, createKeyRequest)
                 .onFailure().transform(t -> {
                     Log.errorf(t, "[%s] AzureKeyVaultService -> createAzureKVKey: Azure Key Vault error response for keyName [%s]", ErrorCode.ERROR_GENERATING_KEY_PAIR, keyName);
                     throw new InternalServerErrorException(Response
