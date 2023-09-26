@@ -123,7 +123,7 @@ public class TransactionsService {
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
                                         .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
                                         .build());
-                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, null, res.getQrcodeTxtUrl()));
+                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, null, res.getQrcodeTxtUrl(), true));
                 });
     }
 
@@ -153,7 +153,7 @@ public class TransactionsService {
         return entity;
     }
 
-    protected Transaction createTransactionFromIdpayTransactionEntity(IdpayTransactionEntity entity, byte[] secondFactor, String qrCode) {
+    protected Transaction createTransactionFromIdpayTransactionEntity(IdpayTransactionEntity entity, byte[] secondFactor, String qrCode, boolean createTransaction) {
 
         Transaction transaction = new Transaction();
 
@@ -162,7 +162,9 @@ public class TransactionsService {
         transaction.setInitiativeId(entity.idpayTransaction.getInitiativeId());
         transaction.setTimestamp(entity.idpayTransaction.getTimestamp());
         transaction.setGoodsCost(entity.idpayTransaction.getGoodsCost());
-        transaction.setChallenge(entity.idpayTransaction.getTrxCode().getBytes(StandardCharsets.UTF_8));
+        if (createTransaction) {
+            transaction.setChallenge(entity.idpayTransaction.getTrxCode().getBytes(StandardCharsets.UTF_8));
+        }
         transaction.setTrxCode(entity.idpayTransaction.getTrxCode());
         transaction.setQrCode(qrCode);
         transaction.setCoveredAmount(entity.idpayTransaction.getCoveredAmount());
@@ -197,7 +199,7 @@ public class TransactionsService {
 
                                 if (updEntity.idpayTransaction.equals(entity.idpayTransaction)) {
                                     Log.debugf("TransactionsService -> getTransaction: transaction situation is NOT changed");
-                                    return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(updEntity, res.getSecondFactor(), null));
+                                    return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(updEntity, res.getSecondFactor(), null, false));
                                 } else {
                                     Log.debugf("TransactionsService -> getTransaction: transaction situation is changed, make an update");
                                     return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
@@ -205,7 +207,7 @@ public class TransactionsService {
                                                 Log.errorf(err, "TransactionsService -> getTransaction: Error while updating transaction %s on db", entity.transactionId);
 
                                                 return updEntity;
-                                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, res.getSecondFactor(), null));//update ok, send response to a client
+                                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, res.getSecondFactor(), null, false));//update ok, send response to a client
                                 }
                             });
                 });
