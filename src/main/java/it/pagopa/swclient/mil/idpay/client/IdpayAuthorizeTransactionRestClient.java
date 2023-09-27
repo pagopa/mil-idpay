@@ -18,7 +18,7 @@ public interface IdpayAuthorizeTransactionRestClient {
     Uni<PublicKeyIDPay> retrieveIdpayPublicKey();
 
     @POST
-    @Path("idpay/mil/payment/cie/{idpayTransactionId}/authorize")
+    @Path("/idpay/mil/payment/cie/{idpayTransactionId}/authorize")
     @ClientHeaderParam(name = "Ocp-Apim-Subscription-Key", value = "${idpay-rest-client.apim-subscription-key}", required = false)
     Uni<AuthTransactionResponse> authorize(@HeaderParam("x-merchant-id") @NotNull String xMerchantId, @HeaderParam("x-acquirer-id") String xAcquirerId, AuthorizeTransaction authorizeTransaction);
 }
