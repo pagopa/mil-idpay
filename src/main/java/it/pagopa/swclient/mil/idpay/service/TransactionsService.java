@@ -499,7 +499,7 @@ public class TransactionsService {
     }
 
     private Uni<Response> authorize(IdpayTransactionEntity dbData, AuthorizeTransaction authorize) {
-            return idpayAuthorizeTransactionRestClient.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), authorize)
+            return idpayAuthorizeTransactionRestClient.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), authorize)
                     .onFailure().transform(Unchecked.function(t -> {
 
                         // Error 500 while trying to authorize transaction
