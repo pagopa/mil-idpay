@@ -2,6 +2,7 @@ package it.pagopa.swclient.mil.idpay.azurekeyvault.service;
 
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.unchecked.Unchecked;
 import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.bean.Errors;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
@@ -64,7 +65,7 @@ public class AzureKeyVaultService {
 
         return azureKeyVaultClient.getKey(BEARER + accessToken.getAccess_token(), keyName)
                 .onItemOrFailure()
-                    .transformToUni((getKeyResponse, error) -> {
+                    .transformToUni(Unchecked.function((getKeyResponse, error) -> {
                         if (error != null && !(error instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404)) {
                             Log.errorf(error, "AzureKeyVaultService -> getAzureKVKey: Azure Key Vault error response for keyName [%s]", keyName);
 
@@ -77,7 +78,7 @@ public class AzureKeyVaultService {
                         } else {
                             return Uni.createFrom().item(getPublicKey(getKeyResponse));
                         }
-                    });
+                    }));
 
     }
 
@@ -92,14 +93,14 @@ public class AzureKeyVaultService {
         CreateKeyRequest createKeyRequest = new CreateKeyRequest(RSA, keysize, OPS, attributes);
 
         return azureKeyVaultClient.createKey(BEARER + accessToken.getAccess_token(), keyName, createKeyRequest)
-                .onFailure().transform(t -> {
+                .onFailure().transform(Unchecked.function(t -> {
                     Log.errorf(t, "[%s] AzureKeyVaultService -> createAzureKVKey: Azure Key Vault error response for keyName [%s]", ErrorCode.ERROR_GENERATING_KEY_PAIR, keyName);
                     throw new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR), List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR_MSG)))
                             .build());
-                })
-                .map(this::getPublicKey);
+                }))
+                .map(this::generateKVKey);
     }
 
     private boolean isKeyValid(DetailedKey key) {
@@ -138,11 +139,6 @@ public class AzureKeyVaultService {
         }
     }
 
-    /**
-     * @param kid
-     * @param attributes
-     * @return
-     */
     private boolean isKeyValid(String kid, KeyAttributes attributes) {
         if (attributes == null) {
             Log.errorf("The key [%s] has null attributes.", kid);
@@ -199,21 +195,9 @@ public class AzureKeyVaultService {
     }
 
     private PublicKeyIDPay getPublicKey(DetailedKey key) {
-        ArrayList<KeyOp> keyOps = new ArrayList<>();
-        keyOps.add(KeyOp.wrapKey);
-
+        Log.debugf("Check if key [%s] is valid.", key);
         if (isKeyValid(key)) {
-            KeyNameAndVersion keyNameAndVersion = kidUtil.getNameAndVersionFromAzureKid(key.getDetails().getKid());
-
-            return new PublicKeyIDPay(
-                    key.getDetails().getExponent(),
-                    PublicKeyUse.enc,
-                    kidUtil.getMyKidFromNameAndVersion(keyNameAndVersion),
-                    key.getDetails().getModulus(),
-                    KeyType.RSA,
-                    key.getAttributes().getExp(),
-                    key.getAttributes().getCreated(),
-                    keyOps);
+            return generateKVKey(key);
         } else {
             String message = String.format("[%s] Error generating the key pair: invalid key pair has been generated.", ErrorCode.ERROR_GENERATING_KEY_PAIR);
             Log.fatal(message);
@@ -222,5 +206,22 @@ public class AzureKeyVaultService {
                     .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR), List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR_MSG)))
                     .build());
         }
+    }
+
+    private PublicKeyIDPay generateKVKey(DetailedKey key) {
+        ArrayList<KeyOp> keyOps = new ArrayList<>();
+        keyOps.add(KeyOp.wrapKey);
+
+        KeyNameAndVersion keyNameAndVersion = kidUtil.getNameAndVersionFromAzureKid(key.getDetails().getKid());
+
+        return new PublicKeyIDPay(
+                key.getDetails().getExponent(),
+                PublicKeyUse.enc,
+                kidUtil.getMyKidFromNameAndVersion(keyNameAndVersion),
+                key.getDetails().getModulus(),
+                KeyType.RSA,
+                key.getAttributes().getExp(),
+                key.getAttributes().getCreated(),
+                keyOps);
     }
 }

@@ -292,7 +292,7 @@ public class TransactionsService {
             .chain(entity -> { //Transaction found
                 Log.debugf("TransactionsService -> verifyCie: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
                 return this.callIpzs(entity, verifyCie, transactionId);
-                }).chain(res -> {//response ok
+                }).chain(Unchecked.function(res -> {//response ok
                     Log.debugf("TransactionsService -> verifyCie: IPZS identitycards service returned a 200 status, response: [%s]", res);
 
                     if (!Outcome.OK.equals(res.getOutcome())) {//if ipzs answers with HTTP 200 and outcome = LOST, STOLEN or EXPIRED, return HTTP 400 (bad request) with error body
@@ -324,7 +324,7 @@ public class TransactionsService {
                                             });
                                 });
                     }
-            });
+            }));
     }
 
     protected IpzsVerifyCieRequest createIpzsVerifyCieRequest(VerifyCie verifyCie, String trxCode) {
