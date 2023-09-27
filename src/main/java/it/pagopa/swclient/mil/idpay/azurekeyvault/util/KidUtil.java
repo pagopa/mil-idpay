@@ -1,13 +1,12 @@
 package it.pagopa.swclient.mil.idpay.azurekeyvault.util;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.KeyNameAndVersion;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -32,7 +31,7 @@ public class KidUtil {
     @PostConstruct
     void init() {
         String temp = (vaultBaseUrl + "/keys/").replace("//keys", "/keys");
-        patternForAzureKidWithNameAndVersion = Pattern.compile("^" + Pattern.quote(temp) + "(?<name>\\w+)\\/(?<version>\\w+)$");
+        patternForAzureKidWithNameAndVersion = Pattern.compile("^" + Pattern.quote(temp) + "(?<name>[\\w-]+)\\/(?<version>[\\w-]+)$");
     }
 
     /**

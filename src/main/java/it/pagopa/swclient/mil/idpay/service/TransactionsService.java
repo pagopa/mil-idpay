@@ -86,6 +86,8 @@ public class TransactionsService {
     @ConfigProperty(name="azuread.tenant-id")
     String azureADTenantId;
 
+    private static final String BEARER = "Bearer ";
+
     private static final String CLIENT_CREDENTIALS = "client_credentials";
 
     private static final String VAULT = "https://vault.azure.net/.default";
@@ -169,7 +171,6 @@ public class TransactionsService {
         transaction.setQrCode(qrCode);
         transaction.setCoveredAmount(entity.idpayTransaction.getCoveredAmount());
         transaction.setStatus(entity.idpayTransaction.getStatus());
-        transaction.setLastUpdate(entity.idpayTransaction.getLastUpdate());
         transaction.setSecondFactor(secondFactor);
 
         return transaction;
@@ -470,7 +471,7 @@ public class TransactionsService {
                 .value(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey())
                 .build();
 
-        return azureKeyVaultClient.unwrapKey(token.getAccess_token(), authorizeTransaction.getAuthCodeBlockData().getKid(), unwrapKeyRequest)
+        return azureKeyVaultClient.unwrapKey(BEARER + token.getAccess_token(), authorizeTransaction.getAuthCodeBlockData().getKid(), unwrapKeyRequest)
                 .onFailure().transform(Unchecked.function(t -> {
 
                     // If unwrap key kails, return INTERNAL_SERVER_ERROR
