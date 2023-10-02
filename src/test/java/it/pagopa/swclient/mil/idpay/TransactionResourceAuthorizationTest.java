@@ -102,7 +102,7 @@ class TransactionResourceAuthorizationTest {
         Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
                         .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
+        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
                 .thenReturn(Uni.createFrom().item(authTransactionResponse));
 
 
@@ -317,7 +317,7 @@ class TransactionResourceAuthorizationTest {
         Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
+        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
 
@@ -362,7 +362,7 @@ class TransactionResourceAuthorizationTest {
                 .message("Wrong Authorization Code")
                 .build());
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
+        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
                 .thenReturn(Uni.createFrom().item(authTransactionResponse));
 
 
@@ -406,7 +406,7 @@ class TransactionResourceAuthorizationTest {
         authTransactionResponse.setAuthTransactionResponseOk(null);
         authTransactionResponse.setAuthTransactionResponseWrong(null);
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
+        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
                 .thenReturn(Uni.createFrom().item(authTransactionResponse));
 
 
