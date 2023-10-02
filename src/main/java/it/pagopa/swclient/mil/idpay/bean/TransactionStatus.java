@@ -10,5 +10,7 @@ public enum TransactionStatus {
 
     REJECTED,
 
-    REWARDED;
+    REWARDED,
+
+    CANCELLED
 }

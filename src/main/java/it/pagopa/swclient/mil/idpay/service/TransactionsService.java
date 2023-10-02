@@ -278,7 +278,7 @@ public class TransactionsService {
     }
 
     protected IdpayTransactionEntity updateCancelIdpayTransactionEntity(IdpayTransactionEntity entity) {
-        entity.idpayTransaction.setStatus(TransactionStatus.REJECTED);
+        entity.idpayTransaction.setStatus(TransactionStatus.CANCELLED);
         entity.idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
 
         return entity;
