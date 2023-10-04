@@ -188,14 +188,11 @@ class TransactionsResourceTest {
     @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void getStatusTransactionTest_OK_notChanged() {
 
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
-                .thenReturn(Uni.createFrom().item(syncTrxStatusNotChanged));
-
+        idpayTransactionEntity = TransactionsTestData.getTransactionEntity(validMilHeaders, createTransactionRequest, transactionResponse);
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
-        IdpayTransactionEntity updEntity = idpayTransactionEntity;
-
-        Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(syncTrxStatusNotChanged));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -212,7 +209,6 @@ class TransactionsResourceTest {
         Assertions.assertNull(response.jsonPath().getList("errors"));
 
         Assertions.assertEquals(TransactionStatus.CREATED.toString(), response.jsonPath().getString("status"));
-        //Assertions.assertEquals("Updated Transaction for getStatusTransactionTest", response.jsonPath().getString("trxCode"));
 
     }
 
@@ -302,9 +298,6 @@ class TransactionsResourceTest {
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
-
-        IdpayTransactionEntity updEntity = idpayTransactionEntity;
-        //updEntity.idpayTransaction.setTrxCode("Updated Transaction for getStatusTransactionTest");
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().failure(new TimeoutException()));
 

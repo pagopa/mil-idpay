@@ -15,7 +15,7 @@ import java.util.List;
 public interface IdpayInitiativesRestClient {
 
     @GET
-    @Path("/initiatives")
+    @Path("/idpay/mil/payment/qr-code/merchant/initiatives")
     @ClientHeaderParam(name = "Ocp-Apim-Subscription-Key", value = "${idpay-rest-client.apim-subscription-key}", required = false)
     Uni<List<InitiativeDTO>> getMerchantInitiativeList(@HeaderParam("x-merchant-id") @NotNull String idpayMerchantId);
 }

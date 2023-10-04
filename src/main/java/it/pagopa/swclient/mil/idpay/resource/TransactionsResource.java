@@ -5,7 +5,9 @@ import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
 import it.pagopa.swclient.mil.idpay.IdpayConstants;
+import it.pagopa.swclient.mil.idpay.bean.AuthorizeTransaction;
 import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
+import it.pagopa.swclient.mil.idpay.bean.VerifyCie;
 import it.pagopa.swclient.mil.idpay.service.TransactionsService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -42,7 +44,6 @@ public class TransactionsResource {
      */
     @ConfigProperty(name="idpay.transaction.location.base-url")
     String idpayTransactionLocationBaseURL;
-
 
     @POST
     @Path("/")
@@ -112,5 +113,52 @@ public class TransactionsResource {
         return URI.create(idpayTransactionLocationBaseURL + "/transactions/" + milTransactionId);
     }
 
+    @POST
+    @Path("/{transactionId}/verifyCie")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({"PayWithIDPay"})
+    public Uni<Response> verifyCie(
+            @Valid @BeanParam CommonHeader headers,
+            @Pattern(regexp = IdpayConstants.TRANSACTION_ID_REGEX,
+                    message = "[" + ErrorCode.ERROR_TRANSACTION_ID_MUST_MATCH_REGEXP + "] transactionId must match \"{regexp}\"")
+            @PathParam(value = "transactionId") String transactionId,
+            @Valid
+            @NotNull(message = "[" + ErrorCode.VERIFY_CIE_MUST_NOT_BE_EMPTY + "] request must not be empty")
+            VerifyCie verifyCie) {
+
+        Log.debugf("TransactionsResource -> verifyCie - Input verifyCie: %s, %s", headers, verifyCie);
+
+        return transactionsService.verifyCie(headers, transactionId, verifyCie).chain(res -> {
+            Log.debugf("TransactionsResource -> TransactionsService -> verifyCie - Response %s", res);
+
+            Response.ResponseBuilder responseBuilder = Response.status(Status.OK);
+            responseBuilder
+                    .location(getTransactionURI(transactionId))
+                    .header("Retry-After", idpayTransactionRetryAfter)
+                    .header("Max-Retries", idpayTransactionMaxRetry);
+
+            return Uni.createFrom().item(responseBuilder.entity(res).build());
+        });
+    }
+
+    @POST
+    @Path("/{milTransactionId}/authorize")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({"PayWithIDPay"})
+    public Uni<Response> authorizeTransaction(
+            @Valid @BeanParam CommonHeader headers,
+            @Valid @NotNull AuthorizeTransaction authorizeTransaction,
+            @PathParam(value = "milTransactionId") String milTransactionId) {
+
+        Log.debugf("TransactionsResource -> authorizeTransaction - Input authorizeTransaction: %s, %s", headers, authorizeTransaction);
+
+        return transactionsService.authorizeTransaction(headers, authorizeTransaction, milTransactionId).chain(res -> {
+            Log.debugf("TransactionsResource -> TransactionsService -> authorizeTransaction - Response %s", res);
+
+            return Uni.createFrom().item(res);
+        });
+    }
 
 }

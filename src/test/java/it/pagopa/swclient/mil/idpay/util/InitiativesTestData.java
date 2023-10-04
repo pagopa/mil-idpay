@@ -89,6 +89,7 @@ public final class InitiativesTestData {
         initiative7.setServiceId("serviceId6");
         initiative7.setEnabled(Boolean.TRUE);
 
+
         InitiativeDTO initiative8 = new InitiativeDTO();
         initiative8.setInitiativeId("8h");
         initiative8.setInitiativeName("Iniziative name8");
