@@ -1,5 +1,5 @@
 /*
- * VerifySignatureRequest.java
+ * SignRequest.java
  *
  * 25 lug 2023
  */
@@ -26,22 +26,11 @@ import lombok.ToString;
 @Setter
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class VerifySignatureRequest {
-    /*
-     *
-     */
-    @JsonProperty("alg")
-    private String alg;
+public class UnwrapKeyResponse {
 
-    /*
-     *
-     */
-    @JsonProperty("digest")
-    private String data;
+    @JsonProperty("kid")
+    private String kid;
 
-    /*
-     *
-     */
     @JsonProperty("value")
-    private String signature;
+    private String value;
 }

@@ -75,8 +75,13 @@ public class AzureKeyVaultService {
                                     .build());
                         } else if (error != null || (getKeyResponse != null && (!isKeyValid(getKeyResponse) || !isKeyNotYetExpired(getKeyResponse.getDetails().getKid(), getKeyResponse.getAttributes())))) {//Se NOT FOUND o Expired chiamo CreateKey
                             return createAzureKVKey(accessToken, keyName);
+                        } else if (getKeyResponse != null) {
+                            return Uni.createFrom().item(generateKVKey(getKeyResponse));
                         } else {
-                            return Uni.createFrom().item(getPublicKey(getKeyResponse));
+                            throw new InternalServerErrorException(Response
+                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                    .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
+                                    .build());
                         }
                     }));
 
@@ -191,20 +196,6 @@ public class AzureKeyVaultService {
         } else {
             Log.warnf("The 'not before' timestamp of [%s] is not valid. Found [%s], expected a value less than [%d].", kid, attributes.getNbf(), now);
             return false;
-        }
-    }
-
-    private PublicKeyIDPay getPublicKey(DetailedKey key) {
-        Log.debugf("Check if key [%s] is valid.", key);
-        if (isKeyValid(key)) {
-            return generateKVKey(key);
-        } else {
-            String message = String.format("[%s] Error generating the key pair: invalid key pair has been generated.", ErrorCode.ERROR_GENERATING_KEY_PAIR);
-            Log.fatal(message);
-            throw new InternalServerErrorException(Response
-                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR), List.of(ErrorCode.ERROR_GENERATING_KEY_PAIR_MSG)))
-                    .build());
         }
     }
 

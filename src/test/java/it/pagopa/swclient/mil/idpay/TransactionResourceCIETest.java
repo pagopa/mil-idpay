@@ -532,7 +532,7 @@ class TransactionResourceCIETest {
         getKeyResponse.getDetails().setKty("DSA");
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -548,12 +548,10 @@ class TransactionResourceCIETest {
 
         getKeyResponse.getDetails().setKty("RSA");
 
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
-        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
 
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_KEY_PAIR));
-
+        Assertions.assertEquals("RSA", response.jsonPath().getString("kty"));
     }
 
 
@@ -574,7 +572,7 @@ class TransactionResourceCIETest {
         getKeyResponse.getDetails().setKid(vaultUrl + "/keys/0709643f49394529b92c19a68c8e184a");
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -614,7 +612,7 @@ class TransactionResourceCIETest {
         getKeyResponse.getDetails().setKid(null);
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -654,7 +652,7 @@ class TransactionResourceCIETest {
         getKeyResponse.getDetails().setKeyOps(null);
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -670,11 +668,10 @@ class TransactionResourceCIETest {
 
         getKeyResponse = TransactionsTestData.getAzureKVGetKeyResponse();
 
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
-        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
 
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_KEY_PAIR));
+        Assertions.assertEquals("RSA", response.jsonPath().getString("kty"));
 
     }
 
@@ -699,7 +696,7 @@ class TransactionResourceCIETest {
         getKeyResponse.getDetails().setKeyOps(keyOps);
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -715,11 +712,10 @@ class TransactionResourceCIETest {
 
         getKeyResponse = TransactionsTestData.getAzureKVGetKeyResponse();
 
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
-        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
 
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_KEY_PAIR));
+        Assertions.assertEquals("RSA", response.jsonPath().getString("kty"));
 
     }
 
@@ -744,7 +740,7 @@ class TransactionResourceCIETest {
         getKeyResponse.getDetails().setKeyOps(keyOps);
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -760,11 +756,10 @@ class TransactionResourceCIETest {
 
         getKeyResponse = TransactionsTestData.getAzureKVGetKeyResponse();
 
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
-        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
 
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_KEY_PAIR));
+        Assertions.assertEquals("RSA", response.jsonPath().getString("kty"));
 
     }
 
@@ -784,7 +779,7 @@ class TransactionResourceCIETest {
         DetailedKey kr = TransactionsTestData.getAzureKVGetKeyResponseAttrNull();
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(kr));
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -798,13 +793,11 @@ class TransactionResourceCIETest {
                 .extract()
                 .response();
 
-        //getKeyResponse = TransactionsTestData.getAzureKVGetKeyResponse();
 
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
-        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
 
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_KEY_PAIR));
+        Assertions.assertEquals("RSA", response.jsonPath().getString("kty"));
     }
 
     @Test
@@ -824,7 +817,7 @@ class TransactionResourceCIETest {
         getKeyResponse.getAttributes().setEnabled(null);
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -840,11 +833,10 @@ class TransactionResourceCIETest {
 
         getKeyResponse.getAttributes().setEnabled(true);
 
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
-        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
 
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_KEY_PAIR));
+        Assertions.assertEquals("RSA", response.jsonPath().getString("kty"));
 
     }
 
@@ -865,7 +857,7 @@ class TransactionResourceCIETest {
         getKeyResponse.getAttributes().setEnabled(false);
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -881,11 +873,9 @@ class TransactionResourceCIETest {
 
         getKeyResponse.getAttributes().setEnabled(true);
 
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
-        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
-
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_KEY_PAIR));
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
+        Assertions.assertEquals("RSA", response.jsonPath().getString("kty"));
     }
 
     @Test
@@ -907,7 +897,7 @@ class TransactionResourceCIETest {
         getKeyResponse.getAttributes().setCreated(now + 1000);
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -923,11 +913,10 @@ class TransactionResourceCIETest {
 
         getKeyResponse.getAttributes().setCreated(now - 300);
 
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
-        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
 
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_KEY_PAIR));
+        Assertions.assertEquals("RSA", response.jsonPath().getString("kty"));
     }
 
     @Test
@@ -947,7 +936,7 @@ class TransactionResourceCIETest {
         getKeyResponse.getAttributes().setCreated(null);
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -964,11 +953,10 @@ class TransactionResourceCIETest {
         long now = Instant.now().getEpochSecond();
         getKeyResponse.getAttributes().setCreated(now - 300);
 
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
-        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
 
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_KEY_PAIR));
+        Assertions.assertEquals("RSA", response.jsonPath().getString("kty"));
     }
 
     @Test
@@ -1070,7 +1058,7 @@ class TransactionResourceCIETest {
         azureAdAccessToken.setAccess_token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(403)));
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -1107,7 +1095,7 @@ class TransactionResourceCIETest {
         azureAdAccessToken.setAccess_token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().nullItem());
 
-
+        Mockito.when(azureKeyVaultClient.createKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(createKeyResponse));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -1197,11 +1185,10 @@ class TransactionResourceCIETest {
 
         createKeyResponse.getDetails().setKty("RSA");
 
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
-        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
 
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_KEY_PAIR));
+        Assertions.assertEquals("RSA", response.jsonPath().getString("kty"));
     }
 
     @Test
@@ -1324,4 +1311,40 @@ class TransactionResourceCIETest {
 
         Assertions.assertEquals("RSA", response.jsonPath().getString("kty"));
     }
+/*
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void verifyCIETest_OK_NoPOSS() {
+
+        idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
+        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+
+        azureAdAccessToken.setAccess_token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(azureAdAccessToken));
+
+        Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
+
+        Map<String, String> validMilHeadersNonPOS = TransactionsTestData.getMilHeadersNonPOS();
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeadersNonPOS)
+                .and()
+                .body(verifyCieRequest)
+                .pathParam("transactionId", transactionId)
+                .when()
+                .post("/{transactionId}/verifyCie")
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
+
+        Assertions.assertEquals("RSA", response.jsonPath().getString("kty"));
+    }*/
 }

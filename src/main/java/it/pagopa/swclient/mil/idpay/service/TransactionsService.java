@@ -6,7 +6,7 @@ import io.smallrye.mutiny.unchecked.Unchecked;
 import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.bean.Errors;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.SignResponse;
+import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyResponse;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyRequest;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.service.AzureKeyVaultService;
@@ -407,7 +407,7 @@ public class TransactionsService {
                                                         try {
 
                                                             // Start trying to encrypt session key with public key retrieved
-                                                            String encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getSignature());
+                                                            String encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getValue());
                                                             AuthCodeBlockData authCodeBlockData = AuthCodeBlockData.builder()
                                                                     .kid(publicKeyIDPay.getKid())
                                                                     .encSessionKey(encryptedSessionKey)
@@ -464,7 +464,7 @@ public class TransactionsService {
         }
     }
 
-    private Uni<SignResponse> unwrapKey(AuthorizeTransaction authorizeTransaction, AccessToken token) {
+    private Uni<UnwrapKeyResponse> unwrapKey(AuthorizeTransaction authorizeTransaction, AccessToken token) {
         UnwrapKeyRequest unwrapKeyRequest = UnwrapKeyRequest
                 .builder()
                 .alg("RSA-OAEP-256")

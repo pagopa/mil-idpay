@@ -235,13 +235,13 @@ public final class TransactionsTestData {
         return headerMap;
     }
 
-    public static SignResponse getUnwrapKey() {
-        SignResponse signResponse = new SignResponse();
+    public static UnwrapKeyResponse getUnwrapKey() {
+        UnwrapKeyResponse unwrapKeyResponse = new UnwrapKeyResponse();
 
-        signResponse.setKid(vaultUrl + "/keys/0709643f49394529b92c19a68c8e184a/6581c704deda4979943c3b34468df7c2");
-        signResponse.setSignature("sessionKey");
+        unwrapKeyResponse.setKid(vaultUrl + "/keys/0709643f49394529b92c19a68c8e184a/6581c704deda4979943c3b34468df7c2");
+        unwrapKeyResponse.setValue("sessionKey");
 
-        return signResponse;
+        return unwrapKeyResponse;
     }
 
     public static AuthorizeTransaction getAuthorizeTransaction() {

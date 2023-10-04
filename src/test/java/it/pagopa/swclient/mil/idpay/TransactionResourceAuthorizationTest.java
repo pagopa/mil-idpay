@@ -7,7 +7,7 @@ import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.SignResponse;
+import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyResponse;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyRequest;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.bean.*;
@@ -66,7 +66,7 @@ class TransactionResourceAuthorizationTest {
     TransactionResponse transactionResponse;
     IpzsVerifyCieResponse ipzsVerifyCieResponseOK;
     AccessToken azureAdAccessToken;
-    SignResponse signResponse;
+    UnwrapKeyResponse unwrapKeyResponse;
     AuthorizeTransaction authorizeTransaction;
     AuthTransactionResponse authTransactionResponse;
     PublicKeyIDPay publicKeyIDPay;
@@ -81,7 +81,7 @@ class TransactionResourceAuthorizationTest {
 
         ipzsVerifyCieResponseOK = TransactionsTestData.getIpzsVerifyCieResponseOK();
         azureAdAccessToken = TransactionsTestData.getAzureADAccessToken();
-        signResponse = TransactionsTestData.getUnwrapKey();
+        unwrapKeyResponse = TransactionsTestData.getUnwrapKey();
         authorizeTransaction = TransactionsTestData.getAuthorizeTransaction();
         publicKeyIDPay = TransactionsTestData.getPublicKeyIdPay();
         authTransactionResponse = TransactionsTestData.getAuthTransactionResponse();
@@ -97,7 +97,7 @@ class TransactionResourceAuthorizationTest {
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
-                .thenReturn(Uni.createFrom().item(signResponse));
+                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
         Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
                         .thenReturn(Uni.createFrom().item(publicKeyIDPay));
@@ -277,7 +277,7 @@ class TransactionResourceAuthorizationTest {
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
-                .thenReturn(Uni.createFrom().item(signResponse));
+                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
         Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
@@ -312,7 +312,7 @@ class TransactionResourceAuthorizationTest {
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
-                .thenReturn(Uni.createFrom().item(signResponse));
+                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
         Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
@@ -350,7 +350,7 @@ class TransactionResourceAuthorizationTest {
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
-                .thenReturn(Uni.createFrom().item(signResponse));
+                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
         Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
@@ -398,7 +398,7 @@ class TransactionResourceAuthorizationTest {
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
-                .thenReturn(Uni.createFrom().item(signResponse));
+                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
         Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
@@ -441,7 +441,7 @@ class TransactionResourceAuthorizationTest {
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
-                .thenReturn(Uni.createFrom().item(signResponse));
+                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
         publicKeyIDPay.setN("ABC");
         publicKeyIDPay.setE("DEF");
