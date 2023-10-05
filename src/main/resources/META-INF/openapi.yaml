@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: IDPay Microservice
-  version: 2.0.0-RC
+  version: 3.0.0-RC
   description: IDPay Microservice for Multi-channel Integration Layer of SW Client Project
   contact:
     name: Antonio Tarricone
@@ -58,16 +58,17 @@ paths:
   #
   # ================================================================================================
   /transactions:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+      - $ref: '#/components/parameters/Version'
+      - $ref: '#/components/parameters/AcquirerId'
+      - $ref: '#/components/parameters/Channel'
+      - $ref: '#/components/parameters/MerchantId'
+      - $ref: '#/components/parameters/TerminalId'
+    
     post:
       operationId: createTransaction
       summary: Creates an IDPay transaction
-      parameters:
-        - $ref: '#/components/parameters/RequestId'
-        - $ref: '#/components/parameters/Version'
-        - $ref: '#/components/parameters/AcquirerId'
-        - $ref: '#/components/parameters/Channel'
-        - $ref: '#/components/parameters/MerchantId'
-        - $ref: '#/components/parameters/TerminalId'
       requestBody:
         $ref: '#/components/requestBodies/CreateTransaction'
       responses:
@@ -525,6 +526,7 @@ components:
         - AUTHORIZED    # CREATED -> IDENTIFIED -> AUTHORIZED : Transaction has been authorized by the User
         - REJECTED
         - REWARDED
+        - CANCELLED     # Transaction has been deleted
     
     TransactionTimestamp:
       description: Timestamp of the transaction
