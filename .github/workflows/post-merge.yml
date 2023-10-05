@@ -200,7 +200,7 @@ jobs:
       #
       - name: Run Postman collection
         if: steps.semantic.outputs.new_release_published == 'true'
-        run: newman run src/test/postman/postman_collection.json -e src/test/postman/dev.postman_environment.json --env-var "clientId=${{ secrets.CLIENT_ID }}" --env-var "clientSecret=${{ secrets.CLIENT_SECRET }}" --env-var "azureClientId=${{ secrets.AZURE_CLIENT_ID }}" --env-var "azureClientSecret=${{ secrets.AZURE_CLIENT_SECRET }}" --env-var "tenantId=${{ secrets.AZURE_TENANT_ID }}"
+        run: newman run src/test/postman/postman_collection.json -e src/test/postman/dev.postman_environment.json --env-var "clientId=${{ secrets.CLIENT_ID }}" --env-var "clientSecret=${{ secrets.CLIENT_SECRET }}" --env-var "azureClientId=${{ secrets.MIL_SERVICES_CLIENT_ID }}" --env-var "azureClientSecret=${{ secrets.AZURE_CLIENT_SECRET }}" --env-var "tenantId=${{ secrets.AZURE_TENANT_ID }}"
 
       #
       # STABLE - Update of pom.xml with the new version.
