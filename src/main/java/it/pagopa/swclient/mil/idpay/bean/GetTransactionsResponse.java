@@ -6,13 +6,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @RegisterForReflection
-public class AuthTransactionResponse {
+public class GetTransactionsResponse {
 
-    private AuthTransactionResponseOk authTransactionResponseOk;
-    private AuthTransactionResponseWrong authTransactionResponseWrong;
+    List<Transaction> transactions;
 }

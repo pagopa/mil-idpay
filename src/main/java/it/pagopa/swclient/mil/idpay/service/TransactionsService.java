@@ -1,6 +1,8 @@
 package it.pagopa.swclient.mil.idpay.service;
 
 import io.quarkus.logging.Log;
+import io.quarkus.panache.common.Page;
+import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.unchecked.Unchecked;
 import it.pagopa.swclient.mil.bean.CommonHeader;
@@ -44,6 +46,12 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -91,6 +99,12 @@ public class TransactionsService {
     private static final String CLIENT_CREDENTIALS = "client_credentials";
 
     private static final String VAULT = "https://vault.azure.net/.default";
+
+    @ConfigProperty(name="idpay.transactions.days-before", defaultValue = "30")
+    int getTransactionsDaysBefore;
+
+    @ConfigProperty(name="idpay.transactions.max-transactions", defaultValue = "30")
+    int getTransactionsMaxTransactions;
 
     public Uni<Transaction> createTransaction(CommonHeader headers, CreateTransaction createTransaction) {
 
@@ -567,5 +581,59 @@ public class TransactionsService {
     public String getIdpayMerchantId(String merchantId, String acquirerId) {
         Log.debugf("TransactionsService -> getIdpayMerchantId: idpayMerchantId [%s] retrieved for merchantId [%s] and acquirerId [%s]", merchantId, merchantId, acquirerId);
         return merchantId;
+    }
+
+    public Uni<GetTransactionsResponse> getLastTransactions(CommonHeader headers) {
+
+        Log.debugf("TransactionsService -> getLastTransactions - Input parameters: %s", headers);
+
+        return idpayTransactionRepository.find(
+                        """
+                                idpayTransaction.terminalId = ?1 and
+                                idpayTransaction.merchantId = ?2 and
+                                idpayTransaction.channel    = ?3 and
+                                idpayTransaction.acquirerId = ?4 and
+                                idpayTransaction.timestamp >= ?5
+                              """,
+                        Sort.by("idpayTransaction.timestamp").descending(),
+                        headers.getTerminalId(),
+                        headers.getMerchantId(),
+                        headers.getChannel(),
+                        headers.getAcquirerId(),
+                        LocalDateTime.ofInstant(Instant.now().truncatedTo(ChronoUnit.SECONDS), ZoneOffset.UTC)
+                                .toLocalDate().atTime(LocalTime.MIN) // set midnight
+                                .minus(getTransactionsDaysBefore, ChronoUnit.DAYS) // transaction of the last 30 days
+                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .withBatchSize(getTransactionsMaxTransactions)
+                .page(Page.ofSize(getTransactionsMaxTransactions))
+                .list()
+                .onFailure().transform(t -> {
+                    Log.errorf(t, "[%s] TransactionsService -> getLastTransactions: Error while retrieving transactions from DB",
+                            ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB);
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB), List.of(ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB_MSG)))
+                            .build());
+                })
+                .map(txEntityList -> {
+
+                    Log.debugf("============ txEntityList.size: [%s]", txEntityList.size());
+                    var transactionList = txEntityList.stream().map(txEntity ->
+                            Transaction.builder()
+                                .idpayTransactionId(txEntity.idpayTransaction.getIdpayTransactionId())
+                                .milTransactionId(txEntity.idpayTransaction.getMilTransactionId())
+                                .initiativeId(txEntity.idpayTransaction.getInitiativeId())
+                                .timestamp(txEntity.idpayTransaction.getTimestamp())
+                                .goodsCost(txEntity.idpayTransaction.getGoodsCost())
+                                .trxCode(txEntity.idpayTransaction.getTrxCode())
+                                .coveredAmount(txEntity.idpayTransaction.getCoveredAmount())
+                                .status(txEntity.idpayTransaction.getStatus())
+                                .lastUpdate(txEntity.idpayTransaction.getLastUpdate())
+                                .build()).toList();
+                    GetTransactionsResponse getTransactionsResponse = new GetTransactionsResponse();
+                    getTransactionsResponse.setTransactions(transactionList);
+
+                    return getTransactionsResponse;
+                });
     }
 }

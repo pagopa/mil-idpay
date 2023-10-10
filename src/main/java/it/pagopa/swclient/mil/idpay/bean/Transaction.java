@@ -3,14 +3,12 @@ package it.pagopa.swclient.mil.idpay.bean;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.validation.constraints.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 @ToString(exclude = {"secondFactor"})
 @RegisterForReflection
 @JsonInclude(JsonInclude.Include.NON_NULL)
