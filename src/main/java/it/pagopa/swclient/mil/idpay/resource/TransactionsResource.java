@@ -30,7 +30,7 @@ public class TransactionsResource {
     /**
      * The value of the Max-Retries header to be sent in response to the createTransaction API
      */
-    @ConfigProperty(name="idpay.transactiont.max-retry", defaultValue = "3")
+    @ConfigProperty(name="idpay.transaction.max-retry", defaultValue = "3")
     int idpayTransactionMaxRetry;
 
     /**
@@ -158,6 +158,24 @@ public class TransactionsResource {
             Log.debugf("TransactionsResource -> TransactionsService -> authorizeTransaction - Response %s", res);
 
             return Uni.createFrom().item(res);
+        });
+    }
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({"PayWithIDPay"})
+    public Uni<Response> getLastTransactions(@Valid @BeanParam CommonHeader headers) {
+
+        Log.debugf("TransactionsResource -> getLastTransactions - Input parameters: %s", headers);
+
+        return transactionsService.getLastTransactions(headers).chain(res -> {
+            Log.debugf("TransactionsResource -> TransactionsService -> getLastTransactions - Response %s", res);
+
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.OK)
+                            .entity(res)
+                            .build());
         });
     }
 

@@ -1,5 +1,7 @@
 package it.pagopa.swclient.mil.idpay;
 
+import io.quarkus.mongodb.panache.reactive.ReactivePanacheQuery;
+import io.quarkus.panache.common.Sort;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -58,6 +61,8 @@ class TransactionsResourceTest {
 
     String transactionId;
 
+    //List<IdpayTransactionEntity> transactionEntityList;
+
     @BeforeAll
     void createTestObjects() {
         validMilHeaders = TransactionsTestData.getMilHeaders();
@@ -68,6 +73,7 @@ class TransactionsResourceTest {
         syncTrxStatus = TransactionsTestData.getStatusTransactionResponse();
         transactionId = RandomStringUtils.random(32, true, true);
         syncTrxStatusNotChanged = TransactionsTestData.getStatusTransactionResponseNotChanged();
+        //transactionEntityList = TransactionsTestData.getListTransactionEntity(validMilHeaders, createTransactionRequest, transactionResponse);
     }
 
     @Test
@@ -451,5 +457,61 @@ class TransactionsResourceTest {
 
         Assertions.assertEquals(204, response.statusCode());
 
+    }
+
+    //Storico
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void getLastTransactionsTest_OK() {
+
+        ReactivePanacheQuery<IdpayTransactionEntity> reactivePanacheQuery = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(reactivePanacheQuery.page(Mockito.any())).thenReturn(reactivePanacheQuery);
+        Mockito.when(reactivePanacheQuery.withBatchSize(Mockito.anyInt())).thenReturn(reactivePanacheQuery);
+        Mockito.when(reactivePanacheQuery.list()).thenReturn(Uni.createFrom().item(List.of(idpayTransactionEntity)));
+
+        Mockito
+                .when(idpayTransactionRepository.find(Mockito.anyString(), Mockito.any(Sort.class), Mockito.any(Object[].class)))
+                .thenReturn(reactivePanacheQuery);
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .when()
+                .get("/")
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
+
+        Assertions.assertEquals(1, response.jsonPath().getList("transactions").size());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void getLastTransactionsTest_KO_DB() {
+
+        ReactivePanacheQuery<IdpayTransactionEntity> reactivePanacheQuery = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(reactivePanacheQuery.page(Mockito.any())).thenReturn(reactivePanacheQuery);
+        Mockito.when(reactivePanacheQuery.withBatchSize(Mockito.anyInt())).thenReturn(reactivePanacheQuery);
+        Mockito.when(reactivePanacheQuery.list()).thenReturn(Uni.createFrom().failure(new TimeoutException()));
+
+        Mockito
+                .when(idpayTransactionRepository.find(Mockito.anyString(), Mockito.any(Sort.class), Mockito.any(Object[].class)))
+                .thenReturn(reactivePanacheQuery);
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .when()
+                .get("/")
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB));
     }
 }

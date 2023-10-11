@@ -1,5 +1,6 @@
 package it.pagopa.swclient.mil.idpay.bean;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +12,7 @@ import java.util.Date;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@RegisterForReflection
 public class AuthTransactionResponseOk {
 
     private String id;
