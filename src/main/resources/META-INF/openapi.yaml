@@ -303,9 +303,9 @@ components:
       description: Challenge to authenticate the CIE
       type: string
       format: byte  # Base64 URL safe
-      minLength:  8 # bytes
-      maxLength: 16 # bytes
-      example: "NzI3NzZCNkQ2NTZCMzE3OA=="
+      minLength: 8 # bytes
+      maxLength: 8 # bytes
+      example: "MTIzNDU2Nzg="
       
     Channel:
       description: Channel originating the request
@@ -507,8 +507,8 @@ components:
     TransactionCode:
       description: Fallback code to use when IO cannot read the QR-code
       type: string
-      pattern: "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$"
-      example: "rwkmek1x"
+      pattern: "^[0-9a-zA-Z]{8}$"
+      example: "12345678"
     
     TransactionLocation:
       description: URL of the transaction
