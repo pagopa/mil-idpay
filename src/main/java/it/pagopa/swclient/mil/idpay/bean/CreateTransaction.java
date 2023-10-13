@@ -17,7 +17,8 @@ import lombok.ToString;
 public class CreateTransaction {
 
     @NotNull(message = "[" + ErrorCode.ERROR_INITIATIVEID_MUST_NOT_BE_NULL + "] initiativeId must not be null")
-    @Pattern(regexp = "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$")
+    @Pattern(regexp = "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$",
+            message = "[" + ErrorCode.ERROR_INITIATIVEID_MUST_MATCH_REGEXP + "] initiativeId must match \"{regexp}\"")
     private String initiativeId;
 
     @NotNull(message = "[" + ErrorCode.ERROR_TIMESTAMP_MUST_NOT_BE_NULL + "] timestamp must not be null")
