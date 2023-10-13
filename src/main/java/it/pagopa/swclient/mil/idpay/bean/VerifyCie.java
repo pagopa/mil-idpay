@@ -3,6 +3,7 @@ package it.pagopa.swclient.mil.idpay.bean;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,11 +20,14 @@ public class VerifyCie {
     private String nis;
 
     @NotNull(message = "[" + ErrorCode.CIE_PUBLIC_KEY_MUST_NOT_BE_NULL + "] request must not be null")
+    @Size(min = 1, max = 32767)
     private byte[] ciePublicKey;
 
     @NotNull(message = "[" + ErrorCode.SIGNATURE_MUST_NOT_BE_NULL + "] request must not be null")
+    @Size(min = 1, max = 32767)
     private byte[] signature;
 
     @NotNull(message = "[" + ErrorCode.SOD_MUST_NOT_BE_NULL + "] request must not be null")
+    @Size(min = 1, max = 32767)
     private byte[] sod;
 }

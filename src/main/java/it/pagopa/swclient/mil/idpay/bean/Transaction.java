@@ -35,6 +35,7 @@ public class Transaction {
     @Max(value = 99999999999L)
     private Long goodsCost;
 
+    @Size(min = 8, max = 16)
     private byte[] challenge;
 
     @NotNull
