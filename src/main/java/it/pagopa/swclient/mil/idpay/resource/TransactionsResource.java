@@ -149,7 +149,7 @@ public class TransactionsResource {
     @RolesAllowed({"PayWithIDPay"})
     public Uni<Response> authorizeTransaction(
             @Valid @BeanParam CommonHeader headers,
-            @Valid @NotNull AuthorizeTransaction authorizeTransaction,
+            @Valid @NotNull(message = "[" + ErrorCode.AUTHORIZE_TRANSACTION_MUST_NOT_BE_EMPTY + "] request must not be empty") AuthorizeTransaction authorizeTransaction,
             @PathParam(value = "milTransactionId") String milTransactionId) {
 
         Log.debugf("TransactionsResource -> authorizeTransaction - Input authorizeTransaction: %s, %s", headers, authorizeTransaction);

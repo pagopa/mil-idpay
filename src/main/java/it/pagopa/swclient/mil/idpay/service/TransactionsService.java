@@ -347,7 +347,7 @@ public class TransactionsService {
         req.setNis(verifyCie.getNis());
         req.setSod(verifyCie.getSod());
         req.setKpubint(verifyCie.getCiePublicKey());
-        req.setChallenge(trxCode);
+        req.setChallenge(trxCode.getBytes(StandardCharsets.UTF_8));
         req.setChallengeSignature(verifyCie.getSignature());
         return req;
     }
@@ -421,7 +421,7 @@ public class TransactionsService {
                                                         try {
 
                                                             // Start trying to encrypt session key with public key retrieved
-                                                            String encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getValue());
+                                                            byte[] encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getValue());
                                                             AuthCodeBlockData authCodeBlockData = AuthCodeBlockData.builder()
                                                                     .kid(publicKeyIDPay.getKid())
                                                                     .encSessionKey(encryptedSessionKey)
@@ -482,7 +482,7 @@ public class TransactionsService {
         UnwrapKeyRequest unwrapKeyRequest = UnwrapKeyRequest
                 .builder()
                 .alg("RSA-OAEP-256")
-                .value(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey())
+                .value(new String(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey(), StandardCharsets.UTF_8))
                 .build();
 
         return azureKeyVaultClient.unwrapKey(BEARER + token.getAccess_token(), authorizeTransaction.getAuthCodeBlockData().getKid(), unwrapKeyRequest)

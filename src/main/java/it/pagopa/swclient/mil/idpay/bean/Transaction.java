@@ -35,11 +35,10 @@ public class Transaction {
     @Max(value = 99999999999L)
     private Long goodsCost;
 
-    @Size(min = 8, max = 16)
     private byte[] challenge;
 
     @NotNull
-    @Pattern(regexp = "^[\u0001-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]{1,256}$")
+    @Pattern(regexp = "^[0-9a-zA-Z]{8}$")
     private String trxCode;
 
     @NotNull

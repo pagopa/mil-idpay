@@ -12,8 +12,8 @@ import lombok.ToString;
 public class IpzsVerifyCieRequest {
 
     private String nis;
-    private String sod;
-    private String kpubint;
-    private String challenge;
-    private String challengeSignature;
+    private byte[] sod;
+    private byte[] kpubint;
+    private byte[] challenge;
+    private byte[] challengeSignature;
 }

@@ -19,6 +19,11 @@ public final class ErrorCode {
     public static final String ERROR_KID_MUST_NOT_BE_NULL 							                    = MODULE_ID + "000008";
     public static final String ERROR_ENCSESSIONKEY_MUST_NOT_BE_NULL 							        = MODULE_ID + "000009";
     public static final String ERROR_AUTHCODEBLOCK_MUST_NOT_BE_NULL 							        = MODULE_ID + "000010";
+    public static final String CIE_PUBLIC_KEY_MUST_NOT_BE_NULL 							                = MODULE_ID + "000011";
+    public static final String SIGNATURE_MUST_NOT_BE_NULL 							                    = MODULE_ID + "000012";
+    public static final String SOD_MUST_NOT_BE_NULL 							                        = MODULE_ID + "000013";
+    public static final String AUTH_CODE_BLOCK_DATA_MUST_NOT_BE_NULL                                    = MODULE_ID + "000014";
+    public static final String AUTHORIZE_TRANSACTION_MUST_NOT_BE_EMPTY                                  = MODULE_ID + "000015";
 
     // rest server validation errors
     public static final String CREATE_TRANSACTION_MUST_NOT_BE_EMPTY 							        = MODULE_ID + "000030";

@@ -3,8 +3,8 @@
 		"_postman_id": "3ac45a22-40f3-4644-b376-c05b5ba50992",
 		"name": "mil-idpay qrcode",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "4131675",
-		"_collection_link": "https://crimson-zodiac-456704.postman.co/workspace/Personal-Workspace~7804a326-503c-4623-9152-3f4c38f2d060/collection/4131675-3ac45a22-40f3-4644-b376-c05b5ba50992?action=share&source=collection_link&creator=4131675"
+		"_exporter_id": "29646859",
+		"_collection_link": "https://crimson-zodiac-456704.postman.co/workspace/Personal-Workspace~7804a326-503c-4623-9152-3f4c38f2d060/collection/4131675-3ac45a22-40f3-4644-b376-c05b5ba50992?action=share&source=collection_link&creator=29646859"
 	},
 	"item": [
 		{
@@ -300,6 +300,15 @@
 						],
 						"type": "text/javascript"
 					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
 				}
 			],
 			"request": {
@@ -333,7 +342,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"nis\": \"432543576456\",\r\n\t\"ciePublicKey\": \"MEgCQQCo9+BpMRYQ/dL3DS2CyJxRF+j6ctbT3/Qp84+KeFhnii7NT7fELilKUSnxS30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE=\",\r\n\t\"signature\": \"14OJ2TV93OT621XR0MV5NJtMOcK2nCyBXMRhpVxO88xgzhMpoMQ2fQs+ug8+8oKhsOwkYKYRW9VY9u3oYaKIH75RJPHlVe+4J9gKZ6IqpUsYu3Mvb2PDrlwzZV5KH232/b/6QFoD7/STBtMOO8rU0lTkHTw11VsCgHSW4Jv6N4P98zD0ScgIpvgcis5H0SkApyIZs/qAkJyAP9iEw7tOfbO3q1jkK+7nV9G9ia/nlJl+itD6/Nv1u+KQ8OwFq5kPNaDsXPI1CBQp/Ll4Q7gVMWH5toGltfpouQZaMxukb2z0IWxVC//gbIRBoW3qsxlBi23HMNaieyGal2cCEjC/Ng==\",\r\n\t\"sod\": \"EkCTZfFjWVBAXh1ahqBJwKJYD1o7HKBGF0QOCkITt1mGNwQGMSBkDp/xMvyULz3RQG07UYZDWUEZVsAUQ9LKTs6jz7JGgSDH1Yt3+b3PmAahbeLJLj77MFRH5mDHmTekZH3/db+gfZElM8M0AcOAgfYYatA/F1S\"\r\n}",
+					"raw": "{\r\n\t\"nis\": \"432543576456\",\r\n\t\"ciePublicKey\": \"MEgCQQCo9+BpMRYQ/dL3DS2CyJxRF+j6ctbT3/Qp84+KeFhnii7NT7fELilKUSnxS30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE=\",\r\n\t\"signature\": \"14OJ2TV93OT621XR0MV5NJtMOcK2nCyBXMRhpVxO88xgzhMpoMQ2fQs+ug8+8oKhsOwkYKYRW9VY9u3oYaKIH75RJPHlVe+4J9gKZ6IqpUsYu3Mvb2PDrlwzZV5KH232/b/6QFoD7/STBtMOO8rU0lTkHTw11VsCgHSW4Jv6N4P98zD0ScgIpvgcis5H0SkApyIZs/qAkJyAP9iEw7tOfbO3q1jkK+7nV9G9ia/nlJl+itD6/Nv1u+KQ8OwFq5kPNaDsXPI1CBQp/Ll4Q7gVMWH5toGltfpouQZaMxukb2z0IWxVC//gbIRBoW3qsxlBi23HMNaieyGal2cCEjC/Ng==\",\r\n\t\"sod\": \"RWtDVFpmRmpXVkJBWGgxYWhxQkp3S0pZRDFvN0hLQkdGMFFPQ2tJVHQxbUdOd1FHTVNCa0RwL3hNdnlVTHozUlFHMDdVWVpEV1VFWlZzQVVROUxLVHM2ano3SkdnU0RIMVl0MytiM1BtQWFoYmVMSkxqNzdNRlJINW1ESG1UZWtaSDMvZGIrZ2ZaRWxNOE0wQWNPQWdmWVlhdEEvRjFT\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -738,7 +747,8 @@
 					"script": {
 						"exec": [
 							"var jsonData = JSON.parse(responseBody);\r",
-							"postman.setEnvironmentVariable(\"encSessionKey\", jsonData.value);"
+							"let encodedKeys = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(jsonData.value));\r",
+							"postman.setEnvironmentVariable(\"encSessionKey\", encodedKeys);"
 						],
 						"type": "text/javascript"
 					}
@@ -942,7 +952,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"authCodeBlockData\": {\r\n        \"kid\": \"{{kid}}\",\r\n        \"encSessionKey\": \"{{encSessionKey}}\",\r\n        \"authCodeBlock\": \"authorizationCodeBlock\"\r\n    }\r\n}",
+					"raw": "{\r\n    \"authCodeBlockData\": {\r\n        \"kid\": \"{{kid}}\",\r\n        \"encSessionKey\": \"{{encSessionKey}}\",\r\n        \"authCodeBlock\": \"dGVzdA==\"\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

@@ -51,7 +51,7 @@ public final class TransactionsTestData {
         TransactionResponse res = new TransactionResponse();
 
         res.setId("4490eea8-9c81-4879-9720-22222222333");
-        res.setTrxCode("trxCodetrxCodetrxCode");
+        res.setTrxCode("12345678");
         res.setInitiativeId("initiativeId1");
         res.setMerchantId("111");
         res.setIdTrxAcquirer("4490eea8-9c81-4879-9720-9578de10ff4e");
@@ -119,7 +119,7 @@ public final class TransactionsTestData {
 
         res.setId("4490eea8-9c81-4879-9720-22222222333");
         res.setIdTrxIssuer("IdTrxIssuer1");
-        res.setTrxCode("trxCodetrxCodetrxCode");
+        res.setTrxCode("12345678");
         res.setTrxDate(new Date());
         res.setAuthDate(new Date());
         res.setOperationType(OperationType.CHARGE);
@@ -142,7 +142,7 @@ public final class TransactionsTestData {
 
         res.setId("4490eea8-9c81-4879-9720-22222222333");
         res.setIdTrxIssuer("IdTrxIssuer1");
-        res.setTrxCode("trxCodetrxCodetrxCode");
+        res.setTrxCode("12345678");
         res.setTrxDate(new Date());
         res.setAuthDate(new Date());
         res.setOperationType(OperationType.CHARGE);
@@ -193,15 +193,15 @@ public final class TransactionsTestData {
         VerifyCie res = new VerifyCie();
 
         res.setNis("432543576456");
-        res.setCiePublicKey("MEgCQQCo9+BpMRYQ/dL3DS2CyJxRF+j6ctbT3/Qp84+KeFhnii7NT7fELilKUSnxS30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE=");
-        res.setSignature("14OJ2TV93OT621XR0MV5NJtMOcK2nCyBXMRhpVxO88xgzhMpoMQ2fQs+ug8+8oKhsOwkYKYRW9VY" +
-                "9u3oYaKIH75RJPHlVe+4J9gKZ6IqpUsYu3Mvb2PDrlwzZV5KH232/b/6QFoD7/STBtMOO8rU0lTk" +
-                "HTw11VsCgHSW4Jv6N4P98zD0ScgIpvgcis5H0SkApyIZs/qAkJyAP9iEw7tOfbO3q1jkK+7nV9G9" +
-                "ia/nlJl+itD6/Nv1u+KQ8OwFq5kPNaDsXPI1CBQp/Ll4Q7gVMWH5toGltfpouQZaMxukb2z0IWxV" +
-                "C//gbIRBoW3qsxlBi23HMNaieyGal2cCEjC/Ng==");
-        res.setSod("EkCTZfFjWVBAXh1ahqBJwKJYD1o7HKBGF0QOCkITt1mGNwQGMSBkDp/xMvyU" +
-                "Lz3RQG07UYZDWUEZVsAUQ9LKTs6jz7JGgSDH1Yt3+b3PmAahbeLJLj77MFRH5mDHmTekZH3/db+g" +
-                "fZElM8M0AcOAgfYYatA/F1S");
+        res.setCiePublicKey("MEgCQQCo9+BpMRYQ/dL3DS2CyJxRF+j6ctbT3/Qp84+KeFhnii7NT7fELilKUSnxS30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE=".getBytes(StandardCharsets.UTF_8));
+        res.setSignature(("14OJ2TV93OT621XR0MV5NJtMOcK2nCyBXMRhpVxO88xgzhMpoMQ2fQs+ug8+8oKhsOwkYKYRW9VY" +
+                        "9u3oYaKIH75RJPHlVe+4J9gKZ6IqpUsYu3Mvb2PDrlwzZV5KH232/b/6QFoD7/STBtMOO8rU0lTk" +
+                        "HTw11VsCgHSW4Jv6N4P98zD0ScgIpvgcis5H0SkApyIZs/qAkJyAP9iEw7tOfbO3q1jkK+7nV9G9" +
+                        "ia/nlJl+itD6/Nv1u+KQ8OwFq5kPNaDsXPI1CBQp/Ll4Q7gVMWH5toGltfpouQZaMxukb2z0IWxV" +
+                        "C//gbIRBoW3qsxlBi23HMNaieyGal2cCEjC/Ng==").getBytes(StandardCharsets.UTF_8));
+        res.setSod(("EkCTZfFjWVBAXh1ahqBJwKJYD1o7HKBGF0QOCkITt1mGNwQGMSBkDp/xMvyU" +
+                        "Lz3RQG07UYZDWUEZVsAUQ9LKTs6jz7JGgSDH1Yt3+b3PmAahbeLJLj77MFRH5mDHmTekZH3/db+g" +
+                        "fZElM8M0AcOAgfYYatA/F1S").getBytes(StandardCharsets.UTF_8));
 
         return res;
     }
@@ -216,9 +216,6 @@ public final class TransactionsTestData {
     }
 
     public static DetailedKey getAzureKVGetKeyResponseAttrNull() {
-        //long now = Instant.now().getEpochSecond();
-        //KeyAttributes keyAttributes = new KeyAttributes(now - 300, now + 600, now - 300, now - 300, Boolean.TRUE, KEY_RECOVERY_LEVEL, 0, Boolean.FALSE);
-
         KeyDetails details = new KeyDetails(vaultUrl + "/keys/" + KEY_NAME + "/" + KEY_VERSION, KEY_TYPE, KEY_OPS, MODULUS, PUBLIC_EXPONENT);
         return new DetailedKey(details, null);
     }
@@ -248,9 +245,9 @@ public final class TransactionsTestData {
         AuthorizeTransaction authorizeTransaction = new AuthorizeTransaction();
         AuthCodeBlockData authCodeBlockData = new AuthCodeBlockData();
 
-        authCodeBlockData.setAuthCodeBlock("MDAwMTAyMDMwNDA1MDYwNzA4MDkwQTBCMEMwRDBFMEY=");
+        authCodeBlockData.setAuthCodeBlock("MDAwMTAyMDMwNDA1MDYwNzA4MDkwQTBCMEMwRDBFMEY=".getBytes(StandardCharsets.UTF_8));
         authCodeBlockData.setKid(vaultUrl + "/keys/0709643f49394529b92c19a68c8e184a/6581c704deda4979943c3b34468df7c2");
-        authCodeBlockData.setEncSessionKey("et2j4kthRmeuc5uzCLi9dE9LeQKCsqbTNxNDwrJ-mBFA4UZQaXS1hdRw6ygXoH6Ra1uciDMDHpbg7DJoYfis_foMzk3gIQxrGkmcbsPkC2ieklIpOf021smzd_pSFJ580XQzwOJCli762aRByuNQAVFismcRhkSCad8fcRe7TgevephXcrbrjr25eCRgvmACESfrydnopO5g6yIkINpzuK9wP4ljDZTO90hP-_uRrfrgjwdxa6vv-qilYqvC4RPL7HR7eEbxkHFvsri7F7J9QDp5GsAJK1Bh4EdaLyl6MwYW1sEFnpQ-27_xtvFbwFANdB70cxsosvNsRueMjh9s-2rhgPZIT_YyHn3s394OOOKql5Umamn6pvcejPgXnXY0nRmSHCDoSUzNzEnQb1sxhuDpvQLQpWsKD3DESIjaDBq7sSvpBsoOg1ybnMccWiaIIRXCpYJU8aPhrkVTR-AczxwfwKtcCipLk3CiEjv6iu6PxfO62BGGRSUpe_m_HfU02DmT4qa6wUHbg0Sy3NBwBNvBVOVVIfwzmxZcQ6D5MhJaPSlfzcp4iTLk2a3eQU0bvJ3WsTdKhwuK6VgB2IV99i4ZX_bnxBaqKOzc1I3StTPGVAVCMjsTXGy0OyHDOtJv5A4N18r8rHyIVfzOuBEDa05_cp3ceHtrE8Dl5KzjFbY");
+        authCodeBlockData.setEncSessionKey("et2j4kthRmeuc5uzCLi9dE9LeQKCsqbTNxNDwrJ-mBFA4UZQaXS1hdRw6ygXoH6Ra1uciDMDHpbg7DJoYfis_foMzk3gIQxrGkmcbsPkC2ieklIpOf021smzd_pSFJ580XQzwOJCli762aRByuNQAVFismcRhkSCad8fcRe7TgevephXcrbrjr25eCRgvmACESfrydnopO5g6yIkINpzuK9wP4ljDZTO90hP-_uRrfrgjwdxa6vv-qilYqvC4RPL7HR7eEbxkHFvsri7F7J9QDp5GsAJK1Bh4EdaLyl6MwYW1sEFnpQ-27_xtvFbwFANdB70cxsosvNsRueMjh9s-2rhgPZIT_YyHn3s394OOOKql5Umamn6pvcejPgXnXY0nRmSHCDoSUzNzEnQb1sxhuDpvQLQpWsKD3DESIjaDBq7sSvpBsoOg1ybnMccWiaIIRXCpYJU8aPhrkVTR-AczxwfwKtcCipLk3CiEjv6iu6PxfO62BGGRSUpe_m_HfU02DmT4qa6wUHbg0Sy3NBwBNvBVOVVIfwzmxZcQ6D5MhJaPSlfzcp4iTLk2a3eQU0bvJ3WsTdKhwuK6VgB2IV99i4ZX_bnxBaqKOzc1I3StTPGVAVCMjsTXGy0OyHDOtJv5A4N18r8rHyIVfzOuBEDa05_cp3ceHtrE8Dl5KzjFbY".getBytes(StandardCharsets.UTF_8));
 
         authorizeTransaction.setAuthCodeBlockData(authCodeBlockData);
 
@@ -271,7 +268,7 @@ public final class TransactionsTestData {
                 .builder()
                 .id("1")
                 .idTrxIssuer("IdTrxIssuer2")
-                .trxCode("trxCodetrxCodetrxCode")
+                .trxCode("12345678")
                 .trxDate(new Date())
                 .operationType(OperationType.CHARGE)
                 .amountCents(99999999999L)
@@ -292,8 +289,8 @@ public final class TransactionsTestData {
         return PublicKeyIDPay
                 .builder()
                 .keyOps(List.of(KeyOp.wrapKey))
-                .e("AQAB")
-                .n("x9Rbax8IZ6yld9vAu3AQjEBd9Q6fyx29rTkqghK7y4t93TrfTPf0E5Uh3fdZjzCzCDrZUitvGJU4RJObn8dxFGHNXdZaRSZ7uk1kM9E1YjFrHwwXDgCeQl6U6wNL5lTjOrjRm6sj5fgvbQnO61F9zZKpKdoxPrIYpJH8YPfI9owTP1ADfPXj53hwt39DcRV9tY2fjlk3jrs1z1oJFYskTpkq7Ihtmdnq0bGgNwNhEaEoP0BcvYowKLwE4V2y9SUX6LqRzB7VzjucHnxlCc2Ms92Zj0P")
+                .e("AQAB".getBytes(StandardCharsets.UTF_8))
+                .n("x9Rbax8IZ6yld9vAu3AQjEBd9Q6fyx29rTkqghK7y4t93TrfTPf0E5Uh3fdZjzCzCDrZUitvGJU4RJObn8dxFGHNXdZaRSZ7uk1kM9E1YjFrHwwXDgCeQl6U6wNL5lTjOrjRm6sj5fgvbQnO61F9zZKpKdoxPrIYpJH8YPfI9owTP1ADfPXj53hwt39DcRV9tY2fjlk3jrs1z1oJFYskTpkq7Ihtmdnq0bGgNwNhEaEoP0BcvYowKLwE4V2y9SUX6LqRzB7VzjucHnxlCc2Ms92Zj0P".getBytes(StandardCharsets.UTF_8))
                 .kid(vaultUrl + "/keys/0709643f49394529b92c19a68c8e184a/6581c704deda4979943c3b34468df7c2")
                 .exp(1671523199)
                 .iat(1629999999)
