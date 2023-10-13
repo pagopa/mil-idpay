@@ -13,7 +13,8 @@ import lombok.*;
 public class AuthCodeBlockData {
 
     @NotNull(message = "[" + ErrorCode.ERROR_KID_MUST_NOT_BE_NULL + "] kid must not be null")
-    @Pattern(regexp = "^[ -~]{1,2048}$")
+    @Pattern(regexp = "^[ -~]{1,2048}$",
+            message = "[" + ErrorCode.ERROR_KID_MUST_MATCH_REGEXP + "] kid must match \"{regexp}\"")
     private String kid;
 
     @NotNull(message = "[" + ErrorCode.ERROR_ENCSESSIONKEY_MUST_NOT_BE_NULL + "] encSessionKey must not be null")

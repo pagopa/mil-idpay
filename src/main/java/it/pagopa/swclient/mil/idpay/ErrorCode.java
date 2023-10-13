@@ -24,6 +24,12 @@ public final class ErrorCode {
     public static final String SOD_MUST_NOT_BE_NULL 							                        = MODULE_ID + "000013";
     public static final String AUTH_CODE_BLOCK_DATA_MUST_NOT_BE_NULL                                    = MODULE_ID + "000014";
     public static final String AUTHORIZE_TRANSACTION_MUST_NOT_BE_EMPTY                                  = MODULE_ID + "000015";
+    public static final String ERROR_NIS_MUST_MATCH_REGEXP                                              = MODULE_ID + "000016";
+    public static final String ERROR_CIE_PUBLIC_KEY_MUST_BE_BETWEEN                                     = MODULE_ID + "000017";
+    public static final String ERROR_SIGNATURE_MUST_BE_BETWEEN                                          = MODULE_ID + "000018";
+    public static final String ERROR_SOD_MUST_BE_BETWEEN                                                = MODULE_ID + "000019";
+    public static final String ERROR_KID_MUST_MATCH_REGEXP                                              = MODULE_ID + "000020";
+    public static final String ERROR_INITIATIVEID_MUST_MATCH_REGEXP                                     = MODULE_ID + "000021";
 
     // rest server validation errors
     public static final String CREATE_TRANSACTION_MUST_NOT_BE_EMPTY 							        = MODULE_ID + "000030";
