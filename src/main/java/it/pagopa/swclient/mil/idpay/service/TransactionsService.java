@@ -589,13 +589,15 @@ public class TransactionsService {
 
         return idpayTransactionRepository.find(
                         """
-                                idpayTransaction.terminalId = ?1 and
-                                idpayTransaction.merchantId = ?2 and
-                                idpayTransaction.channel    = ?3 and
-                                idpayTransaction.acquirerId = ?4 and
-                                idpayTransaction.timestamp >= ?5
+                                idpayTransaction.status in ?1 and
+                                idpayTransaction.terminalId = ?2 and
+                                idpayTransaction.merchantId = ?3 and
+                                idpayTransaction.channel    = ?4 and
+                                idpayTransaction.acquirerId = ?5 and
+                                idpayTransaction.timestamp >= ?6
                               """,
                         Sort.by("idpayTransaction.timestamp").descending(),
+                        List.of(TransactionStatus.CANCELLED, TransactionStatus.AUTHORIZED),
                         headers.getTerminalId(),
                         headers.getMerchantId(),
                         headers.getChannel(),
@@ -616,8 +618,6 @@ public class TransactionsService {
                             .build());
                 })
                 .map(txEntityList -> {
-
-                    Log.debugf("============ txEntityList.size: [%s]", txEntityList.size());
                     var transactionList = txEntityList.stream().map(txEntity ->
                             Transaction.builder()
                                 .idpayTransactionId(txEntity.idpayTransaction.getIdpayTransactionId())
