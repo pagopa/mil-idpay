@@ -29,8 +29,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
-
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
@@ -444,8 +442,8 @@ class TransactionResourceAuthorizationTest {
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
-        publicKeyIDPay.setN("ABC".getBytes(StandardCharsets.UTF_8));
-        publicKeyIDPay.setE("DEF".getBytes(StandardCharsets.UTF_8));
+        publicKeyIDPay.setN("ABC");
+        publicKeyIDPay.setE("DEF");
         Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 

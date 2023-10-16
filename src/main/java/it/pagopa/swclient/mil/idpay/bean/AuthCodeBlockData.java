@@ -18,9 +18,11 @@ public class AuthCodeBlockData {
     private String kid;
 
     @NotNull(message = "[" + ErrorCode.ERROR_ENCSESSIONKEY_MUST_NOT_BE_NULL + "] encSessionKey must not be null")
-    private byte[] encSessionKey;
+    @Size(min = 256, max = 2048, message = "[" + ErrorCode.ERROR_ENCSESSIONKEY_MUST_BE_BETWEEN + "] encSessionKey must be between than {min} and {max}")
+    private String encSessionKey;
 
     @NotNull(message = "[" + ErrorCode.ERROR_AUTHCODEBLOCK_MUST_NOT_BE_NULL + "] authCodeBlock must not be null")
-    private byte[] authCodeBlock;
+    @Size(min = 16, max = 16, message = "[" + ErrorCode.ERROR_AUTHCODEBLOCK_MUST_BE_BETWEEN + "] authCodeBlock must be between than {min} and {max}")
+    private String authCodeBlock;
 
 }

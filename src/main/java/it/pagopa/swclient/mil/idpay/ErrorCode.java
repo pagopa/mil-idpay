@@ -30,6 +30,8 @@ public final class ErrorCode {
     public static final String ERROR_SOD_MUST_BE_BETWEEN                                                = MODULE_ID + "000019";
     public static final String ERROR_KID_MUST_MATCH_REGEXP                                              = MODULE_ID + "000020";
     public static final String ERROR_INITIATIVEID_MUST_MATCH_REGEXP                                     = MODULE_ID + "000021";
+    public static final String ERROR_ENCSESSIONKEY_MUST_BE_BETWEEN                                      = MODULE_ID + "000022";
+    public static final String ERROR_AUTHCODEBLOCK_MUST_BE_BETWEEN                                      = MODULE_ID + "000023";
 
     // rest server validation errors
     public static final String CREATE_TRANSACTION_MUST_NOT_BE_EMPTY 							        = MODULE_ID + "000030";

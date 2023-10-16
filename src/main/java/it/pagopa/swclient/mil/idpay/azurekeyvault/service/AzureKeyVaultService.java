@@ -21,8 +21,6 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
-
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -207,10 +205,10 @@ public class AzureKeyVaultService {
         KeyNameAndVersion keyNameAndVersion = kidUtil.getNameAndVersionFromAzureKid(key.getDetails().getKid());
 
         return new PublicKeyIDPay(
-                key.getDetails().getExponent().getBytes(StandardCharsets.UTF_8),
+                key.getDetails().getExponent(),
                 PublicKeyUse.enc,
                 kidUtil.getMyKidFromNameAndVersion(keyNameAndVersion),
-                key.getDetails().getModulus().getBytes(StandardCharsets.UTF_8),
+                key.getDetails().getModulus(),
                 KeyType.RSA,
                 key.getAttributes().getExp(),
                 key.getAttributes().getCreated(),
