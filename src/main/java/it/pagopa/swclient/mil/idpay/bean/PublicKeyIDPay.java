@@ -14,7 +14,7 @@ public class PublicKeyIDPay {
     /*
      * Public exponent
      */
-    private byte[] e;
+    private String e;
 
     /*
      * Public key use
@@ -29,7 +29,7 @@ public class PublicKeyIDPay {
     /*
      * Modulus
      */
-    private byte[] n;
+    private String n;
 
     /*
      * Key type
