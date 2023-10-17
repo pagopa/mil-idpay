@@ -421,7 +421,7 @@ public class TransactionsService {
                                                         try {
 
                                                             // Start trying to encrypt session key with public key retrieved
-                                                            byte[] encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getValue());
+                                                            String encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getValue());
                                                             AuthCodeBlockData authCodeBlockData = AuthCodeBlockData.builder()
                                                                     .kid(publicKeyIDPay.getKid())
                                                                     .encSessionKey(encryptedSessionKey)
@@ -482,7 +482,7 @@ public class TransactionsService {
         UnwrapKeyRequest unwrapKeyRequest = UnwrapKeyRequest
                 .builder()
                 .alg("RSA-OAEP-256")
-                .value(new String(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey(), StandardCharsets.UTF_8))
+                .value(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey())
                 .build();
 
         return azureKeyVaultClient.unwrapKey(BEARER + token.getAccess_token(), authorizeTransaction.getAuthCodeBlockData().getKid(), unwrapKeyRequest)
