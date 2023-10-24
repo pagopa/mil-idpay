@@ -8,8 +8,8 @@ import io.smallrye.mutiny.unchecked.Unchecked;
 import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.bean.Errors;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
-import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyResponse;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyRequest;
+import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyResponse;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.service.AzureKeyVaultService;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.util.EncryptUtil;
@@ -18,6 +18,7 @@ import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayAuthorizeTransactionRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayTransactionsRestClient;
 import it.pagopa.swclient.mil.idpay.client.IpzsVerifyCieRestClient;
+import it.pagopa.swclient.mil.idpay.client.bean.PreAuthPaymentResponseDTO;
 import it.pagopa.swclient.mil.idpay.client.bean.SyncTrxStatus;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionCreationRequest;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
@@ -38,10 +39,10 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 
-import java.nio.charset.StandardCharsets;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -52,6 +53,7 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -139,7 +141,7 @@ public class TransactionsService {
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
                                         .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
                                         .build());
-                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, null, res.getQrcodeTxtUrl(), true));
+                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, null, res.getTrxTxtUrl(), true));
                 });
     }
 
@@ -212,17 +214,18 @@ public class TransactionsService {
 
                                 IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(headers, entity, res);
 
-                                if (updEntity.idpayTransaction.equals(entity.idpayTransaction)) {
-                                    Log.debugf("TransactionsService -> getTransaction: transaction situation is NOT changed");
-                                    return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(updEntity, res.getSecondFactor(), null, false));
-                                } else {
-                                    Log.debugf("TransactionsService -> getTransaction: transaction situation is changed, make an update");
-                                    return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
-                                            .onFailure().recoverWithItem(err -> {
-                                                Log.errorf(err, "TransactionsService -> getTransaction: Error while updating transaction %s on db", entity.transactionId);
 
-                                                return updEntity;
-                                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, res.getSecondFactor(), null, false));//update ok, send response to a client
+                                if (!updEntity.idpayTransaction.equals(entity.idpayTransaction)) {
+                                    Log.debugf("TransactionsService -> getTransaction: transaction situation is changed, make an update");
+                                    idpayTransactionRepository.update(updEntity);
+                                }
+
+
+                                if (TransactionStatus.IDENTIFIED.equals(res.getStatus()) && entity.idpayTransaction.getByCie() != null && Boolean.TRUE.equals(entity.idpayTransaction.getByCie())) {
+                                    return getSecondFactor(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                                            .map(secFactResp -> createTransactionFromIdpayTransactionEntity(updEntity, Base64.getUrlEncoder().encode(secFactResp.getSecondFactor().getBytes(StandardCharsets.UTF_8)), null, false));
+                                } else {
+                                    return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(updEntity, null, null, false));
                                 }
                             });
                 });
@@ -246,6 +249,7 @@ public class TransactionsService {
         idpayTransaction.setStatus(res.getStatus());
         idpayTransaction.setCoveredAmount(res.getRewardCents());
         idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
+        idpayTransaction.setByCie(entity.idpayTransaction.getByCie());
 
         IdpayTransactionEntity trEntity = new IdpayTransactionEntity();
 
@@ -268,26 +272,35 @@ public class TransactionsService {
                     //call idpay to cancel transaction
                     return idpayTransactionsRestClient.deleteTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                             .onFailure().transform(t -> {
-                                Log.errorf(t, "TransactionsService -> cancelTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                                if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
+                                    Log.errorf(t, " TransactionsService -> cancelTransaction: idpay NOT FOUND for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                                    Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
+                                    return new NotFoundException(Response
+                                            .status(Response.Status.NOT_FOUND)
+                                            .entity(errors)
+                                            .build());
+                                } else {
+                                    Log.errorf(t, "TransactionsService -> cancelTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
-                            return new InternalServerErrorException(Response
-                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                    .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
-                                    .build());
-                        })
-                        .chain(() -> {
-                            Log.debug("TransactionsService -> cancelTransaction: idpay getStatusTransaction service returned a 200 status");
+                                    return new InternalServerErrorException(Response
+                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                            .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
+                                            .build());
+                                }
+                            })
+                            .chain(() -> {
+                                Log.debug("TransactionsService -> cancelTransaction: idpay getStatusTransaction service returned a 200 status");
 
-                            IdpayTransactionEntity updEntity = updateCancelIdpayTransactionEntity(entity);
+                                IdpayTransactionEntity updEntity = updateCancelIdpayTransactionEntity(entity);
 
-                            return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
-                                    .onFailure().recoverWithItem(err -> {
-                                        Log.errorf(err, "TransactionsService -> cancelTransaction: Error while updating transaction %s on db", entity.transactionId);
+                                return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
+                                        .onFailure().recoverWithItem(err -> {
+                                            Log.errorf(err, "TransactionsService -> cancelTransaction: Error while updating transaction %s on db", entity.transactionId);
 
-                                        return updEntity;
-                                    })
-                                    .chain(() -> Uni.createFrom().voidItem());
-                                });
+                                            return updEntity;
+                                        })
+                                        .chain(() -> Uni.createFrom().voidItem());
+                            });
             });
     }
 
@@ -634,6 +647,19 @@ public class TransactionsService {
                     getTransactionsResponse.setTransactions(transactionList);
 
                     return getTransactionsResponse;
+                });
+    }
+
+    private Uni<PreAuthPaymentResponseDTO> getSecondFactor(String idpayMerchantId, String xAcquirerId, String transactionId) {
+
+        return idpayTransactionsRestClient.putPreviewPreAuthPayment(idpayMerchantId, xAcquirerId, transactionId)
+                .onFailure().transform(t -> {
+                    Log.errorf(t, "[%s] TransactionsService -> getSecondFactor: Error while retrieving secondFactor for idpay transaction [%s]",
+                            ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR, transactionId);
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR), List.of(ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR_MSG)))
+                            .build());
                 });
     }
 }
