@@ -53,7 +53,6 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -171,7 +170,7 @@ public class TransactionsService {
         return entity;
     }
 
-    protected Transaction createTransactionFromIdpayTransactionEntity(IdpayTransactionEntity entity, byte[] secondFactor, String qrCode, boolean createTransaction) {
+    protected Transaction createTransactionFromIdpayTransactionEntity(IdpayTransactionEntity entity, String secondFactor, String qrCode, boolean createTransaction) {
 
         Transaction transaction = new Transaction();
 
@@ -203,13 +202,23 @@ public class TransactionsService {
                     //call idpay to retrieve current state
                     return idpayTransactionsRestClient.getStatusTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                             .onFailure().transform(t -> {
-                                Log.errorf(t, "TransactionsService -> getTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                                if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
+                                    Log.errorf(t, " TransactionsService -> getTransaction: idpay NOT FOUND for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                                    Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
+                                    return new NotFoundException(Response
+                                            .status(Response.Status.NOT_FOUND)
+                                            .entity(errors)
+                                            .build());
+                                } else {
+                                    Log.errorf(t, "TransactionsService -> getTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
-                            return new InternalServerErrorException(Response
-                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                    .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
-                                    .build());
-                        }).chain(res -> { //response ok
+                                    return new InternalServerErrorException(Response
+                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                            .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
+                                            .build());
+                                }
+                            })
+                            .chain(res -> { //response ok
                             Log.debugf("TransactionsService -> getTransaction: idpay getStatusTransaction service returned a 200 status, response: [%s]", res);
 
                                 IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(headers, entity, res);
@@ -223,7 +232,7 @@ public class TransactionsService {
 
                                 if (TransactionStatus.IDENTIFIED.equals(res.getStatus()) && entity.idpayTransaction.getByCie() != null && Boolean.TRUE.equals(entity.idpayTransaction.getByCie())) {
                                     return getSecondFactor(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
-                                            .map(secFactResp -> createTransactionFromIdpayTransactionEntity(updEntity, Base64.getUrlEncoder().encode(secFactResp.getSecondFactor().getBytes(StandardCharsets.UTF_8)), null, false));
+                                            .map(secFactResp -> createTransactionFromIdpayTransactionEntity(updEntity, secFactResp.getSecondFactor(), null, false));
                                 } else {
                                     return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(updEntity, null, null, false));
                                 }
