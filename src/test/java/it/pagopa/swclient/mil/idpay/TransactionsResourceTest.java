@@ -643,7 +643,7 @@ class TransactionsResourceTest {
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
         IdpayTransactionEntity updEntity = idpayTransactionEntity;
-        //updEntity.idpayTransaction.setTrxCode("Updated Transaction for getStatusTransactionTest");
+        updEntity.idpayTransaction.setStatus(TransactionStatus.IDENTIFIED);
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
@@ -663,6 +663,7 @@ class TransactionsResourceTest {
 
         syncTrxStatus.setStatus(TransactionStatus.CREATED);
         idpayTransactionEntity.idpayTransaction.setByCie(null);
+        updEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
 
         Assertions.assertEquals(200, response.statusCode());
         Assertions.assertNull(response.jsonPath().getList("errors"));
@@ -723,7 +724,7 @@ class TransactionsResourceTest {
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
         IdpayTransactionEntity updEntity = idpayTransactionEntity;
-        //updEntity.idpayTransaction.setTrxCode("Updated Transaction for getStatusTransactionTest");
+        updEntity.idpayTransaction.setStatus(TransactionStatus.IDENTIFIED);
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
@@ -743,6 +744,7 @@ class TransactionsResourceTest {
 
         syncTrxStatus.setStatus(TransactionStatus.CREATED);
         //idpayTransactionEntity.idpayTransaction.setByCie(null);
+        updEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
 
         Assertions.assertEquals(200, response.statusCode());
         Assertions.assertNull(response.jsonPath().getList("errors"));
@@ -756,15 +758,16 @@ class TransactionsResourceTest {
     @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void getStatusTransactionSecondFactorTestCieFalse_OK() {
 
+        idpayTransactionEntity.idpayTransaction.setByCie(false);
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
         syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
         Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
-        idpayTransactionEntity.idpayTransaction.setByCie(false);
-        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
-
         IdpayTransactionEntity updEntity = idpayTransactionEntity;
-        //updEntity.idpayTransaction.setTrxCode("Updated Transaction for getStatusTransactionTest");
+
+        updEntity.idpayTransaction.setStatus(TransactionStatus.IDENTIFIED);
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
@@ -784,6 +787,7 @@ class TransactionsResourceTest {
 
         syncTrxStatus.setStatus(TransactionStatus.CREATED);
         idpayTransactionEntity.idpayTransaction.setByCie(null);
+        updEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
 
         Assertions.assertEquals(200, response.statusCode());
         Assertions.assertNull(response.jsonPath().getList("errors"));

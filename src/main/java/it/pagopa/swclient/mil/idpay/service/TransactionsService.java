@@ -329,7 +329,8 @@ public class TransactionsService {
             .chain(entity -> { //Transaction found
                 Log.debugf("TransactionsService -> verifyCie: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
-                return this.updateByCie(entity).chain(ent -> this.callIpzs(ent, verifyCie, transactionId));
+                return this.updateByCie(entity)
+                        .chain(ent -> this.callIpzs(ent, verifyCie, transactionId));
                 }).chain(Unchecked.function(res -> {//response ok
                     Log.debugf("TransactionsService -> verifyCie: IPZS identitycards service returned a 200 status, response: [%s]", res);
 
