@@ -226,15 +226,15 @@ public class TransactionsService {
 
                                 if (!updEntity.idpayTransaction.equals(entity.idpayTransaction)) {
                                     Log.debugf("TransactionsService -> getTransaction: transaction situation is changed, make an update");
-                                    idpayTransactionRepository.update(updEntity);
-                                }
+                                    return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
+                                            .onFailure().recoverWithItem(err -> {
+                                                Log.errorf(err, "TransactionsService -> cancelTransaction: Error while updating transaction %s on db", entity.transactionId);
 
-
-                                if (TransactionStatus.IDENTIFIED.equals(res.getStatus()) && entity.idpayTransaction.getByCie() != null && Boolean.TRUE.equals(entity.idpayTransaction.getByCie())) {
-                                    return getSecondFactor(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
-                                            .map(secFactResp -> createTransactionFromIdpayTransactionEntity(updEntity, secFactResp.getSecondFactor(), null, false));
+                                                return updEntity;
+                                            }).chain(uEnt -> getSecFactAndRespond(uEnt, res));
                                 } else {
-                                    return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(updEntity, null, null, false));
+                                    Log.debugf("TransactionsService -> getTransaction: transaction situation is NOT changed");
+                                    return getSecFactAndRespond(updEntity, res);
                                 }
                             });
                 });
@@ -328,7 +328,8 @@ public class TransactionsService {
         return getIdpayTransactionEntity(transactionId) //looking for MilTransactionID in DB
             .chain(entity -> { //Transaction found
                 Log.debugf("TransactionsService -> verifyCie: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
-                return this.callIpzs(entity, verifyCie, transactionId);
+
+                return this.updateByCie(entity).chain(ent -> this.callIpzs(ent, verifyCie, transactionId));
                 }).chain(Unchecked.function(res -> {//response ok
                     Log.debugf("TransactionsService -> verifyCie: IPZS identitycards service returned a 200 status, response: [%s]", res);
 
@@ -670,5 +671,28 @@ public class TransactionsService {
                             .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR), List.of(ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR_MSG)))
                             .build());
                 });
+    }
+
+
+    private Uni<IdpayTransactionEntity> updateByCie(IdpayTransactionEntity entity) {
+
+        entity.idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
+        entity.idpayTransaction.setByCie(true);
+
+        return idpayTransactionRepository.update(entity)
+                .onFailure().transform(err -> new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
+                            .build())
+                );
+    }
+
+    private Uni<Transaction> getSecFactAndRespond(IdpayTransactionEntity entity, SyncTrxStatus res) {
+        if (TransactionStatus.IDENTIFIED.equals(res.getStatus()) && entity.idpayTransaction.getByCie() != null && Boolean.TRUE.equals(entity.idpayTransaction.getByCie())) {
+            return getSecondFactor(entity.idpayTransaction.getIdpayMerchantId(), entity.idpayTransaction.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                    .map(secFactResp -> createTransactionFromIdpayTransactionEntity(entity, secFactResp.getSecondFactor(), null, false));
+        } else {
+            return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(entity, null, null, false));
+        }
     }
 }
