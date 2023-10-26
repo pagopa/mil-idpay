@@ -118,7 +118,6 @@ class TransactionResourceAuthorizationTest {
                 .response();
 
         Assertions.assertEquals(200, response.statusCode());
-        //Assertions.assertNull(response.jsonPath().getList("errors"));
     }
 
     @Test
@@ -240,6 +239,7 @@ class TransactionResourceAuthorizationTest {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
+        idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.IDENTIFIED);
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
@@ -467,5 +467,47 @@ class TransactionResourceAuthorizationTest {
         Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
 
         Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_ENCRYPTING_SESSION_KEY));
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void authorizeTransactionTest_KOAuthorizeUpdate500() {
+
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
+
+        Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
+                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
+
+        Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
+                .thenReturn(Uni.createFrom().item(publicKeyIDPay));
+
+        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
+                .thenReturn(Uni.createFrom().item(authTransactionResponse));
+
+        Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
+
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .body(authorizeTransaction)
+                .pathParam("milTransactionId", transactionId)
+                .when()
+                .post("/{milTransactionId}/authorize")
+                .then()
+                .extract()
+                .response();
+
+        idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.IDENTIFIED);
+
+        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+
+        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_STORING_DATA_IN_DB));
     }
 }
