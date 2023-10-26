@@ -481,10 +481,12 @@ components:
     SecondFactor:
       description: Second factor to build authorization code block
       type: string
-      format: byte # Base64 URL safe
-      minLength: 6 # bytes -> 8 chars when encoded with Base64
-      maxLength: 6 # bytes -> 8 chars when encoded with Base64
-      example: "SD76s1nB"
+      pattern: "^[a-fA-F0-9]{16}$"
+      example: "abc534659def0000"
+      #format: byte # Base64 URL safe
+      #minLength: 6 # bytes -> 8 chars when encoded with Base64
+      #maxLength: 6 # bytes -> 8 chars when encoded with Base64
+      #example: "SD76s1nB"
     
     Signature:
       description: Signature of the challenge calculated by the CIE

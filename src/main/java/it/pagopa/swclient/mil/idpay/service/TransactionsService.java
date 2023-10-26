@@ -86,13 +86,13 @@ public class TransactionsService {
     @RestClient
     IdpayAuthorizeTransactionRestClient idpayAuthorizeTransactionRestClient;
 
-    @ConfigProperty(name="azuread.client-id")
+    @ConfigProperty(name = "azuread.client-id")
     String azureADClientId;
 
-    @ConfigProperty(name="azuread.client-secret")
+    @ConfigProperty(name = "azuread.client-secret")
     String azureADClientSecret;
 
-    @ConfigProperty(name="azuread.tenant-id")
+    @ConfigProperty(name = "azuread.tenant-id")
     String azureADTenantId;
 
     private static final String BEARER = "Bearer ";
@@ -101,10 +101,10 @@ public class TransactionsService {
 
     private static final String VAULT = "https://vault.azure.net/.default";
 
-    @ConfigProperty(name="idpay.transactions.days-before", defaultValue = "30")
+    @ConfigProperty(name = "idpay.transactions.days-before", defaultValue = "30")
     int getTransactionsDaysBefore;
 
-    @ConfigProperty(name="idpay.transactions.max-transactions", defaultValue = "30")
+    @ConfigProperty(name = "idpay.transactions.max-transactions", defaultValue = "30")
     int getTransactionsMaxTransactions;
 
     public Uni<Transaction> createTransaction(CommonHeader headers, CreateTransaction createTransaction) {
@@ -133,7 +133,7 @@ public class TransactionsService {
                     Log.debugf("TransactionsService -> createTransaction: storing idpay transaction [%s] on DB", entity.idpayTransaction);
 
                     return idpayTransactionRepository.persist(entity)
-                            .onFailure().transform(err-> {
+                            .onFailure().transform(err -> {
                                 Log.errorf(err, "TransactionsService -> createTransaction: Error while storing transaction %s on db", entity.transactionId);
 
                                 return new InternalServerErrorException(Response
@@ -275,8 +275,8 @@ public class TransactionsService {
         Log.debugf("TransactionsService -> cancelTransaction - Input parameters: %s, %s", headers, transactionId);
 
         return getIdpayTransactionEntity(transactionId) //looking for MilTransactionID in DB
-            .chain(entity -> { //Transaction found
-                Log.debugf("TransactionsService -> cancelTransaction: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                .chain(entity -> { //Transaction found
+                    Log.debugf("TransactionsService -> cancelTransaction: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
                     //call idpay to cancel transaction
                     return idpayTransactionsRestClient.deleteTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
@@ -313,8 +313,8 @@ public class TransactionsService {
             });
     }
 
-    protected IdpayTransactionEntity updateCancelIdpayTransactionEntity(IdpayTransactionEntity entity) {
-        entity.idpayTransaction.setStatus(TransactionStatus.CANCELLED);
+    protected IdpayTransactionEntity updateIdpayTransactionEntity(IdpayTransactionEntity entity, TransactionStatus status) {
+        entity.idpayTransaction.setStatus(status);
         entity.idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
 
         return entity;
@@ -363,7 +363,7 @@ public class TransactionsService {
                                             });
                                 });
                     }
-            }));
+                }));
     }
 
     protected IpzsVerifyCieRequest createIpzsVerifyCieRequest(VerifyCie verifyCie, String trxCode) {
@@ -459,7 +459,8 @@ public class TransactionsService {
                                                             return authorize(dbData, authorize);
                                                         } catch (NoSuchAlgorithmException | InvalidKeySpecException |
                                                                  NoSuchPaddingException | InvalidKeyException |
-                                                                 IllegalBlockSizeException | BadPaddingException error) {
+                                                                 IllegalBlockSizeException |
+                                                                 BadPaddingException error) {
 
                                                             // If encrypt retrieve some error, return INTERNAL_SERVER_ERROR
                                                             Log.errorf("Error during encrypting session key using IDPay public key [%s]", publicKeyIDPay);
@@ -537,48 +538,71 @@ public class TransactionsService {
     }
 
     private Uni<Response> authorize(IdpayTransactionEntity dbData, AuthorizeTransaction authorize) {
-            return idpayAuthorizeTransactionRestClient.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), authorize)
-                    .onFailure().transform(Unchecked.function(t -> {
+        return idpayAuthorizeTransactionRestClient.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), authorize)
+                .onFailure().transform(Unchecked.function(t -> {
 
-                        // Error 500 while trying to authorize transaction
-                        Log.errorf(t, "TransactionsService -> authorizeTransaction: error response while authorizing transaction.");
-                        Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES_MSG));
+                    // Error 500 while trying to authorize transaction
+                    Log.errorf(t, "TransactionsService -> authorizeTransaction: error response while authorizing transaction.");
+                    Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES_MSG));
 
-                        throw new InternalServerErrorException(Response
+                    throw new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(errors)
+                            .build());
+                }))
+                .chain(finalResult -> {
+                    if (finalResult.getAuthTransactionResponseOk() != null) {
+
+                        // If all went ok, send 200 OK to client
+                        Log.debugf("TransactionsService -> authorizeTransaction: call to authorize returned a 200 status, response with public key: [%s]", finalResult.getAuthTransactionResponseOk());
+
+                        // Start updating transaction with new status AUTHORIZED
+                        return updateAuthorizeTransactionStatus(dbData)
+                                .onItem()
+                                .transform(result -> result);
+                    } else if (finalResult.getAuthTransactionResponseWrong() != null) {
+
+                        // If IDPay responds with WRONG_AUTH_CODE, send BAD_REQUEST to client
+                        Log.errorf("TransactionsService -> authorizeTransaction: error IDPay responds with WRONG_AUTH_CODE for transaction: [%s]", dbData.transactionId);
+                        Errors errors = new Errors(List.of(ErrorCode.ERROR_IDPAY_WRONG_AUTH_CODE), List.of(ErrorCode.ERROR_IDPAY_WRONG_AUTH_CODE_MSG));
+
+                        return Uni.createFrom().item((Response
+                                .status(Response.Status.BAD_REQUEST)
+                                .entity(errors)
+                                .build()));
+                    } else {
+
+                        // If any other from IDPay, send INTERNAL_SERVER_ERROR to client
+                        Log.errorf("TransactionsService -> authorizeTransaction: IDPay responds with unknown error 500 for transaction: [%s]", dbData.transactionId);
+                        Errors errors = new Errors(List.of(ErrorCode.ERROR_IDPAY_UNKNOWN_ERROR_CODE), List.of(ErrorCode.ERROR_IDPAY_UNKNOWN_ERROR_MSG));
+
+                        return Uni.createFrom().item((Response
                                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                                 .entity(errors)
-                                .build());
-                    }))
-                    .chain(finalResult -> {
-                        if (finalResult.getAuthTransactionResponseOk() != null) {
+                                .build()));
+                    }
+                });
+    }
 
-                            // If all went ok, send 200 OK to client
-                            Log.debugf("TransactionsService -> authorizeTransaction: call to authorize returned a 200 status, response with public key: [%s]", finalResult.getAuthTransactionResponseOk());
+    private Uni<Response> updateAuthorizeTransactionStatus(IdpayTransactionEntity dbData) {
+        Log.debugf("TransactionsService -> authorizeTransaction: transaction status is changed, make an update");
 
-                            Response response = Response.status(Response.Status.OK).build();
-                            return Uni.createFrom().item(response);
-                        } else if (finalResult.getAuthTransactionResponseWrong() != null) {
+        IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(dbData, TransactionStatus.AUTHORIZED);
 
-                            // If IDPay responds with WRONG_AUTH_CODE, send BAD_REQUEST to client
-                            Log.errorf("TransactionsService -> authorizeTransaction: error IDPay responds with WRONG_AUTH_CODE for transaction: [%s]", dbData.transactionId);
-                            Errors errors = new Errors(List.of(ErrorCode.ERROR_IDPAY_WRONG_AUTH_CODE), List.of(ErrorCode.ERROR_IDPAY_WRONG_AUTH_CODE_MSG));
+        return idpayTransactionRepository.update(updEntity)
+                .onFailure().transform(Unchecked.function(err -> {
+                    Log.errorf(err, "TransactionsService -> authorizeTransaction: Error while updating transaction %s on db", dbData.transactionId);
 
-                            return Uni.createFrom().item((Response
-                                    .status(Response.Status.BAD_REQUEST)
-                                    .entity(errors)
-                                    .build()));
-                        } else {
+                    throw new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
+                            .build());
+                }))
+                .onItem().transform(transactionSaved -> {
+                    Log.debugf("TransactionsService -> authorizeTransaction: transaction saved: [%s]", transactionSaved);
 
-                            // If any other from IDPay, send INTERNAL_SERVER_ERROR to client
-                            Log.errorf("TransactionsService -> authorizeTransaction: IDPay responds with unknown error 500 for transaction: [%s]", dbData.transactionId);
-                            Errors errors = new Errors(List.of(ErrorCode.ERROR_IDPAY_UNKNOWN_ERROR_CODE), List.of(ErrorCode.ERROR_IDPAY_UNKNOWN_ERROR_MSG));
-
-                            return Uni.createFrom().item((Response
-                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                    .entity(errors)
-                                    .build()));
-                        }
-                    });
+                    return Response.status(Response.Status.OK).build();
+                });
     }
 
     public Uni<IdpayTransactionEntity> getIdpayTransactionEntity(String transactionId) {
@@ -644,16 +668,16 @@ public class TransactionsService {
                 .map(txEntityList -> {
                     var transactionList = txEntityList.stream().map(txEntity ->
                             Transaction.builder()
-                                .idpayTransactionId(txEntity.idpayTransaction.getIdpayTransactionId())
-                                .milTransactionId(txEntity.idpayTransaction.getMilTransactionId())
-                                .initiativeId(txEntity.idpayTransaction.getInitiativeId())
-                                .timestamp(txEntity.idpayTransaction.getTimestamp())
-                                .goodsCost(txEntity.idpayTransaction.getGoodsCost())
-                                .trxCode(txEntity.idpayTransaction.getTrxCode())
-                                .coveredAmount(txEntity.idpayTransaction.getCoveredAmount())
-                                .status(txEntity.idpayTransaction.getStatus())
-                                .lastUpdate(txEntity.idpayTransaction.getLastUpdate())
-                                .build()).toList();
+                                    .idpayTransactionId(txEntity.idpayTransaction.getIdpayTransactionId())
+                                    .milTransactionId(txEntity.idpayTransaction.getMilTransactionId())
+                                    .initiativeId(txEntity.idpayTransaction.getInitiativeId())
+                                    .timestamp(txEntity.idpayTransaction.getTimestamp())
+                                    .goodsCost(txEntity.idpayTransaction.getGoodsCost())
+                                    .trxCode(txEntity.idpayTransaction.getTrxCode())
+                                    .coveredAmount(txEntity.idpayTransaction.getCoveredAmount())
+                                    .status(txEntity.idpayTransaction.getStatus())
+                                    .lastUpdate(txEntity.idpayTransaction.getLastUpdate())
+                                    .build()).toList();
                     GetTransactionsResponse getTransactionsResponse = new GetTransactionsResponse();
                     getTransactionsResponse.setTransactions(transactionList);
 
