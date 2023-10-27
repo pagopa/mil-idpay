@@ -300,7 +300,7 @@ public class TransactionsService {
                             .chain(() -> {
                                 Log.debug("TransactionsService -> cancelTransaction: idpay getStatusTransaction service returned a 200 status");
 
-                                IdpayTransactionEntity updEntity = updateCancelIdpayTransactionEntity(entity);
+                                IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(entity, TransactionStatus.CANCELLED);
 
                                 return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
                                         .onFailure().recoverWithItem(err -> {
@@ -446,17 +446,13 @@ public class TransactionsService {
 
                                                             // Start trying to encrypt session key with public key retrieved
                                                             String encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getValue());
-                                                            AuthCodeBlockData authCodeBlockData = AuthCodeBlockData.builder()
-                                                                    .kid(publicKeyIDPay.getKid())
-                                                                    .encSessionKey(encryptedSessionKey)
-                                                                    .authCodeBlock(authorizeTransaction.getAuthCodeBlockData().getAuthCodeBlock())
+
+                                                            PinBlockDTO pinBlock = PinBlockDTO.builder()
+                                                                    .encryptedPinBlock(authorizeTransaction.getAuthCodeBlockData().getAuthCodeBlock())
+                                                                    .encryptedKey(encryptedSessionKey)
                                                                     .build();
 
-                                                            AuthorizeTransaction authorize = AuthorizeTransaction.builder()
-                                                                    .authCodeBlockData(authCodeBlockData)
-                                                                    .build();
-
-                                                            return authorize(dbData, authorize);
+                                                            return authorize(dbData, pinBlock);
                                                         } catch (NoSuchAlgorithmException | InvalidKeySpecException |
                                                                  NoSuchPaddingException | InvalidKeyException |
                                                                  IllegalBlockSizeException |
@@ -513,7 +509,7 @@ public class TransactionsService {
         return azureKeyVaultClient.unwrapKey(BEARER + token.getAccess_token(), authorizeTransaction.getAuthCodeBlockData().getKid(), unwrapKeyRequest)
                 .onFailure().transform(Unchecked.function(t -> {
 
-                    // If unwrap key kails, return INTERNAL_SERVER_ERROR
+                    // If unwrap key fails, return INTERNAL_SERVER_ERROR
                     Log.errorf(t, "TransactionsService -> authorizeTransaction: Azure KV error response while unwrapping session key [%s]", authorizeTransaction.getAuthCodeBlockData().getEncSessionKey());
 
                     throw new InternalServerErrorException(Response
@@ -537,9 +533,9 @@ public class TransactionsService {
                 })).chain(publicKeyIDPay -> Uni.createFrom().item(publicKeyIDPay));
     }
 
-    private Uni<Response> authorize(IdpayTransactionEntity dbData, AuthorizeTransaction authorize) {
-        return idpayAuthorizeTransactionRestClient.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), authorize)
-                .onFailure().transform(Unchecked.function(t -> {
+    private Uni<Response> authorize(IdpayTransactionEntity dbData, PinBlockDTO pinBlock) {
+            return idpayAuthorizeTransactionRestClient.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), pinBlock)
+                    .onFailure().transform(Unchecked.function(t -> {
 
                     // Error 500 while trying to authorize transaction
                     Log.errorf(t, "TransactionsService -> authorizeTransaction: error response while authorizing transaction.");

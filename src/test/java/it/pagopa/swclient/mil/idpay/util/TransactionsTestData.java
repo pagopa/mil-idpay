@@ -268,17 +268,10 @@ public final class TransactionsTestData {
         AuthTransactionResponseOk authTransactionResponseOk = AuthTransactionResponseOk
                 .builder()
                 .id("1")
-                .idTrxIssuer("IdTrxIssuer2")
                 .trxCode("12345678")
-                .trxDate(new Date())
-                .operationType(OperationType.CHARGE)
                 .amountCents(99999999999L)
-                .amountCurrency("EUR")
-                .acquirerId("AcquirerId")
-                .merchantId("IdPayMerchantId")
                 .initiativeId("InitiativeId2")
                 .status(TransactionStatus.AUTHORIZED)
-                .rewardCents(123L)
                 .build();
 
         authTransactionResponse.setAuthTransactionResponseOk(authTransactionResponseOk);

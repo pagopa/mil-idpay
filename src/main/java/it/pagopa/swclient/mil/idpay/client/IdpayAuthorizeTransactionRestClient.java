@@ -2,7 +2,7 @@ package it.pagopa.swclient.mil.idpay.client;
 
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.idpay.bean.AuthTransactionResponse;
-import it.pagopa.swclient.mil.idpay.bean.AuthorizeTransaction;
+import it.pagopa.swclient.mil.idpay.bean.PinBlockDTO;
 import it.pagopa.swclient.mil.idpay.bean.PublicKeyIDPay;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
@@ -17,8 +17,12 @@ public interface IdpayAuthorizeTransactionRestClient {
     @ClientHeaderParam(name = "Ocp-Apim-Subscription-Key", value = "${idpay-rest-client.apim-subscription-key}", required = false)
     Uni<PublicKeyIDPay> retrieveIdpayPublicKey();
 
-    @POST
+    @PUT
     @Path("/idpay/mil/payment/idpay-code/{idpayTransactionId}/authorize")
     @ClientHeaderParam(name = "Ocp-Apim-Subscription-Key", value = "${idpay-rest-client.apim-subscription-key}", required = false)
-    Uni<AuthTransactionResponse> authorize(@HeaderParam("x-merchant-id") @NotNull String xMerchantId, @HeaderParam("x-acquirer-id") String xAcquirerId, @PathParam("idpayTransactionId") String idpayTransactionId, AuthorizeTransaction authorizeTransaction);
+    Uni<AuthTransactionResponse> authorize(
+            @HeaderParam("x-merchant-fiscalcode") @NotNull String xMerchantFiscalCode,
+            @HeaderParam("x-acquirer-id") String xAcquirerId,
+            @PathParam("idpayTransactionId") String idpayTransactionId,
+            PinBlockDTO pinBlockDTO);
 }

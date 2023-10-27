@@ -32,6 +32,8 @@ public final class ErrorCode {
     public static final String ERROR_INITIATIVEID_MUST_MATCH_REGEXP                                     = MODULE_ID + "000021";
     public static final String ERROR_ENCSESSIONKEY_MUST_BE_BETWEEN                                      = MODULE_ID + "000022";
     public static final String ERROR_AUTHCODEBLOCK_MUST_BE_BETWEEN                                      = MODULE_ID + "000023";
+    public static final String ERROR_ENCRYPTEDPINBLOCK_MUST_NOT_BE_NULL 							    = MODULE_ID + "000024";
+    public static final String ERROR_ENCRYPTEDKEY_MUST_NOT_BE_NULL 							            = MODULE_ID + "000025";
 
     // rest server validation errors
     public static final String CREATE_TRANSACTION_MUST_NOT_BE_EMPTY 							        = MODULE_ID + "000030";

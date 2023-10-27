@@ -13,7 +13,6 @@ import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.bean.*;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayAuthorizeTransactionRestClient;
-import it.pagopa.swclient.mil.idpay.client.IpzsVerifyCieRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieResponse;
@@ -41,10 +40,6 @@ class TransactionResourceAuthorizationTest {
     @InjectMock
     @RestClient
     IdpayAuthorizeTransactionRestClient idpayAuthorizeTransactionRestClient;
-
-    @InjectMock
-    @RestClient
-    IpzsVerifyCieRestClient ipzsVerifyCieRestClient;
 
     @InjectMock
     @RestClient
@@ -101,7 +96,7 @@ class TransactionResourceAuthorizationTest {
         Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
                         .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
+        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
                 .thenReturn(Uni.createFrom().item(authTransactionResponse));
 
 
@@ -316,7 +311,7 @@ class TransactionResourceAuthorizationTest {
         Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
+        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
 
@@ -361,7 +356,7 @@ class TransactionResourceAuthorizationTest {
                 .message("Wrong Authorization Code")
                 .build());
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
+        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
                 .thenReturn(Uni.createFrom().item(authTransactionResponse));
 
 
@@ -405,7 +400,7 @@ class TransactionResourceAuthorizationTest {
         authTransactionResponse.setAuthTransactionResponseOk(null);
         authTransactionResponse.setAuthTransactionResponseWrong(null);
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
+        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
                 .thenReturn(Uni.createFrom().item(authTransactionResponse));
 
 
@@ -484,7 +479,7 @@ class TransactionResourceAuthorizationTest {
         Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(AuthorizeTransaction.class)))
+        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
                 .thenReturn(Uni.createFrom().item(authTransactionResponse));
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
