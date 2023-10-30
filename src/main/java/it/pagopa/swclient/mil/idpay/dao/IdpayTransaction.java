@@ -26,5 +26,5 @@ public class IdpayTransaction {
     private TransactionStatus status;
     private Long coveredAmount;
     private String lastUpdate;
-
+    private Boolean byCie;
 }

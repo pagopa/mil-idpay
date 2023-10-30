@@ -31,7 +31,7 @@ public class TransactionResponse {
     private String vat;
     private Boolean splitPayment;
     private Long residualAmountCents;
-    private String qrcodePngUrl;
-    private String qrcodeTxtUrl;
+    private String trxPngUrl;
+    private String trxTxtUrl;
 
 }

@@ -12,6 +12,7 @@ import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
 import it.pagopa.swclient.mil.idpay.bean.TransactionStatus;
 import it.pagopa.swclient.mil.idpay.client.IdpayTransactionsRestClient;
+import it.pagopa.swclient.mil.idpay.client.bean.PreAuthPaymentResponseDTO;
 import it.pagopa.swclient.mil.idpay.client.bean.SyncTrxStatus;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
@@ -62,6 +63,7 @@ class TransactionsResourceTest {
     String transactionId;
 
     //List<IdpayTransactionEntity> transactionEntityList;
+    PreAuthPaymentResponseDTO preAuthPaymentResponseDTO;
 
     @BeforeAll
     void createTestObjects() {
@@ -74,6 +76,7 @@ class TransactionsResourceTest {
         transactionId = RandomStringUtils.random(32, true, true);
         syncTrxStatusNotChanged = TransactionsTestData.getStatusTransactionResponseNotChanged();
         //transactionEntityList = TransactionsTestData.getListTransactionEntity(validMilHeaders, createTransactionRequest, transactionResponse);
+        preAuthPaymentResponseDTO = TransactionsTestData.getSecondFactor();
     }
 
     @Test
@@ -270,10 +273,66 @@ class TransactionsResourceTest {
 
     @Test
     @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
-    void getStatusTransactionTest_KOIdpay() {
+    void getStatusTransactionTest_KOIdpay404() {
 
         Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(404)));
+
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .pathParam("transactionId", transactionId)
+                .when()
+                .get("/{transactionId}")
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(404, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+
+        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES));
+
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void getStatusTransactionTest_KOIdpay500() {
+
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
+
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .pathParam("transactionId", transactionId)
+                .when()
+                .get("/{transactionId}")
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+
+        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES));
+
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void getStatusTransactionTest_KOIdpay() {
+
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new TimeoutException()));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
@@ -299,7 +358,7 @@ class TransactionsResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void getStatusTransactionTest_KOUpdate() {
-
+        syncTrxStatus.setStatus(TransactionStatus.AUTHORIZED);
         Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
@@ -318,6 +377,7 @@ class TransactionsResourceTest {
                 .extract()
                 .response();
 
+        syncTrxStatus.setStatus(TransactionStatus.CREATED);
         Assertions.assertEquals(200, response.statusCode());
         Assertions.assertNull(response.jsonPath().getList("errors"));
     }
@@ -404,10 +464,66 @@ class TransactionsResourceTest {
 
     @Test
     @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
-    void deleteTransactionTest_KOIdpay() {
+    void deleteTransactionTest_KOIdpay404() {
 
         Mockito.when(idpayTransactionsRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(404)));
+
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .pathParam("transactionId", transactionId)
+                .when()
+                .delete("/{transactionId}")
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(404, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+
+        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES));
+
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void deleteTransactionTest_KOIdpay500() {
+
+        Mockito.when(idpayTransactionsRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
+
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .pathParam("transactionId", transactionId)
+                .when()
+                .delete("/{transactionId}")
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+
+        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES));
+
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void deleteTransactionTest_KOIdpay() {
+
+        Mockito.when(idpayTransactionsRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new TimeoutException()));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
 
@@ -513,5 +629,171 @@ class TransactionsResourceTest {
         Assertions.assertEquals(500, response.statusCode());
         Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
         Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_RETRIEVING_DATA_FROM_DB));
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void getStatusTransactionSecondFactorTest_OK() {
+
+        syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(syncTrxStatus));
+
+        idpayTransactionEntity.idpayTransaction.setByCie(true);
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        IdpayTransactionEntity updEntity = idpayTransactionEntity;
+        updEntity.idpayTransaction.setStatus(TransactionStatus.IDENTIFIED);
+
+        Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
+
+        Mockito.when(idpayTransactionsRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(preAuthPaymentResponseDTO));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .pathParam("transactionId", transactionId)
+                .when()
+                .get("/{transactionId}")
+                .then()
+                .extract()
+                .response();
+
+        syncTrxStatus.setStatus(TransactionStatus.CREATED);
+        idpayTransactionEntity.idpayTransaction.setByCie(null);
+        updEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
+
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
+
+        Assertions.assertEquals(TransactionStatus.IDENTIFIED.toString(), response.jsonPath().getString("status"));
+        Assertions.assertNotNull(response.jsonPath().getString("secondFactor"));
+
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void getStatusTransactionSecondFactorTest_KOIdPay() {
+
+        syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(syncTrxStatus));
+
+        idpayTransactionEntity.idpayTransaction.setByCie(true);
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        IdpayTransactionEntity updEntity = idpayTransactionEntity;
+        //updEntity.idpayTransaction.setTrxCode("Updated Transaction for getStatusTransactionTest");
+
+        Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
+
+        Mockito.when(idpayTransactionsRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .pathParam("transactionId", transactionId)
+                .when()
+                .get("/{transactionId}")
+                .then()
+                .extract()
+                .response();
+
+        syncTrxStatus.setStatus(TransactionStatus.CREATED);
+        idpayTransactionEntity.idpayTransaction.setByCie(null);
+
+        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void getStatusTransactionSecondFactorTestCieNull_OK() {
+
+        syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(syncTrxStatus));
+
+        //idpayTransactionEntity.idpayTransaction.setByCie(true);
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        IdpayTransactionEntity updEntity = idpayTransactionEntity;
+        updEntity.idpayTransaction.setStatus(TransactionStatus.IDENTIFIED);
+
+        Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
+
+        Mockito.when(idpayTransactionsRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(preAuthPaymentResponseDTO));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .pathParam("transactionId", transactionId)
+                .when()
+                .get("/{transactionId}")
+                .then()
+                .extract()
+                .response();
+
+        syncTrxStatus.setStatus(TransactionStatus.CREATED);
+        //idpayTransactionEntity.idpayTransaction.setByCie(null);
+        updEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
+
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
+
+        Assertions.assertEquals(TransactionStatus.IDENTIFIED.toString(), response.jsonPath().getString("status"));
+        Assertions.assertNull(response.jsonPath().getString("secondFactor"));
+
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void getStatusTransactionSecondFactorTestCieFalse_OK() {
+
+        idpayTransactionEntity.idpayTransaction.setByCie(false);
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(syncTrxStatus));
+
+        IdpayTransactionEntity updEntity = idpayTransactionEntity;
+
+        updEntity.idpayTransaction.setStatus(TransactionStatus.IDENTIFIED);
+
+        Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
+
+        Mockito.when(idpayTransactionsRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(preAuthPaymentResponseDTO));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .pathParam("transactionId", transactionId)
+                .when()
+                .get("/{transactionId}")
+                .then()
+                .extract()
+                .response();
+
+        syncTrxStatus.setStatus(TransactionStatus.CREATED);
+        idpayTransactionEntity.idpayTransaction.setByCie(null);
+        updEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
+
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNull(response.jsonPath().getList("errors"));
+
+        Assertions.assertEquals(TransactionStatus.IDENTIFIED.toString(), response.jsonPath().getString("status"));
+        Assertions.assertNull(response.jsonPath().getString("secondFactor"));
+
     }
 }

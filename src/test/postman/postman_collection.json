@@ -92,7 +92,7 @@
 							}
 						],
 						"url": {
-							"raw": "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io/idpay/mil/payment/qr-code/merchant/initiatives",
+							"raw": "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io/idpay/mil/merchant/initiatives",
 							"protocol": "https",
 							"host": [
 								"156360cd-f617-4dcb-b908-ae29a2a8651c",
@@ -103,8 +103,6 @@
 							"path": [
 								"idpay",
 								"mil",
-								"payment",
-								"qr-code",
 								"merchant",
 								"initiatives"
 							]
@@ -182,7 +180,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"initiativeId\": \"aaaaaaaaaaaaaaaaaa\",\r\n  \"timestamp\": \"2023-07-30T14:27:38\",\r\n  \"goodsCost\": 333\r\n}",
+					"raw": "{\r\n  \"initiativeId\": \"aaaaaaaaaaaaaaaaaa\",\r\n  \"timestamp\": \"2023-10-15T21:27:38\",\r\n  \"goodsCost\": 32\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -241,7 +239,7 @@
 							}
 						},
 						"url": {
-							"raw": "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io/idpay/mil/payment/qr-code/merchant",
+							"raw": "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io/idpay/mil/payment",
 							"protocol": "https",
 							"host": [
 								"156360cd-f617-4dcb-b908-ae29a2a8651c",
@@ -252,9 +250,7 @@
 							"path": [
 								"idpay",
 								"mil",
-								"payment",
-								"qr-code",
-								"merchant"
+								"payment"
 							]
 						}
 					},
@@ -284,7 +280,7 @@
 						}
 					],
 					"cookie": [],
-					"body": "{\n\t\"id\": \"4490eea8-9c81-4879-9720-22222222333\",\n\t\"trxCode\": \"trxCodetrxCodetrxCode\",\n\t\"initiativeId\": \"initiativeId1\",\n\t\"merchantId\": \"111\",\n\t\"idTrxAcquirer\": \"4490eea8-9c81-4879-9720-9578de10ff4e\",\n\t\"trxDate\": \"2023-08-03T14:29:01\",\n\t\"trxExpirationMinutes\": 14235426,\n\t\"amountCents\": 99999999999,\n\t\"amountCurrency\": \"EUR\",\n\t\"mcc\": \"mcc1\",\n\t\"acquirerId\": \"222\",\n\t\"status\": \"CREATED\",\n\t\"merchantFiscalCode\": \"112331234\",\n\t\"vat\": \"vat1\",\n\t\"splitPayment\": false,\n\t\"residualAmountCents\": 0,\n\t\"qrcodePngUrl\": \"qrcodePngUrl\",\n\t\"qrcodeTxtUrl\": \"qrcodeTxtUrl\"\n}\t"
+					"body": "{\n\t\"id\": \"4490eea8-9c81-4879-9720-22222222333\",\n\t\"trxCode\": \"trxCodetrxCodetrxCode\",\n\t\"initiativeId\": \"initiativeId1\",\n\t\"merchantId\": \"111\",\n\t\"idTrxAcquirer\": \"4490eea8-9c81-4879-9720-9578de10ff4e\",\n\t\"trxDate\": \"2023-08-03T14:29:01\",\n\t\"trxExpirationMinutes\": 14235426,\n\t\"amountCents\": 99999999999,\n\t\"amountCurrency\": \"EUR\",\n\t\"mcc\": \"mcc1\",\n\t\"acquirerId\": \"222\",\n\t\"status\": \"CREATED\",\n\t\"merchantFiscalCode\": \"112331234\",\n\t\"vat\": \"vat1\",\n\t\"splitPayment\": false,\n\t\"residualAmountCents\": 0,\n\t\"trxPngUrl\": \"trxPngUrl\",\n\t\"trxTxtUrl\": \"trxTxtUrl\"\n}\t"
 				}
 			]
 		},
@@ -871,7 +867,7 @@
 							}
 						],
 						"url": {
-							"raw": "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io/idpay/mil/payment/qr-code/merchant/status/:id",
+							"raw": "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io/idpay/mil/payment/status/:id",
 							"protocol": "https",
 							"host": [
 								"156360cd-f617-4dcb-b908-ae29a2a8651c",
@@ -883,8 +879,6 @@
 								"idpay",
 								"mil",
 								"payment",
-								"qr-code",
-								"merchant",
 								"status",
 								":id"
 							],
@@ -910,7 +904,69 @@
 						}
 					],
 					"cookie": [],
-					"body": "{\n\t\"id\": \"4490eea8-9c81-4879-9720-22222222333\",\n\t\"idTrxIssuer\": \"IdTrxIssuer1\",\n\t\"trxCode\": \"trxCodetrxCodetrxCode\",\n\t\"trxDate\": \"2023-08-03T14:29:01\",\n\t\"authDate\": \"2023-08-05T10:29:01\",\n\t\"operationType\": \"CHARGE\",\n\t\"amountCents\": 99999999999,\n\t\"amountCurrency\": \"EUR\",\n\t\"mcc\": \"mcc1\",\n\t\"acquirerId\": \"222\",\n\t\"merchantId\": \"111\",\n\t\"initiativeId\": \"initiativeId1\",\n\t\"rewardCents\": 50,\n\t\"status\": \"CREATED\",\n    \"secondFactor\": \"483efab359c1\"\n}"
+					"body": "{\n\t\"id\": \"4490eea8-9c81-4879-9720-22222222333\",\n\t\"idTrxIssuer\": \"IdTrxIssuer1\",\n\t\"trxCode\": \"trxCodetrxCodetrxCode\",\n\t\"trxDate\": \"2023-08-03T14:29:01\",\n\t\"authDate\": \"2023-08-05T10:29:01\",\n\t\"operationType\": \"CHARGE\",\n\t\"amountCents\": 99999999999,\n\t\"amountCurrency\": \"EUR\",\n\t\"mcc\": \"mcc1\",\n\t\"acquirerId\": \"222\",\n\t\"merchantId\": \"111\",\n\t\"initiativeId\": \"initiativeId1\",\n\t\"rewardCents\": 50,\n\t\"status\": \"CREATED\"\n}"
+				},
+				{
+					"name": "Recupero dello second factor",
+					"originalRequest": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"value": "a8d1e9e023734e3e89abf1fa83a7755f",
+								"type": "text"
+							},
+							{
+								"key": "x-acquirer-id",
+								"value": "222",
+								"type": "text"
+							},
+							{
+								"key": "x-merchant-fiscalcode",
+								"value": "111",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io/idpay/mil/payment/idpay-code/:id/preview",
+							"protocol": "https",
+							"host": [
+								"156360cd-f617-4dcb-b908-ae29a2a8651c",
+								"mock",
+								"pstmn",
+								"io"
+							],
+							"path": [
+								"idpay",
+								"mil",
+								"payment",
+								"idpay-code",
+								":id",
+								"preview"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "4490eea8-9c81-4879-9720-22222222333"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json;charset=UTF-8"
+						},
+						{
+							"key": "content-length",
+							"value": "345"
+						}
+					],
+					"cookie": [],
+					"body": "{\n\t\"id\": \"4490eea8-9c81-4879-9720-22222222333\",\n\t\"trxCode\": \"trxCodetrxCodetrxCode\",\n\t\"trxDate\": \"2023-08-03T14:29:01\",\n    \"initiativeId\": \"initiativeId1\",\n    \"initiativeName\": \"initiativeName1\",\n\t\"businessName\": \"businessName1\",\n    \"status\": \"CREATED\",\n    \"reward\": 50,\n    \"amountCents\": 99999999999,\n    \"residualBudget\": 1423,\n\t\"secondFactor\": \"0000545683729013\"\n}"
 				}
 			]
 		},
@@ -1050,7 +1106,7 @@
 							}
 						],
 						"url": {
-							"raw": "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io/idpay/mil/payment/qr-code/merchant/:id",
+							"raw": "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io/idpay/mil/payment/:id",
 							"protocol": "https",
 							"host": [
 								"156360cd-f617-4dcb-b908-ae29a2a8651c",
@@ -1062,8 +1118,6 @@
 								"idpay",
 								"mil",
 								"payment",
-								"qr-code",
-								"merchant",
 								":id"
 							],
 							"variable": [

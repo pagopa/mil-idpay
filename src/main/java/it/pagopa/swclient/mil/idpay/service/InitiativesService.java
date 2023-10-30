@@ -33,7 +33,7 @@ public class InitiativesService {
 
         Log.debugf("InitiativesService -> getInitiatives - Input parameters: %s", headers);
 
-        return idpayInitiativesRestClient.getMerchantInitiativeList(transactionsService.getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()))
+        return idpayInitiativesRestClient.getMerchantInitiativeList(transactionsService.getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId())
                 .onFailure().transform(t -> {
                     if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
                         Log.errorf(t, " InitiativesService -> getInitiatives: idpay NOT FOUND for MerchantId [%s]", headers.getMerchantId());
@@ -56,9 +56,8 @@ public class InitiativesService {
                     LocalDate today = LocalDate.now();
 
                     List<Initiative> iniList = res.stream().filter(ini ->
-                                InitiativeStatus.PUBLISHED == ini.getStatus()  && Boolean.TRUE.equals(ini.getEnabled())
+                                InitiativeStatus.PUBLISHED == ini.getStatus()
                                         && (today.isAfter(ini.getStartDate()) || today.isEqual(ini.getStartDate()))
-                                        && (ini.getEndDate() == null || (today.isBefore(ini.getEndDate()) || today.isEqual(ini.getEndDate())))
                             )
                             .map(fIni -> new Initiative(fIni.getInitiativeId(), fIni.getInitiativeName(), fIni.getOrganizationName())).toList();
 

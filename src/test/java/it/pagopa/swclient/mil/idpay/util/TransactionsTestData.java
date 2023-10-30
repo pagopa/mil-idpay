@@ -2,6 +2,7 @@ package it.pagopa.swclient.mil.idpay.util;
 
 import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.*;
 import it.pagopa.swclient.mil.idpay.bean.*;
+import it.pagopa.swclient.mil.idpay.client.bean.PreAuthPaymentResponseDTO;
 import it.pagopa.swclient.mil.idpay.client.bean.SyncTrxStatus;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
@@ -9,6 +10,8 @@ import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieResponse;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.Outcome;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransaction;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -66,8 +69,8 @@ public final class TransactionsTestData {
         res.setVat("vat1");
         res.setSplitPayment(false);
         res.setResidualAmountCents(0L);
-        res.setQrcodePngUrl("qrcodePngUrl");
-        res.setQrcodeTxtUrl("qrcodeTxtUrl");
+        res.setTrxPngUrl("trxPngUrl");
+        res.setTrxTxtUrl("trxTxtUrl");
 
         return res;
     }
@@ -131,7 +134,6 @@ public final class TransactionsTestData {
         res.setInitiativeId("initiativeId1");
         res.setRewardCents(123L);
         res.setStatus(TransactionStatus.CREATED);
-        res.setSecondFactor("483efab359c1".getBytes(StandardCharsets.UTF_8));
 
         return res;
     }
@@ -154,7 +156,6 @@ public final class TransactionsTestData {
         res.setInitiativeId("initiativeId1");
         res.setRewardCents(30L);
         res.setStatus(TransactionStatus.CREATED);
-        res.setSecondFactor("483efab359c1".getBytes(StandardCharsets.UTF_8));
 
         return res;
     }
@@ -267,17 +268,10 @@ public final class TransactionsTestData {
         AuthTransactionResponseOk authTransactionResponseOk = AuthTransactionResponseOk
                 .builder()
                 .id("1")
-                .idTrxIssuer("IdTrxIssuer2")
                 .trxCode("12345678")
-                .trxDate(new Date())
-                .operationType(OperationType.CHARGE)
                 .amountCents(99999999999L)
-                .amountCurrency("EUR")
-                .acquirerId("AcquirerId")
-                .merchantId("IdPayMerchantId")
                 .initiativeId("InitiativeId2")
                 .status(TransactionStatus.AUTHORIZED)
-                .rewardCents(123L)
                 .build();
 
         authTransactionResponse.setAuthTransactionResponseOk(authTransactionResponseOk);
@@ -296,6 +290,19 @@ public final class TransactionsTestData {
                 .iat(1629999999)
                 .kty(KeyType.RSA)
                 .use(PublicKeyUse.enc)
+                .build();
+    }
+
+    public static PreAuthPaymentResponseDTO getSecondFactor() {
+        return PreAuthPaymentResponseDTO
+                .builder()
+                .id("dslkjfhakf")
+                .trxDate(new Date())
+                .initiativeId("initiativeId1")
+                .initiativeName("initiativeName")
+                .businessName("businessName")
+                .status(TransactionStatus.IDENTIFIED)
+                .secondFactor(StringUtils.leftPad(RandomStringUtils.random(12, false, true), 16, "0"))
                 .build();
     }
 }

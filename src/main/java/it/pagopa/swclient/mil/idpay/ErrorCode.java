@@ -32,6 +32,8 @@ public final class ErrorCode {
     public static final String ERROR_INITIATIVEID_MUST_MATCH_REGEXP                                     = MODULE_ID + "000021";
     public static final String ERROR_ENCSESSIONKEY_MUST_BE_BETWEEN                                      = MODULE_ID + "000022";
     public static final String ERROR_AUTHCODEBLOCK_MUST_BE_BETWEEN                                      = MODULE_ID + "000023";
+    public static final String ERROR_ENCRYPTEDPINBLOCK_MUST_NOT_BE_NULL 							    = MODULE_ID + "000024";
+    public static final String ERROR_ENCRYPTEDKEY_MUST_NOT_BE_NULL 							            = MODULE_ID + "000025";
 
     // rest server validation errors
     public static final String CREATE_TRANSACTION_MUST_NOT_BE_EMPTY 							        = MODULE_ID + "000030";
@@ -44,6 +46,7 @@ public final class ErrorCode {
     public static final String ERROR_CALLING_AUTHORIZE_REST_SERVICES 							        = MODULE_ID + "000052";
     public static final String ERROR_IDPAY_WRONG_AUTH_CODE           							        = MODULE_ID + "000053";
     public static final String ERROR_IDPAY_UNKNOWN_ERROR_CODE      							            = MODULE_ID + "000054";
+    public static final String ERROR_RETRIEVING_SECOND_FACTOR	 							            = MODULE_ID + "000055";
 
 
     // db errors
@@ -90,6 +93,7 @@ public final class ErrorCode {
     public static final String ERROR_IDPAY_WRONG_AUTH_CODE_DESCR = "IDPay responds with WRONG_AUTH_CODE";
     public static final String ERROR_IDPAY_UNKNOWN_ERROR_DESCR = "IDPay responds with an unknown error 500";
     public static final String ERROR_ENCRYPTING_SESSION_KEY_DESCR = "Error occurs during encrypting session key";
+    public static final String ERROR_RETRIEVING_SECOND_FACTOR_DESCR = "Error retrieving second factor";
 
 
     /*
@@ -115,6 +119,7 @@ public final class ErrorCode {
     public static final String ERROR_IDPAY_WRONG_AUTH_CODE_MSG = "[" + ERROR_IDPAY_WRONG_AUTH_CODE + "] " + ERROR_IDPAY_WRONG_AUTH_CODE_DESCR;
     public static final String ERROR_IDPAY_UNKNOWN_ERROR_MSG = "[" + ERROR_IDPAY_UNKNOWN_ERROR_CODE + "] " + ERROR_IDPAY_UNKNOWN_ERROR_DESCR;
     public static final String ERROR_ENCRYPTING_SESSION_KEY_MSG = "[" + ERROR_ENCRYPTING_SESSION_KEY + "] " + ERROR_ENCRYPTING_SESSION_KEY_DESCR;
+    public static final String ERROR_RETRIEVING_SECOND_FACTOR_MSG = "[" + ERROR_RETRIEVING_SECOND_FACTOR + "] " + ERROR_RETRIEVING_SECOND_FACTOR_DESCR;
 
     private ErrorCode() {
     }
