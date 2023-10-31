@@ -385,7 +385,10 @@ class TransactionsResourceTest {
 
     @Test
     @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
-    void deleteTransactionTest_OK() {
+    void deleteTransactionTest_OKAborted() {
+
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Mockito.when(idpayTransactionsRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().voidItem());
@@ -408,6 +411,41 @@ class TransactionsResourceTest {
                 .extract()
                 .response();
 
+        Assertions.assertEquals(204, response.statusCode());
+
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    void deleteTransactionTest_OKCancelled() {
+
+        syncTrxStatus.setStatus(TransactionStatus.AUTHORIZED);
+
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(syncTrxStatus));
+
+        Mockito.when(idpayTransactionsRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
+
+        IdpayTransactionEntity updEntity = idpayTransactionEntityForDelete;
+        updEntity.idpayTransaction.setTrxCode("Updated Transaction for deleteTransactionTest_OK");
+
+        Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .pathParam("transactionId", transactionId)
+                .when()
+                .delete("/{transactionId}")
+                .then()
+                .extract()
+                .response();
+
+        syncTrxStatus.setStatus(TransactionStatus.CREATED);
         Assertions.assertEquals(204, response.statusCode());
 
     }
@@ -471,6 +509,9 @@ class TransactionsResourceTest {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
 
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(syncTrxStatus));
+
         Response response = given()
                 .contentType(ContentType.JSON)
                 .headers(validMilHeaders)
@@ -498,6 +539,9 @@ class TransactionsResourceTest {
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
+
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -527,6 +571,9 @@ class TransactionsResourceTest {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
 
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(syncTrxStatus));
+
         Response response = given()
                 .contentType(ContentType.JSON)
                 .headers(validMilHeaders)
@@ -549,6 +596,9 @@ class TransactionsResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
     void deleteTransactionTest_KOUpdate() {
+
+        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Mockito.when(idpayTransactionsRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().voidItem());
