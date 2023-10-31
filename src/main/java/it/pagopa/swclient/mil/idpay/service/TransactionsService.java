@@ -200,29 +200,11 @@ public class TransactionsService {
                 Log.debugf("TransactionsService -> getTransaction: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
                     //call idpay to retrieve current state
-                    return idpayTransactionsRestClient.getStatusTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
-                            .onFailure().transform(t -> {
-                                if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
-                                    Log.errorf(t, " TransactionsService -> getTransaction: idpay NOT FOUND for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
-                                    Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
-                                    return new NotFoundException(Response
-                                            .status(Response.Status.NOT_FOUND)
-                                            .entity(errors)
-                                            .build());
-                                } else {
-                                    Log.errorf(t, "TransactionsService -> getTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
-
-                                    return new InternalServerErrorException(Response
-                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
-                                            .build());
-                                }
-                            })
+                    return this.getStatusTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                             .chain(res -> { //response ok
                             Log.debugf("TransactionsService -> getTransaction: idpay getStatusTransaction service returned a 200 status, response: [%s]", res);
 
                                 IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(headers, entity, res);
-
 
                                 if (!updEntity.idpayTransaction.equals(entity.idpayTransaction)) {
                                     Log.debugf("TransactionsService -> getTransaction: transaction situation is changed, make an update");
@@ -278,38 +260,42 @@ public class TransactionsService {
                 .chain(entity -> { //Transaction found
                     Log.debugf("TransactionsService -> cancelTransaction: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
-                    //call idpay to cancel transaction
-                    return idpayTransactionsRestClient.deleteTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
-                            .onFailure().transform(t -> {
-                                if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
-                                    Log.errorf(t, " TransactionsService -> cancelTransaction: idpay NOT FOUND for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
-                                    Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
-                                    return new NotFoundException(Response
-                                            .status(Response.Status.NOT_FOUND)
-                                            .entity(errors)
-                                            .build());
-                                } else {
-                                    Log.errorf(t, "TransactionsService -> cancelTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                    //call idpay to retrieve current state
+                    return this.getStatusTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                            .chain(status -> //response ok
+                                //call idpay to cancel transaction
+                                idpayTransactionsRestClient.deleteTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                                        .onFailure().transform(t -> {
+                                            if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
+                                                Log.errorf(t, " TransactionsService -> cancelTransaction: idpay NOT FOUND for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                                                Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
+                                                return new NotFoundException(Response
+                                                        .status(Response.Status.NOT_FOUND)
+                                                        .entity(errors)
+                                                        .build());
+                                            } else {
+                                                Log.errorf(t, "TransactionsService -> cancelTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
-                                    return new InternalServerErrorException(Response
-                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
-                                            .build());
-                                }
-                            })
-                            .chain(() -> {
-                                Log.debug("TransactionsService -> cancelTransaction: idpay getStatusTransaction service returned a 200 status");
-
-                                IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(entity, TransactionStatus.CANCELLED);
-
-                                return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
-                                        .onFailure().recoverWithItem(err -> {
-                                            Log.errorf(err, "TransactionsService -> cancelTransaction: Error while updating transaction %s on db", entity.transactionId);
-
-                                            return updEntity;
+                                                return new InternalServerErrorException(Response
+                                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                        .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
+                                                        .build());
+                                            }
                                         })
-                                        .chain(() -> Uni.createFrom().voidItem());
-                            });
+                                        .chain(() -> {
+                                            Log.debug("TransactionsService -> cancelTransaction: idpay getStatusTransaction service returned a 200 status");
+
+                                            IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(entity, TransactionStatus.AUTHORIZED.equals(status.getStatus()) ? TransactionStatus.CANCELLED : TransactionStatus.ABORTED);
+
+                                            return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
+                                                    .onFailure().recoverWithItem(err -> {
+                                                        Log.errorf(err, "TransactionsService -> cancelTransaction: Error while updating transaction %s on db", entity.transactionId);
+
+                                                        return updEntity;
+                                                    })
+                                                    .chain(() -> Uni.createFrom().voidItem());
+                                        })
+                            );
             });
     }
 
@@ -715,5 +701,26 @@ public class TransactionsService {
         } else {
             return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(entity, null, null, false));
         }
+    }
+
+    private Uni<SyncTrxStatus> getStatusTransaction(String idpayMerchantId, String xAcquirerId, String transactionId) {
+        return idpayTransactionsRestClient.getStatusTransaction(idpayMerchantId, xAcquirerId, transactionId)
+                .onFailure().transform(t -> {
+                    if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
+                        Log.errorf(t, " TransactionsService -> getStatusTransaction: idpay NOT FOUND for mil transaction [%s]", transactionId);
+                        Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
+                        return new NotFoundException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(errors)
+                                .build());
+                    } else {
+                        Log.errorf(t, "TransactionsService -> getStatusTransaction: idpay error response for mil transaction [%s]", transactionId);
+
+                        return new InternalServerErrorException(Response
+                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
+                                .build());
+                    }
+                });
     }
 }

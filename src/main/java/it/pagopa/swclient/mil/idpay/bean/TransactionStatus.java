@@ -12,5 +12,6 @@ public enum TransactionStatus {
 
     REWARDED,
 
-    CANCELLED
+    CANCELLED,
+    ABORTED
 }
