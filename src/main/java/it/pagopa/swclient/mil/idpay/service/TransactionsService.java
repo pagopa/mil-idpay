@@ -414,7 +414,7 @@ public class TransactionsService {
                                             // Unwrap key success, start retrieving id pay public key
                                             Log.debugf("TransactionsService -> authorizeTransaction: Azure KV unwrapping service returned a 200 status, response: [%s]", unwrappedKey);
 
-                                            return retrieveIdpayPublicKey()
+                                            return retrieveIdpayPublicKey(dbData.idpayTransaction.getAcquirerId())
                                                     .chain(Unchecked.function(publicKeyIDPay -> {
 
                                                         // If idpay public key retrieval success, starth authorize transaction
@@ -497,8 +497,8 @@ public class TransactionsService {
                 })).chain(unwrappedKey -> Uni.createFrom().item(unwrappedKey));
     }
 
-    private Uni<PublicKeyIDPay> retrieveIdpayPublicKey() {
-        return idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey()
+    private Uni<PublicKeyIDPay> retrieveIdpayPublicKey(String acquirerId) {
+        return idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey(acquirerId)
                 .onFailure().transform(Unchecked.function(t -> {
 
                     // If idpay public key retrieval fails, return INTERNAL_SERVER_ERROR

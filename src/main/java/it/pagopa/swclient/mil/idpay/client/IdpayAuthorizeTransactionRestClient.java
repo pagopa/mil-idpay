@@ -13,9 +13,10 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 public interface IdpayAuthorizeTransactionRestClient {
 
     @GET
-    @Path("/zonePublicKey")
+    @Path("/idpay/mil/payment/publickey")
     @ClientHeaderParam(name = "Ocp-Apim-Subscription-Key", value = "${idpay-rest-client.apim-subscription-key}", required = false)
-    Uni<PublicKeyIDPay> retrieveIdpayPublicKey();
+    Uni<PublicKeyIDPay> retrieveIdpayPublicKey(
+            @HeaderParam("x-acquirer-id") String xAcquirerId);
 
     @PUT
     @Path("/idpay/mil/payment/idpay-code/{idpayTransactionId}/authorize")
