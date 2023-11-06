@@ -1,33 +1,27 @@
 package it.pagopa.swclient.mil.idpay.client;
 
+import io.quarkus.rest.client.reactive.ClientQueryParam;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
-import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieRequest;
-import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieResponse;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-@RegisterRestClient(configKey = "azuread-rest-api")
+@RegisterRestClient(configKey = "azure-auth-api")
 public interface AzureADRestClient {
 
     /**
-     *
-     * @param tenantId
-     * @param grantType
-     * @param clientId
-     * @param clientSecret
+     * @param identity
      * @param scope
      * @return
      */
-    @Path("/{tenantId}/oauth2/v2.0/token")
-    @POST
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @ClientQueryParam(name = "api-version", value = "${azure-auth-api.version}")
     Uni<AccessToken> getAccessToken(
-            @PathParam("tenantId") String tenantId,
-            @FormParam("grant_type") String grantType,
-            @FormParam("client_id") String clientId,
-            @FormParam("client_secret") String clientSecret,
-            @FormParam("scope") String scope);
+            @HeaderParam("x-identity-header") String identity,
+            @QueryParam("resource") String scope);
 }

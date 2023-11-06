@@ -86,26 +86,18 @@ public class TransactionsService {
     @RestClient
     IdpayAuthorizeTransactionRestClient idpayAuthorizeTransactionRestClient;
 
-    @ConfigProperty(name = "azuread.client-id")
-    String azureADClientId;
-
-    @ConfigProperty(name = "azuread.client-secret")
-    String azureADClientSecret;
-
-    @ConfigProperty(name = "azuread.tenant-id")
-    String azureADTenantId;
-
     private static final String BEARER = "Bearer ";
 
-    private static final String CLIENT_CREDENTIALS = "client_credentials";
-
-    private static final String VAULT = "https://vault.azure.net/.default";
+    public static final String VAULT = "https://vault.azure.net";
 
     @ConfigProperty(name = "idpay.transactions.days-before", defaultValue = "30")
     int getTransactionsDaysBefore;
 
     @ConfigProperty(name = "idpay.transactions.max-transactions", defaultValue = "30")
     int getTransactionsMaxTransactions;
+
+    @ConfigProperty(name = "azure-auth-api.identity")
+    String identity;
 
     public Uni<Transaction> createTransaction(CommonHeader headers, CreateTransaction createTransaction) {
 
@@ -327,7 +319,7 @@ public class TransactionsService {
                                 .build());
                     } else {
 
-                        return azureADRestClient.getAccessToken(azureADTenantId, CLIENT_CREDENTIALS, azureADClientId, azureADClientSecret, VAULT)
+                        return azureADRestClient.getAccessToken(identity, VAULT)
                                 .onFailure().transform(t -> {
                                     Log.errorf(t, "TransactionsService -> verifyCie: Azure AD error response for mil transaction [%s]", transactionId);
 
@@ -470,7 +462,7 @@ public class TransactionsService {
         } else {
             // If transaction is IDENTIFIED, start retrieving azure access token
 
-            return azureADRestClient.getAccessToken(azureADTenantId, CLIENT_CREDENTIALS, azureADClientId, azureADClientSecret, VAULT)
+            return azureADRestClient.getAccessToken(identity, VAULT)
                     .onFailure().transform(Unchecked.function(t -> {
 
                         // If retrieve access token fails, return INTERNAL_SERVER_ERROR
@@ -492,7 +484,7 @@ public class TransactionsService {
                 .value(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey())
                 .build();
 
-        return azureKeyVaultClient.unwrapKey(BEARER + token.getAccess_token(), authorizeTransaction.getAuthCodeBlockData().getKid(), unwrapKeyRequest)
+        return azureKeyVaultClient.unwrapKey(BEARER + token.getToken(), authorizeTransaction.getAuthCodeBlockData().getKid(), unwrapKeyRequest)
                 .onFailure().transform(Unchecked.function(t -> {
 
                     // If unwrap key fails, return INTERNAL_SERVER_ERROR

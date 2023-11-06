@@ -1,17 +1,30 @@
 package it.pagopa.swclient.mil.idpay.client.bean.azure;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.runtime.annotations.RegisterForReflection;
+import lombok.*;
 
+@RegisterForReflection
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
-@NoArgsConstructor
-@ToString(exclude = {"access_token"})
+@ToString
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AccessToken {
-    private String token_type;
-    private int expires_in;
-    private int ext_expires_in;
-    private String access_token;
+    @JsonProperty("token_type")
+    private String type;
+
+    @JsonProperty("expires_on")
+    private long expiresOn;
+
+    @JsonProperty("client_id")
+    private String clientId;
+
+    @JsonProperty("resource")
+    private String resource;
+
+    @JsonProperty("access_token")
+    private String token;
 }
