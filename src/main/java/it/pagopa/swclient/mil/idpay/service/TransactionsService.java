@@ -14,6 +14,7 @@ import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.service.AzureKeyVaultService;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.util.EncryptUtil;
 import it.pagopa.swclient.mil.idpay.bean.*;
+import it.pagopa.swclient.mil.idpay.bean.cer.CertificateBundle;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayAuthorizeTransactionRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayTransactionsRestClient;
@@ -98,6 +99,9 @@ public class TransactionsService {
 
     @ConfigProperty(name = "azure-auth-api.identity")
     String identity;
+
+    @ConfigProperty(name = "azure-cert.name")
+    String certName;
 
     public Uni<Transaction> createTransaction(CommonHeader headers, CreateTransaction createTransaction) {
 
@@ -713,6 +717,32 @@ public class TransactionsService {
                                 .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
                                 .build());
                     }
+                });
+    }
+
+    public Uni<CertificateBundle> getCertificate() {
+        Log.debugf("TransactionsService -> getCertificate - certName: [%s]", certName);
+
+        return azureADRestClient.getAccessToken(identity, VAULT)
+                .onFailure().transform(t -> {
+                    Log.errorf(t, "TransactionsService -> getCertificate: Azure AD error response for certName [%s]", certName);
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES_MSG)))
+                            .build());
+                }).chain(token -> {
+                    Log.debugf("TransactionsService -> getCertificate:  Azure AD service returned a 200 status, response: [%s]", token);
+
+                    return azureKeyVaultClient.getCertificate(BEARER + token.getToken(), certName)
+                            .onFailure().transform(t -> {
+                                Log.errorf(t, "TransactionsService -> getCertificate: Azure Key Vault error for certName [%s]", certName);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY_MSG)))
+                                        .build());
+                            });
                 });
     }
 }
