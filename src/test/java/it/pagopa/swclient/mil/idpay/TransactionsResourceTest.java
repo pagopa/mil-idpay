@@ -11,7 +11,7 @@ import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
 import it.pagopa.swclient.mil.idpay.bean.TransactionStatus;
-import it.pagopa.swclient.mil.idpay.client.IdpayTransactionsRestClient;
+import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.PreAuthPaymentResponseDTO;
 import it.pagopa.swclient.mil.idpay.client.bean.SyncTrxStatus;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
@@ -41,7 +41,7 @@ class TransactionsResourceTest {
 
     @InjectMock
     @RestClient
-    IdpayTransactionsRestClient idpayTransactionsRestClient;
+    IdpayRestClient idpayRestClient;
 
     @InjectMock
     IdpayTransactionRepository idpayTransactionRepository;
@@ -80,10 +80,10 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void createTransactionTest_OK() {
 
-        Mockito.when(idpayTransactionsRestClient.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
+        Mockito.when(idpayRestClient.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
                 .thenReturn(Uni.createFrom().item(transactionResponse));
 
         Mockito.when(idpayTransactionRepository.persist(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -107,10 +107,10 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void createTransactionTestTest_KO500() {
 
-        Mockito.when(idpayTransactionsRestClient.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
+        Mockito.when(idpayRestClient.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
         Response response = given()
@@ -132,10 +132,10 @@ class TransactionsResourceTest {
 
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void createTransactionTest_KOPersist() {
 
-        Mockito.when(idpayTransactionsRestClient.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
+        Mockito.when(idpayRestClient.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
                 .thenReturn(Uni.createFrom().item(transactionResponse));
 
         Mockito.when(idpayTransactionRepository.persist(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().failure(new TimeoutException()));
@@ -161,10 +161,10 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionTest_OK() {
 
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -194,13 +194,13 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionTest_OK_notChanged() {
 
         idpayTransactionEntity = TransactionsTestData.getTransactionEntity(validMilHeaders, createTransactionRequest, transactionResponse);
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatusNotChanged));
 
         Response response = given()
@@ -222,7 +222,7 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionTest_KOFind() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().failure(new TimeoutException()));
@@ -247,7 +247,7 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionTest_KOFindNull() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().nullItem());
@@ -272,10 +272,10 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionTest_KOIdpay404() {
 
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(404)));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -300,10 +300,10 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionTest_KOIdpay500() {
 
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -328,10 +328,10 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionTest_KOIdpay() {
 
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new TimeoutException()));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -356,10 +356,10 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionTest_KOUpdate() {
         syncTrxStatus.setStatus(TransactionStatus.AUTHORIZED);
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -384,13 +384,13 @@ class TransactionsResourceTest {
 
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void deleteTransactionTest_OKAborted() {
 
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
-        Mockito.when(idpayTransactionsRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
@@ -416,15 +416,15 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void deleteTransactionTest_OKCancelled() {
 
         syncTrxStatus.setStatus(TransactionStatus.AUTHORIZED);
 
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
-        Mockito.when(idpayTransactionsRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
@@ -451,7 +451,7 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void deleteTransactionTest_KOFind() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().failure(new TimeoutException()));
@@ -476,7 +476,7 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void deleteTransactionTest_KOFindNull() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().nullItem());
@@ -501,15 +501,15 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void deleteTransactionTest_KOIdpay404() {
 
-        Mockito.when(idpayTransactionsRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(404)));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
 
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Response response = given()
@@ -532,15 +532,15 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void deleteTransactionTest_KOIdpay500() {
 
-        Mockito.when(idpayTransactionsRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
 
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Response response = given()
@@ -563,15 +563,15 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void deleteTransactionTest_KOIdpay() {
 
-        Mockito.when(idpayTransactionsRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new TimeoutException()));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
 
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Response response = given()
@@ -594,13 +594,13 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void deleteTransactionTest_KOUpdate() {
 
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
-        Mockito.when(idpayTransactionsRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
@@ -627,7 +627,7 @@ class TransactionsResourceTest {
 
     //Storico
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getLastTransactionsTest_OK() {
 
         ReactivePanacheQuery<IdpayTransactionEntity> reactivePanacheQuery = Mockito.mock(ReactivePanacheQuery.class);
@@ -655,7 +655,7 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getLastTransactionsTest_KO_DB() {
 
         ReactivePanacheQuery<IdpayTransactionEntity> reactivePanacheQuery = Mockito.mock(ReactivePanacheQuery.class);
@@ -682,11 +682,11 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionSecondFactorTest_OK() {
 
         syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         idpayTransactionEntity.idpayTransaction.setByCie(true);
@@ -697,7 +697,7 @@ class TransactionsResourceTest {
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
-        Mockito.when(idpayTransactionsRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(preAuthPaymentResponseDTO));
 
         Response response = given()
@@ -724,11 +724,11 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionSecondFactorTest_KOIdPay() {
 
         syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         idpayTransactionEntity.idpayTransaction.setByCie(true);
@@ -739,7 +739,7 @@ class TransactionsResourceTest {
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
-        Mockito.when(idpayTransactionsRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
         Response response = given()
@@ -763,11 +763,11 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionSecondFactorTestCieNull_OK() {
 
         syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         //idpayTransactionEntity.idpayTransaction.setByCie(true);
@@ -778,7 +778,7 @@ class TransactionsResourceTest {
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
-        Mockito.when(idpayTransactionsRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(preAuthPaymentResponseDTO));
 
         Response response = given()
@@ -805,14 +805,14 @@ class TransactionsResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionSecondFactorTestCieFalse_OK() {
 
         idpayTransactionEntity.idpayTransaction.setByCie(false);
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
         syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
-        Mockito.when(idpayTransactionsRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         IdpayTransactionEntity updEntity = idpayTransactionEntity;
@@ -821,7 +821,7 @@ class TransactionsResourceTest {
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
-        Mockito.when(idpayTransactionsRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(preAuthPaymentResponseDTO));
 
         Response response = given()

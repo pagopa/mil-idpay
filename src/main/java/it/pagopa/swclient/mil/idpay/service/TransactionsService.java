@@ -14,11 +14,8 @@ import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.service.AzureKeyVaultService;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.util.EncryptUtil;
 import it.pagopa.swclient.mil.idpay.bean.*;
-import it.pagopa.swclient.mil.idpay.bean.cer.CertificateBundle;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
-import it.pagopa.swclient.mil.idpay.client.IdpayAuthorizeTransactionRestClient;
-import it.pagopa.swclient.mil.idpay.client.IdpayTransactionsRestClient;
-import it.pagopa.swclient.mil.idpay.client.IpzsVerifyCieRestClient;
+import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.PreAuthPaymentResponseDTO;
 import it.pagopa.swclient.mil.idpay.client.bean.SyncTrxStatus;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionCreationRequest;
@@ -39,7 +36,6 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
-
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -73,19 +69,13 @@ public class TransactionsService {
     AzureKeyVaultService azureKeyVaultService;
 
     @RestClient
-    IdpayTransactionsRestClient idpayTransactionsRestClient;
-
-    @RestClient
-    IpzsVerifyCieRestClient ipzsVerifyCieRestClient;
-
-    @RestClient
     AzureADRestClient azureADRestClient;
 
     @RestClient
     AzureKeyVaultClient azureKeyVaultClient;
 
     @RestClient
-    IdpayAuthorizeTransactionRestClient idpayAuthorizeTransactionRestClient;
+    IdpayRestClient idpayRestClient;
 
     private static final String BEARER = "Bearer ";
 
@@ -100,9 +90,6 @@ public class TransactionsService {
     @ConfigProperty(name = "azure-auth-api.identity")
     String identity;
 
-    @ConfigProperty(name = "azure-cert.name")
-    String certName;
-
     public Uni<Transaction> createTransaction(CommonHeader headers, CreateTransaction createTransaction) {
 
         Log.debugf("TransactionsService -> createTransaction - Input parameters: %s, %s", headers, createTransaction);
@@ -114,7 +101,7 @@ public class TransactionsService {
 
         Log.debugf("TransactionsService -> createTransaction: REQUEST to idpay [%s]", req);
 
-        return idpayTransactionsRestClient.createTransaction(getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId(), req)
+        return idpayRestClient.createTransaction(getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId(), req)
                 .onFailure().transform(t -> {
                     Log.errorf(t, "TransactionsService -> createTransaction: idpay error response for MerchantId [%s] e timestamp [%s]", headers.getMerchantId(), createTransaction.getTimestamp());
 
@@ -192,13 +179,13 @@ public class TransactionsService {
         Log.debugf("TransactionsService -> getTransaction - Input parameters: %s, %s", headers, transactionId);
 
         return getIdpayTransactionEntity(transactionId) //looking for MilTransactionID in DB
-            .chain(entity -> { //Transaction found
-                Log.debugf("TransactionsService -> getTransaction: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                .chain(entity -> { //Transaction found
+                    Log.debugf("TransactionsService -> getTransaction: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
                     //call idpay to retrieve current state
                     return this.getStatusTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                             .chain(res -> { //response ok
-                            Log.debugf("TransactionsService -> getTransaction: idpay getStatusTransaction service returned a 200 status, response: [%s]", res);
+                                Log.debugf("TransactionsService -> getTransaction: idpay getStatusTransaction service returned a 200 status, response: [%s]", res);
 
                                 IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(headers, entity, res);
 
@@ -259,40 +246,40 @@ public class TransactionsService {
                     //call idpay to retrieve current state
                     return this.getStatusTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                             .chain(status -> //response ok
-                                //call idpay to cancel transaction
-                                idpayTransactionsRestClient.deleteTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
-                                        .onFailure().transform(t -> {
-                                            if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
-                                                Log.errorf(t, " TransactionsService -> cancelTransaction: idpay NOT FOUND for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
-                                                Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
-                                                return new NotFoundException(Response
-                                                        .status(Response.Status.NOT_FOUND)
-                                                        .entity(errors)
-                                                        .build());
-                                            } else {
-                                                Log.errorf(t, "TransactionsService -> cancelTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                                    //call idpay to cancel transaction
+                                    idpayRestClient.deleteTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                                            .onFailure().transform(t -> {
+                                                if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
+                                                    Log.errorf(t, " TransactionsService -> cancelTransaction: idpay NOT FOUND for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                                                    Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
+                                                    return new NotFoundException(Response
+                                                            .status(Response.Status.NOT_FOUND)
+                                                            .entity(errors)
+                                                            .build());
+                                                } else {
+                                                    Log.errorf(t, "TransactionsService -> cancelTransaction: idpay error response for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
-                                                return new InternalServerErrorException(Response
-                                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                        .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
-                                                        .build());
-                                            }
-                                        })
-                                        .chain(() -> {
-                                            Log.debug("TransactionsService -> cancelTransaction: idpay getStatusTransaction service returned a 200 status");
+                                                    return new InternalServerErrorException(Response
+                                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                            .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
+                                                            .build());
+                                                }
+                                            })
+                                            .chain(() -> {
+                                                Log.debug("TransactionsService -> cancelTransaction: idpay getStatusTransaction service returned a 200 status");
 
-                                            IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(entity, TransactionStatus.AUTHORIZED.equals(status.getStatus()) ? TransactionStatus.CANCELLED : TransactionStatus.ABORTED);
+                                                IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(entity, TransactionStatus.AUTHORIZED.equals(status.getStatus()) ? TransactionStatus.CANCELLED : TransactionStatus.ABORTED);
 
-                                            return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
-                                                    .onFailure().recoverWithItem(err -> {
-                                                        Log.errorf(err, "TransactionsService -> cancelTransaction: Error while updating transaction %s on db", entity.transactionId);
+                                                return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
+                                                        .onFailure().recoverWithItem(err -> {
+                                                            Log.errorf(err, "TransactionsService -> cancelTransaction: Error while updating transaction %s on db", entity.transactionId);
 
-                                                        return updEntity;
-                                                    })
-                                                    .chain(() -> Uni.createFrom().voidItem());
-                                        })
+                                                            return updEntity;
+                                                        })
+                                                        .chain(() -> Uni.createFrom().voidItem());
+                                            })
                             );
-            });
+                });
     }
 
     protected IdpayTransactionEntity updateIdpayTransactionEntity(IdpayTransactionEntity entity, TransactionStatus status) {
@@ -308,11 +295,11 @@ public class TransactionsService {
         Log.debugf("TransactionsService -> verifyCie - Input parameters: %s, %s, %s", headers, transactionId, verifyCie);
 
         return getIdpayTransactionEntity(transactionId) //looking for MilTransactionID in DB
-            .chain(entity -> { //Transaction found
-                Log.debugf("TransactionsService -> verifyCie: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
+                .chain(entity -> { //Transaction found
+                    Log.debugf("TransactionsService -> verifyCie: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
-                return this.updateByCie(entity)
-                        .chain(ent -> this.callIpzs(ent, verifyCie, transactionId));
+                    return this.updateByCie(entity)
+                            .chain(ent -> this.callIpzs(ent, verifyCie, transactionId));
                 }).chain(Unchecked.function(res -> {//response ok
                     Log.debugf("TransactionsService -> verifyCie: IPZS identitycards service returned a 200 status, response: [%s]", res);
 
@@ -376,7 +363,7 @@ public class TransactionsService {
                     .build());
         } else {
             //call ipzs to retrieve CIE state
-            return ipzsVerifyCieRestClient.identitycards(entity.idpayTransaction.getIdpayTransactionId(), this.createIpzsVerifyCieRequest(verifyCie, entity.idpayTransaction.getTrxCode()))
+            return idpayRestClient.identitycards(entity.idpayTransaction.getIdpayTransactionId(), this.createIpzsVerifyCieRequest(verifyCie, entity.idpayTransaction.getTrxCode()))
                     .onFailure().transform(t -> {
                         if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {//IPZS respond NOT FOUND - trasforming in BAD_REQUEST
                             Log.errorf(t, " TransactionsService -> verifyCie: IPZS NOT FOUND for mil transaction [%s]", transactionId);
@@ -502,7 +489,7 @@ public class TransactionsService {
     }
 
     private Uni<PublicKeyIDPay> retrieveIdpayPublicKey(String acquirerId) {
-        return idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey(acquirerId)
+        return idpayRestClient.retrieveIdpayPublicKey(acquirerId)
                 .onFailure().transform(Unchecked.function(t -> {
 
                     // If idpay public key retrieval fails, return INTERNAL_SERVER_ERROR
@@ -516,8 +503,8 @@ public class TransactionsService {
     }
 
     private Uni<Response> authorize(IdpayTransactionEntity dbData, PinBlockDTO pinBlock) {
-            return idpayAuthorizeTransactionRestClient.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), pinBlock)
-                    .onFailure().transform(Unchecked.function(t -> {
+        return idpayRestClient.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), pinBlock)
+                .onFailure().transform(Unchecked.function(t -> {
 
                     // Error 500 while trying to authorize transaction
                     Log.errorf(t, "TransactionsService -> authorizeTransaction: error response while authorizing transaction.");
@@ -615,13 +602,13 @@ public class TransactionsService {
 
         return idpayTransactionRepository.find(
                         """
-                                idpayTransaction.status in ?1 and
-                                idpayTransaction.terminalId = ?2 and
-                                idpayTransaction.merchantId = ?3 and
-                                idpayTransaction.channel    = ?4 and
-                                idpayTransaction.acquirerId = ?5 and
-                                idpayTransaction.timestamp >= ?6
-                              """,
+                                  idpayTransaction.status in ?1 and
+                                  idpayTransaction.terminalId = ?2 and
+                                  idpayTransaction.merchantId = ?3 and
+                                  idpayTransaction.channel    = ?4 and
+                                  idpayTransaction.acquirerId = ?5 and
+                                  idpayTransaction.timestamp >= ?6
+                                """,
                         Sort.by("idpayTransaction.timestamp").descending(),
                         List.of(TransactionStatus.CANCELLED, TransactionStatus.AUTHORIZED),
                         headers.getTerminalId(),
@@ -665,7 +652,7 @@ public class TransactionsService {
 
     private Uni<PreAuthPaymentResponseDTO> getSecondFactor(String idpayMerchantId, String xAcquirerId, String transactionId) {
 
-        return idpayTransactionsRestClient.putPreviewPreAuthPayment(idpayMerchantId, xAcquirerId, transactionId)
+        return idpayRestClient.putPreviewPreAuthPayment(idpayMerchantId, xAcquirerId, transactionId)
                 .onFailure().transform(t -> {
                     Log.errorf(t, "[%s] TransactionsService -> getSecondFactor: Error while retrieving secondFactor for idpay transaction [%s]",
                             ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR, transactionId);
@@ -684,9 +671,9 @@ public class TransactionsService {
 
         return idpayTransactionRepository.update(entity)
                 .onFailure().transform(err -> new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
-                            .build())
+                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
+                        .build())
                 );
     }
 
@@ -700,7 +687,7 @@ public class TransactionsService {
     }
 
     private Uni<SyncTrxStatus> getStatusTransaction(String idpayMerchantId, String xAcquirerId, String transactionId) {
-        return idpayTransactionsRestClient.getStatusTransaction(idpayMerchantId, xAcquirerId, transactionId)
+        return idpayRestClient.getStatusTransaction(idpayMerchantId, xAcquirerId, transactionId)
                 .onFailure().transform(t -> {
                     if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
                         Log.errorf(t, " TransactionsService -> getStatusTransaction: idpay NOT FOUND for mil transaction [%s]", transactionId);
@@ -717,32 +704,6 @@ public class TransactionsService {
                                 .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
                                 .build());
                     }
-                });
-    }
-
-    public Uni<CertificateBundle> getCertificate() {
-        Log.debugf("TransactionsService -> getCertificate - certName: [%s]", certName);
-
-        return azureADRestClient.getAccessToken(identity, VAULT)
-                .onFailure().transform(t -> {
-                    Log.errorf(t, "TransactionsService -> getCertificate: Azure AD error response for certName [%s]", certName);
-
-                    return new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES_MSG)))
-                            .build());
-                }).chain(token -> {
-                    Log.debugf("TransactionsService -> getCertificate:  Azure AD service returned a 200 status, response: [%s]", token);
-
-                    return azureKeyVaultClient.getCertificate(BEARER + token.getToken(), certName)
-                            .onFailure().transform(t -> {
-                                Log.errorf(t, "TransactionsService -> getCertificate: Azure Key Vault error for certName [%s]", certName);
-
-                                return new InternalServerErrorException(Response
-                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY_MSG)))
-                                        .build());
-                            });
                 });
     }
 }

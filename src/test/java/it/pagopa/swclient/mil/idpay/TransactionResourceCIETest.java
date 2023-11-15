@@ -13,7 +13,7 @@ import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
 import it.pagopa.swclient.mil.idpay.bean.TransactionStatus;
 import it.pagopa.swclient.mil.idpay.bean.VerifyCie;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
-import it.pagopa.swclient.mil.idpay.client.IpzsVerifyCieRestClient;
+import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieResponse;
@@ -44,7 +44,7 @@ class TransactionResourceCIETest {
 
     @InjectMock
     @RestClient
-    IpzsVerifyCieRestClient ipzsVerifyCieRestClient;
+    IdpayRestClient idpayRestClient;
 
     @InjectMock
     @RestClient
@@ -72,7 +72,7 @@ class TransactionResourceCIETest {
     VerifyCie verifyCieRequest;
 
     IdpayTransactionEntity updEntity;
-    
+
     @BeforeAll
     void createTestObjects() {
         validMilHeaders = TransactionsTestData.getMilHeaders();
@@ -92,7 +92,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_OK() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -101,14 +101,13 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(azureAdAccessToken));
 
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().item(getKeyResponse));
-
 
 
         Response response = given()
@@ -132,7 +131,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOIdpayStatus() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.IDENTIFIED);
@@ -160,7 +159,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOIPZS404() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -168,7 +167,7 @@ class TransactionResourceCIETest {
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any()))
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any()))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(404)));
 
         Response response = given()
@@ -191,7 +190,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOIPZS500() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -199,7 +198,7 @@ class TransactionResourceCIETest {
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any()))
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any()))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
         Response response = given()
@@ -222,7 +221,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOIPZSTimeout() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -230,7 +229,7 @@ class TransactionResourceCIETest {
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any()))
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any()))
                 .thenReturn(Uni.createFrom().failure(new TimeoutException()));
 
         Response response = given()
@@ -253,7 +252,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOIPZSLost() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -262,7 +261,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.LOST);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
 
         Response response = given()
@@ -288,7 +287,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOIPZSStolen() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -297,7 +296,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.STOLEN);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
 
         Response response = given()
@@ -323,7 +322,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOIPZSExpired() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -332,7 +331,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.EXPIRED);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
 
         Response response = given()
@@ -356,7 +355,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureAD() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -365,7 +364,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new TimeoutException()));
@@ -392,7 +391,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVTimeout() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -401,14 +400,13 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(azureAdAccessToken));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureKeyVaultClient.getKey(Mockito.any(String.class), Mockito.any(String.class))).thenReturn(Uni.createFrom().failure(new TimeoutException()));
-
 
 
         Response response = given()
@@ -431,7 +429,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVTokenNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -440,7 +438,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken(null);
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -466,7 +464,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_OK_AzureKV404ForCreateKey() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -475,7 +473,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -504,7 +502,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KO_AzureKVCreateKey404() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -514,7 +512,7 @@ class TransactionResourceCIETest {
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
 
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
 
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -546,7 +544,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKeyInvalid() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -555,7 +553,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -588,7 +586,7 @@ class TransactionResourceCIETest {
 
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKeyVersionInvalid() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -597,7 +595,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -630,7 +628,7 @@ class TransactionResourceCIETest {
 
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVKidNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -639,7 +637,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -672,7 +670,7 @@ class TransactionResourceCIETest {
 
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVKeyOpsNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -681,7 +679,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -714,7 +712,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVKeyOpsWrap() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -723,13 +721,13 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(azureAdAccessToken));
 
-        String[] keyOps = new String[] {
+        String[] keyOps = new String[]{
                 "wrapKey"
         };
 
@@ -760,7 +758,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVKeyOpsUnwrap() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -769,13 +767,13 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(azureAdAccessToken));
 
-        String[] keyOps = new String[] {
+        String[] keyOps = new String[]{
                 "unwrapKey"
         };
 
@@ -806,7 +804,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVKeyAttrNull() {
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -814,7 +812,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -844,7 +842,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVKeyEnabledNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -853,7 +851,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -886,7 +884,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVKeyEnabledFalse() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -895,7 +893,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -926,7 +924,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVKeyCreatedInFuture() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -935,7 +933,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -969,7 +967,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVKeyCreatedNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -978,7 +976,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -1011,7 +1009,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVKeyExpired() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1020,7 +1018,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -1055,7 +1053,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVKeyExpiredNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1064,7 +1062,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -1099,7 +1097,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVForbidden() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1108,7 +1106,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(azureAdAccessToken));
@@ -1138,7 +1136,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVGetKeyNullResponse() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1147,7 +1145,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(azureAdAccessToken));
@@ -1177,7 +1175,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_OK_NoPOS() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1186,7 +1184,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -1216,7 +1214,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KO_AzureKVCreateKeyDSA() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1225,7 +1223,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -1257,7 +1255,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVNotBeforeFuture() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1266,7 +1264,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -1301,7 +1299,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVNotBeforeNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1310,7 +1308,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -1345,7 +1343,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOAzureKVKeyDetailsNull() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1354,7 +1352,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
         ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         azureAdAccessToken.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imk2bEdrM0ZaenhSY1ViMkMzbkVRN3N5SEpsWSJ9.eyJhdWQiOiI2ZTc0MTcyYi1iZTU2LTQ4NDMtOWZmNC1lNjZhMzliYjEyZTMiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3L3YyLjAiLCJpYXQiOjE1MzcyMzEwNDgsIm5iZiI6MTUzNzIzMTA0OCwiZXhwIjoxNTM3MjM0OTQ4LCJhaW8iOiJBWFFBaS84SUFBQUF0QWFaTG8zQ2hNaWY2S09udHRSQjdlQnE0L0RjY1F6amNKR3hQWXkvQzNqRGFOR3hYZDZ3TklJVkdSZ2hOUm53SjFsT2NBbk5aY2p2a295ckZ4Q3R0djMzMTQwUmlvT0ZKNGJDQ0dWdW9DYWcxdU9UVDIyMjIyZ0h3TFBZUS91Zjc5UVgrMEtJaWpkcm1wNjlSY3R6bVE9PSIsImF6cCI6IjZlNzQxNzJiLWJlNTYtNDg0My05ZmY0LWU2NmEzOWJiMTJlMyIsImF6cGFjciI6IjAiLCJuYW1lIjoiQWJlIExpbmNvbG4iLCJvaWQiOiI2OTAyMjJiZS1mZjFhLTRkNTYtYWJkMS03ZTRmN2QzOGU0NzQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhYmVsaUBtaWNyb3NvZnQuY29tIiwicmgiOiJJIiwic2NwIjoiYWNjZXNzX2FzX3VzZXIiLCJzdWIiOiJIS1pwZmFIeVdhZGVPb3VZbGl0anJJLUtmZlRtMjIyWDVyclYzeERxZktRIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiZnFpQnFYTFBqMGVRYTgyUy1JWUZBQSIsInZlciI6IjIuMCJ9.pj4N-w_3Us9DrBLfpCt");
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
@@ -1387,7 +1385,7 @@ class TransactionResourceCIETest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void verifyCIETest_KOUpdateByCie() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.CREATED);
@@ -1396,7 +1394,7 @@ class TransactionResourceCIETest {
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().failure(new TimeoutException()));
 
         /*ipzsVerifyCieResponseOK.setOutcome(Outcome.OK);
-        Mockito.when(ipzsVerifyCieRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
+        Mockito.when(idpayRestClient.identitycards(Mockito.any(String.class), Mockito.any())).thenReturn(Uni.createFrom().item(ipzsVerifyCieResponseOK));
 
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new TimeoutException()));*/
