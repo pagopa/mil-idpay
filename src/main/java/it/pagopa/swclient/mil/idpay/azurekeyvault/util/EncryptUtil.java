@@ -25,8 +25,8 @@ public class EncryptUtil {
         String exponentBase64 = publicKeyIDPay.getE();
 
         // Decode Base64 values in byte
-        byte[] modulusBytes = Base64.getDecoder().decode(modulusBase64);
-        byte[] exponentBytes = Base64.getDecoder().decode(exponentBase64);
+        byte[] modulusBytes = Base64.getUrlDecoder().decode(modulusBase64);
+        byte[] exponentBytes = Base64.getUrlDecoder().decode(exponentBase64);
 
         // Create specific RSA public key
         RSAPublicKeySpec rsaPublicKeySpec = new RSAPublicKeySpec(

@@ -14,7 +14,8 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							""
+							"var jsonData = JSON.parse(responseBody);\r",
+							"postman.setEnvironmentVariable(\"initiativeId\", jsonData.initiatives[0].id);"
 						],
 						"type": "text/javascript"
 					}
@@ -180,7 +181,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"initiativeId\": \"aaaaaaaaaaaaaaaaaa\",\r\n  \"timestamp\": \"2023-10-15T21:27:38\",\r\n  \"goodsCost\": 32\r\n}",
+					"raw": "{\r\n  \"initiativeId\": \"{{initiativeId}}\",\r\n  \"timestamp\": \"2023-10-15T21:27:38\",\r\n  \"goodsCost\": 32\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -292,7 +293,10 @@
 					"script": {
 						"exec": [
 							"var jsonData = JSON.parse(responseBody);\r",
-							"postman.setEnvironmentVariable(\"kid\", jsonData.kid);"
+							"postman.setEnvironmentVariable(\"kid\", jsonData.kid);\r",
+							"\r",
+							"postman.setEnvironmentVariable(\"modulus\", jsonData.n);\r",
+							"postman.setEnvironmentVariable(\"exponent\", jsonData.e);"
 						],
 						"type": "text/javascript"
 					}
@@ -676,96 +680,25 @@
 			]
 		},
 		{
-			"name": "Get access token",
+			"name": "EncryptSessionKey",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
 						"exec": [
 							"var jsonData = JSON.parse(responseBody);\r",
-							"postman.setEnvironmentVariable(\"azureAccessToken\", jsonData.access_token);"
+							"postman.setEnvironmentVariable(\"encSessionKey\", jsonData);"
 						],
 						"type": "text/javascript"
 					}
 				}
 			],
 			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "urlencoded",
-					"urlencoded": [
-						{
-							"key": "grant_type",
-							"value": "{{clientCredentials}}",
-							"type": "text"
-						},
-						{
-							"key": "client_id",
-							"value": "{{azureClientId}}",
-							"type": "text"
-						},
-						{
-							"key": "client_secret",
-							"value": "{{azureClientSecret}}",
-							"type": "text"
-						},
-						{
-							"key": "scope",
-							"value": "{{scope}}",
-							"type": "text"
-						}
-					]
-				},
-				"url": {
-					"raw": "https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/token",
-					"protocol": "https",
-					"host": [
-						"login",
-						"microsoftonline",
-						"com"
-					],
-					"path": [
-						"{{tenantId}}",
-						"oauth2",
-						"v2.0",
-						"token"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Wrap Key",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"var jsonData = JSON.parse(responseBody);\r",
-							"let encodedKeys = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(jsonData.value));\r",
-							"postman.setEnvironmentVariable(\"encSessionKey\", encodedKeys);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{azureAccessToken}}",
-							"type": "string"
-						}
-					]
-				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"alg\": \"RSA-OAEP-256\",\r\n    \"value\": \"test\"\r\n}",
+					"raw": "{\r\n  \"modulus\": {{modulus}},\r\n  \"exponent\": {{exponent}},\r\n  \"sessionKey\": \"TestSessionKey\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -773,24 +706,13 @@
 					}
 				},
 				"url": {
-					"raw": "https://mil-d-appl-kv.vault.azure.net/keys/{{kid}}/wrapkey?api-version=7.4",
-					"protocol": "https",
+					"raw": "{{mockURL}}/mock/encryptSessionKey",
 					"host": [
-						"mil-d-appl-kv",
-						"vault",
-						"azure",
-						"net"
+						"{{mockURL}}"
 					],
 					"path": [
-						"keys",
-						"{{kid}}",
-						"wrapkey"
-					],
-					"query": [
-						{
-							"key": "api-version",
-							"value": "7.4"
-						}
+						"mock",
+						"encryptSessionKey"
 					]
 				}
 			},
@@ -867,7 +789,7 @@
 							}
 						],
 						"url": {
-							"raw": "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io/idpay/mil/payment/status/:id",
+							"raw": "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io/idpay/mil/payment/:id/status",
 							"protocol": "https",
 							"host": [
 								"156360cd-f617-4dcb-b908-ae29a2a8651c",
@@ -879,8 +801,8 @@
 								"idpay",
 								"mil",
 								"payment",
-								"status",
-								":id"
+								":id",
+								"status"
 							],
 							"variable": [
 								{
