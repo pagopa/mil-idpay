@@ -68,6 +68,7 @@ public final class ErrorCode {
     public static final String ERROR_GENERATING_KEY_PAIR                                                = MODULE_ID + "000082";
     public static final String ERROR_RETRIEVING_KEY_PAIR                                                = MODULE_ID + "000083";
     public static final String ERROR_RETRIEVING_PUBLIC_KEY_IDPAY                                        = MODULE_ID + "000084";
+    public static final String ERROR_RETRIEVING_CERT_FOR_IDPAY                                          = MODULE_ID + "000085";
 
 
     /*
@@ -94,6 +95,7 @@ public final class ErrorCode {
     public static final String ERROR_IDPAY_UNKNOWN_ERROR_DESCR = "IDPay responds with an unknown error 500";
     public static final String ERROR_ENCRYPTING_SESSION_KEY_DESCR = "Error occurs during encrypting session key";
     public static final String ERROR_RETRIEVING_SECOND_FACTOR_DESCR = "Error retrieving second factor";
+    public static final String ERROR_RETRIEVING_CERT_FOR_IDPAY_DESCR = "Azure KV certificate for idpay retrieving error";
 
 
     /*
@@ -120,6 +122,7 @@ public final class ErrorCode {
     public static final String ERROR_IDPAY_UNKNOWN_ERROR_MSG = "[" + ERROR_IDPAY_UNKNOWN_ERROR_CODE + "] " + ERROR_IDPAY_UNKNOWN_ERROR_DESCR;
     public static final String ERROR_ENCRYPTING_SESSION_KEY_MSG = "[" + ERROR_ENCRYPTING_SESSION_KEY + "] " + ERROR_ENCRYPTING_SESSION_KEY_DESCR;
     public static final String ERROR_RETRIEVING_SECOND_FACTOR_MSG = "[" + ERROR_RETRIEVING_SECOND_FACTOR + "] " + ERROR_RETRIEVING_SECOND_FACTOR_DESCR;
+    public static final String ERROR_RETRIEVING_CERT_FOR_IDPAY_MSG = "[" + ERROR_RETRIEVING_CERT_FOR_IDPAY + "] " + ERROR_RETRIEVING_CERT_FOR_IDPAY_DESCR;
 
     private ErrorCode() {
     }

@@ -7,7 +7,7 @@ import it.pagopa.swclient.mil.bean.Errors;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
 import it.pagopa.swclient.mil.idpay.bean.Initiative;
 import it.pagopa.swclient.mil.idpay.bean.InitiativesResponse;
-import it.pagopa.swclient.mil.idpay.client.IdpayInitiativesRestClient;
+import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.InitiativeStatus;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -24,7 +24,7 @@ import java.util.List;
 public class InitiativesService {
 
     @RestClient
-    IdpayInitiativesRestClient idpayInitiativesRestClient;
+    IdpayRestClient idpayRestClient;
 
     @Inject
     TransactionsService transactionsService;
@@ -33,7 +33,7 @@ public class InitiativesService {
 
         Log.debugf("InitiativesService -> getInitiatives - Input parameters: %s", headers);
 
-        return idpayInitiativesRestClient.getMerchantInitiativeList(transactionsService.getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId())
+        return idpayRestClient.getMerchantInitiativeList(transactionsService.getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId())
                 .onFailure().transform(t -> {
                     if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
                         Log.errorf(t, " InitiativesService -> getInitiatives: idpay NOT FOUND for MerchantId [%s]", headers.getMerchantId());

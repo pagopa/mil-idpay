@@ -6,7 +6,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
-import it.pagopa.swclient.mil.idpay.client.IdpayInitiativesRestClient;
+import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.InitiativeDTO;
 import it.pagopa.swclient.mil.idpay.resource.InitiativesResource;
 import it.pagopa.swclient.mil.idpay.util.InitiativesTestData;
@@ -30,7 +30,7 @@ class InitiativesResourceTest {
 
     @InjectMock
     @RestClient
-    IdpayInitiativesRestClient idpayInitiativesRestClient;
+    IdpayRestClient idpayRestClient;
 
     Map<String, String> validMilHeaders;
 
@@ -44,10 +44,10 @@ class InitiativesResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getMerchantInitiativeListTest_OK() {
 
-        Mockito.when(idpayInitiativesRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(initiativesList));
 
         Response response = given()
@@ -64,10 +64,10 @@ class InitiativesResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getMerchantInitiativeListTest_KO404() {
 
-        Mockito.when(idpayInitiativesRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(404)));
 
         Response response = given()
@@ -85,10 +85,10 @@ class InitiativesResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getMerchantInitiativeListTest_KO500() {
 
-        Mockito.when(idpayInitiativesRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
         Response response = given()
@@ -106,10 +106,10 @@ class InitiativesResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getMerchantInitiativeListTest_KO500RuntimeEx() {
 
-        Mockito.when(idpayInitiativesRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idpayRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new RuntimeException()));
 
         Response response = given()

@@ -12,7 +12,7 @@ import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyRequest;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.bean.*;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
-import it.pagopa.swclient.mil.idpay.client.IdpayAuthorizeTransactionRestClient;
+import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieResponse;
@@ -28,6 +28,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
+
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
@@ -39,7 +40,7 @@ class TransactionResourceAuthorizationTest {
 
     @InjectMock
     @RestClient
-    IdpayAuthorizeTransactionRestClient idpayAuthorizeTransactionRestClient;
+    IdpayRestClient idpayRestClient;
 
     @InjectMock
     @RestClient
@@ -82,21 +83,21 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_OK() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
-        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
-                        .thenReturn(Uni.createFrom().item(publicKeyIDPay));
+        Mockito.when(idpayRestClient.retrieveIdpayPublicKey(Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
+        Mockito.when(idpayRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
                 .thenReturn(Uni.createFrom().item(authTransactionResponse));
 
 
@@ -116,7 +117,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_KOIdPayFind500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
@@ -142,7 +143,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_KOIdPayFind404() {
 
         idpayTransactionEntity = null;
@@ -171,7 +172,7 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_KOTransactionNotIdentified() {
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.REWARDED);
@@ -200,12 +201,12 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_KOAccessToken500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
-        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
 
@@ -229,13 +230,13 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_KOUnwrapKey500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
         idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.IDENTIFIED);
-        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
@@ -262,18 +263,18 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_KORetrievePublicKey500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
-        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
+        Mockito.when(idpayRestClient.retrieveIdpayPublicKey(Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
 
@@ -297,21 +298,21 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_KOAuthorize500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
-        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
+        Mockito.when(idpayRestClient.retrieveIdpayPublicKey(Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
+        Mockito.when(idpayRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
 
@@ -335,18 +336,18 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_KOAuthorize400() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
-        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
+        Mockito.when(idpayRestClient.retrieveIdpayPublicKey(Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
         authTransactionResponse.setAuthTransactionResponseOk(null);
@@ -356,7 +357,7 @@ class TransactionResourceAuthorizationTest {
                 .message("Wrong Authorization Code")
                 .build());
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
+        Mockito.when(idpayRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
                 .thenReturn(Uni.createFrom().item(authTransactionResponse));
 
 
@@ -383,24 +384,24 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_KOAuthorizeOther500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
-        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
+        Mockito.when(idpayRestClient.retrieveIdpayPublicKey(Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
         authTransactionResponse.setAuthTransactionResponseOk(null);
         authTransactionResponse.setAuthTransactionResponseWrong(null);
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
+        Mockito.when(idpayRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
                 .thenReturn(Uni.createFrom().item(authTransactionResponse));
 
 
@@ -426,12 +427,12 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_KOEncryptingSessionKey() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
-        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
@@ -439,7 +440,7 @@ class TransactionResourceAuthorizationTest {
 
         publicKeyIDPay.setN("ABC");
         publicKeyIDPay.setE("DEF");
-        Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
+        Mockito.when(idpayRestClient.retrieveIdpayPublicKey(Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
 
@@ -465,21 +466,21 @@ class TransactionResourceAuthorizationTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "PayWithIDPay" })
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_KOAuthorizeUpdate500() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
-        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.retrieveIdpayPublicKey())
+        Mockito.when(idpayRestClient.retrieveIdpayPublicKey(Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
-        Mockito.when(idpayAuthorizeTransactionRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
+        Mockito.when(idpayRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
                 .thenReturn(Uni.createFrom().item(authTransactionResponse));
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));

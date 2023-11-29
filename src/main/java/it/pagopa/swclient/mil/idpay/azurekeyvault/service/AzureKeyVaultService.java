@@ -51,7 +51,7 @@ public class AzureKeyVaultService {
 
     public Uni<PublicKeyIDPay> getAzureKVKey(AccessToken accessToken, CommonHeader headers) {
 
-        if (accessToken.getAccess_token() == null) {
+        if (accessToken.getToken() == null) {
             throw new InternalServerErrorException(Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new Errors(List.of(ErrorCode.AZUREAD_ACCESS_TOKEN_IS_NULL), List.of(ErrorCode.AZUREAD_ACCESS_TOKEN_IS_NULL_MSG)))
@@ -62,7 +62,7 @@ public class AzureKeyVaultService {
 
         Log.debugf("AzureKeyVaultService -> getAzureKVKey: call Azure Key Vault for keyName: [%s]", keyName);
 
-        return azureKeyVaultClient.getKey(BEARER + accessToken.getAccess_token(), keyName)
+        return azureKeyVaultClient.getKey(BEARER + accessToken.getToken(), keyName)
                 .onItemOrFailure()
                     .transformToUni(Unchecked.function((getKeyResponse, error) -> {
                         if (error != null && !(error instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404)) {
@@ -96,7 +96,7 @@ public class AzureKeyVaultService {
 
         CreateKeyRequest createKeyRequest = new CreateKeyRequest(RSA, keysize, OPS, attributes);
 
-        return azureKeyVaultClient.createKey(BEARER + accessToken.getAccess_token(), keyName, createKeyRequest)
+        return azureKeyVaultClient.createKey(BEARER + accessToken.getToken(), keyName, createKeyRequest)
                 .onFailure().transform(Unchecked.function(t -> {
                     Log.errorf(t, "[%s] AzureKeyVaultService -> createAzureKVKey: Azure Key Vault error response for keyName [%s]", ErrorCode.ERROR_GENERATING_KEY_PAIR, keyName);
                     throw new InternalServerErrorException(Response

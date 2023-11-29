@@ -820,11 +820,11 @@
       "sha256": "aczARIfod3nUlwqlDGc8w0qd8IDBwOjY6rLotG-CXPQ="
     },
     {
-      "id": "it.pagopa.swclient.mil:common:jar:2.0.2",
+      "id": "it.pagopa.swclient.mil:common:jar:2.1.0",
       "artifactId": "common",
       "groupId": "it.pagopa.swclient.mil",
-      "version": "2.0.2",
-      "sha256": "ntDsMD3I1EDFqEs4rg-6ZuUG5fASYx_71DIxCz8fwmw="
+      "version": "2.1.0",
+      "sha256": "8SAtPJV3xz7X2T5U5wEBWRDmAND00hNi1DjjsMsSPPM="
     },
     {
       "id": "io.quarkus:quarkus-junit5:jar:3.2.2.Final",
