@@ -6,6 +6,7 @@
 package it.pagopa.swclient.mil.idpay.azurekeyvault.client;
 
 import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.*;
+import it.pagopa.swclient.mil.idpay.bean.cer.CertificateBundle;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import io.quarkus.rest.client.reactive.ClientQueryParam;
@@ -75,4 +76,18 @@ public interface AzureKeyVaultClient {
             @HeaderParam("Authorization") String authorization,
             @PathParam("kid") String kid,
             UnwrapKeyRequest unwrapKeyRequest);
+
+    /**
+     *
+     * @param authorization
+     * @param certName
+     * @return
+     */
+    @Path("/certificates/{certName}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @ClientQueryParam(name = "api-version", value = "${azure-key-vault-api.version}")
+    Uni<CertificateBundle> getCertificate(
+            @HeaderParam("Authorization") String authorization,
+            @PathParam("certName") String certName);
 }
