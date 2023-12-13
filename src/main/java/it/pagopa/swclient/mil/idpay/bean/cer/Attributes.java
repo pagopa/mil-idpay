@@ -31,4 +31,7 @@ public class Attributes {
 
     @JsonProperty("recoveryLevel")
     private String recoveryLevel;
+
+    @JsonProperty("recoverableDays")
+    private Integer recoverableDays;
 }

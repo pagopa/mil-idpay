@@ -29,6 +29,7 @@ public class InitiativesService {
     @Inject
     TransactionsService transactionsService;
 
+
     public Uni<InitiativesResponse> getInitiatives(CommonHeader headers) {
 
         Log.debugf("InitiativesService -> getInitiatives - Input parameters: %s", headers);
