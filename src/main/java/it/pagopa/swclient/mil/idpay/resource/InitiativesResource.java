@@ -3,7 +3,7 @@ package it.pagopa.swclient.mil.idpay.resource;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.bean.CommonHeader;
-import it.pagopa.swclient.mil.idpay.service.InitiativesService;
+import it.pagopa.swclient.mil.idpay.service.TransactionsService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -18,7 +18,7 @@ import jakarta.ws.rs.core.Response;
 public class InitiativesResource {
 
     @Inject
-    InitiativesService initiativesService;
+    TransactionsService transactionsService;
 
     @GET
     @Path("/")
@@ -28,8 +28,8 @@ public class InitiativesResource {
 
         Log.debugf("InitiativesResource -> getInitiatives - Input parameters: %s", headers);
 
-        return initiativesService.getInitiatives(headers).chain(res -> {
-                    Log.debugf("InitiativesResource -> InitiativesService -> getInitiatives - Response %s", res);
+        return transactionsService.getInitiatives(headers).chain(res -> {
+                    Log.debugf("InitiativesResource -> TransactionsService -> getInitiatives - Response %s", res);
 
                     return Uni.createFrom().item(
                             Response.status(Response.Status.OK)

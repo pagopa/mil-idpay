@@ -69,6 +69,9 @@ public final class ErrorCode {
     public static final String ERROR_RETRIEVING_KEY_PAIR                                                = MODULE_ID + "000083";
     public static final String ERROR_RETRIEVING_PUBLIC_KEY_IDPAY                                        = MODULE_ID + "000084";
     public static final String ERROR_RETRIEVING_CERT_FOR_IDPAY                                          = MODULE_ID + "000085";
+    public static final String ERROR_RETRIEVING_SECRET_FOR_IDPAY                                        = MODULE_ID + "000086";
+    public static final String ERROR_GENERATING_KEY_STORE                                             = MODULE_ID + "000087";
+    public static final String ERROR_CERTIFICATE_EXPIRED                                                = MODULE_ID + "000088";
 
 
     /*
@@ -96,6 +99,9 @@ public final class ErrorCode {
     public static final String ERROR_ENCRYPTING_SESSION_KEY_DESCR = "Error occurs during encrypting session key";
     public static final String ERROR_RETRIEVING_SECOND_FACTOR_DESCR = "Error retrieving second factor";
     public static final String ERROR_RETRIEVING_CERT_FOR_IDPAY_DESCR = "Azure KV certificate for idpay retrieving error";
+    public static final String ERROR_RETRIEVING_SECRET_FOR_IDPAY_DESCR = "Azure KV secret for idpay retrieving error";
+    public static final String ERROR_GENERATING_KEY_STORE_FOR_IDPAY_DESCR = "Error during private key generation for idpay";
+    public static final String ERROR_CERTIFICATE_EXPIRED_DESCR = "Azure KV certificate has expired";
 
 
     /*
@@ -123,6 +129,9 @@ public final class ErrorCode {
     public static final String ERROR_ENCRYPTING_SESSION_KEY_MSG = "[" + ERROR_ENCRYPTING_SESSION_KEY + "] " + ERROR_ENCRYPTING_SESSION_KEY_DESCR;
     public static final String ERROR_RETRIEVING_SECOND_FACTOR_MSG = "[" + ERROR_RETRIEVING_SECOND_FACTOR + "] " + ERROR_RETRIEVING_SECOND_FACTOR_DESCR;
     public static final String ERROR_RETRIEVING_CERT_FOR_IDPAY_MSG = "[" + ERROR_RETRIEVING_CERT_FOR_IDPAY + "] " + ERROR_RETRIEVING_CERT_FOR_IDPAY_DESCR;
+    public static final String ERROR_RETRIEVING_SECRET_FOR_IDPAY_MSG = "[" + ERROR_RETRIEVING_SECRET_FOR_IDPAY + "] " + ERROR_RETRIEVING_SECRET_FOR_IDPAY_DESCR;
+    public static final String ERROR_GENERATING_KEY_STORE_MSG = "[" + ERROR_GENERATING_KEY_STORE + "] " + ERROR_GENERATING_KEY_STORE_FOR_IDPAY_DESCR;
+    public static final String ERROR_CERTIFICATE_EXPIRED_MSG = "[" + ERROR_CERTIFICATE_EXPIRED + "] " + ERROR_CERTIFICATE_EXPIRED_DESCR;
 
     private ErrorCode() {
     }
