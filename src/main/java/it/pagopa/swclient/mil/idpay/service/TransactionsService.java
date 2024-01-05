@@ -101,19 +101,21 @@ public class TransactionsService {
 
         return checkOrGenerateClient().chain(() ->
                 idpayRestClient.getMerchantInitiativeList(getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId())
-                        .onFailure().recoverWithItem(Unchecked.function(t -> {
-                            if (t instanceof CertificateException) {
-                                Log.errorf(t, " TransactionsService -> getInitiatives: idpay error response for certificate");
+                        .onItemOrFailure()
+                        .transformToUni(Unchecked.function((initiativeList, error) -> {
+                            if (error instanceof CertificateException) {
+                                Log.errorf(error, " TransactionsService -> getInitiatives: idpay error response for certificate");
 
                                 idpayRestClient = null;
-                                // Riprova
+
+                                // Retry
                                 return checkOrGenerateClient().chain(() ->
                                         idpayRestClient.getMerchantInitiativeList(getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId())
-                                                .onFailure().recoverWithItem(Unchecked.function(retryException -> {
+                                                .onFailure().transform(Unchecked.function(retryException -> {
                                                     if (retryException instanceof CertificateException) {
                                                         Log.errorf(retryException, " TransactionsService -> getInitiatives: idpay error response for certificate");
 
-                                                        // Lancia l'errore in caso di secondo fallimento
+                                                        // Throw error in case of a second failure
                                                         throw new InternalServerErrorException(Response
                                                                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                                                                 .entity(new Errors(List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED), List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED_MSG)))
@@ -136,33 +138,20 @@ public class TransactionsService {
                                                                 .build());
                                                     }
                                                 }))
-                                                .map(res -> {
-                                                    Log.debugf("TransactionsService -> getInitiatives: idpay getMerchantInitiativeList service returned a 200 status, response: [%s]", res);
-
-                                                    LocalDate today = LocalDate.now();
-
-                                                    List<Initiative> iniList = res.stream().filter(ini ->
-                                                                    InitiativeStatus.PUBLISHED == ini.getStatus()
-                                                                            && (today.isAfter(ini.getStartDate()) || today.isEqual(ini.getStartDate()))
-                                                            )
-                                                            .map(fIni -> new Initiative(fIni.getInitiativeId(), fIni.getInitiativeName(), fIni.getOrganizationName())).toList();
-
-                                                    InitiativesResponse inis = new InitiativesResponse();
-                                                    inis.setInitiatives(iniList);
-
-                                                    return inis;
-                                                })
+                                                .map(this::correctResult)
                                 );
-                            } else if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
-                                Log.errorf(t, " TransactionsService -> getInitiatives: idpay NOT FOUND for MerchantId [%s]", headers.getMerchantId());
+                            } else if (error instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
+                                Log.errorf(error, " TransactionsService -> getInitiatives: idpay NOT FOUND for MerchantId [%s]", headers.getMerchantId());
 
                                 Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
                                 throw new NotFoundException(Response
                                         .status(Response.Status.NOT_FOUND)
                                         .entity(errors)
                                         .build());
+                            } else if (initiativeList != null) {
+                                return Uni.createFrom().item(correctResult(initiativeList));
                             } else {
-                                Log.errorf(t, "TransactionsService -> getInitiatives: idpay error response for MerchantId [%s]", headers.getMerchantId());
+                                Log.errorf(error, "TransactionsService -> getInitiatives: idpay error response for MerchantId [%s]", headers.getMerchantId());
 
                                 Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG));
                                 throw new InternalServerErrorException(Response
@@ -172,6 +161,23 @@ public class TransactionsService {
                             }
                         }))
         );
+    }
+
+    private InitiativesResponse correctResult(List<InitiativeDTO> initiativeList) {
+        Log.debugf("TransactionsService -> getInitiatives: idpay getMerchantInitiativeList service returned a 200 status, response: [%s]", initiativeList);
+
+        LocalDate today = LocalDate.now();
+
+        List<Initiative> iniList = initiativeList.stream().filter(ini ->
+                        InitiativeStatus.PUBLISHED == ini.getStatus()
+                                && (today.isAfter(ini.getStartDate()) || today.isEqual(ini.getStartDate()))
+                )
+                .map(fIni -> new Initiative(fIni.getInitiativeId(), fIni.getInitiativeName(), fIni.getOrganizationName())).toList();
+
+        InitiativesResponse inis = new InitiativesResponse();
+        inis.setInitiatives(iniList);
+
+        return inis;
     }
 
     public Uni<Transaction> createTransaction(CommonHeader headers, CreateTransaction createTransaction) {
