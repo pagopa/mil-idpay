@@ -213,7 +213,8 @@ class InitiativesResourceTest {
         Assertions.assertEquals(500, response.statusCode());
         Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
         Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
-        //Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB));
+        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_CERTIFICATE_EXPIRED));
+
         Assertions.assertNull(response.jsonPath().getList("initiatives"));
     }
 

@@ -11,6 +11,8 @@ import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyResponse;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.bean.UnwrapKeyRequest;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.bean.*;
+import it.pagopa.swclient.mil.idpay.bean.cer.CertificateBundle;
+import it.pagopa.swclient.mil.idpay.bean.secret.SecretBundle;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
+import java.security.cert.CertificateException;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
@@ -65,6 +68,8 @@ class TransactionResourceAuthorizationTest {
     AuthorizeTransaction authorizeTransaction;
     AuthTransactionResponse authTransactionResponse;
     PublicKeyIDPay publicKeyIDPay;
+    CertificateBundle certificateBundle;
+    SecretBundle secretBundle;
 
     @BeforeAll
     void createTestObjects() {
@@ -80,6 +85,8 @@ class TransactionResourceAuthorizationTest {
         authorizeTransaction = TransactionsTestData.getAuthorizeTransaction();
         publicKeyIDPay = TransactionsTestData.getPublicKeyIdPay();
         authTransactionResponse = TransactionsTestData.getAuthTransactionResponse();
+        certificateBundle = TransactionsTestData.getCertificateBundle();
+        secretBundle = TransactionsTestData.getSecretBundle();
     }
 
     @Test
@@ -90,6 +97,12 @@ class TransactionResourceAuthorizationTest {
 
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
+
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
@@ -271,6 +284,12 @@ class TransactionResourceAuthorizationTest {
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
@@ -305,6 +324,12 @@ class TransactionResourceAuthorizationTest {
 
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
+
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
@@ -343,6 +368,12 @@ class TransactionResourceAuthorizationTest {
 
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
+
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
 
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
@@ -392,6 +423,12 @@ class TransactionResourceAuthorizationTest {
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
@@ -435,6 +472,12 @@ class TransactionResourceAuthorizationTest {
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
@@ -474,6 +517,12 @@ class TransactionResourceAuthorizationTest {
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
 
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
         Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
                 .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
 
@@ -505,5 +554,87 @@ class TransactionResourceAuthorizationTest {
         Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
 
         Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_STORING_DATA_IN_DB));
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
+    void authorizeTransactionTest_KOCertPermanent() {
+
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
+
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
+        Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
+                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
+
+        Mockito.when(idpayRestClient.retrieveIdpayPublicKey(Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new CertificateException()));
+
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .body(authorizeTransaction)
+                .pathParam("milTransactionId", transactionId)
+                .when()
+                .post("/{milTransactionId}/authorize")
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+
+        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_CERTIFICATE_EXPIRED));
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
+    void authorizeTransactionTest_KOCertAndOK() {
+
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
+
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
+        Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
+                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
+
+        Mockito.when(idpayRestClient.retrieveIdpayPublicKey(Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new CertificateException()))
+                .thenReturn(Uni.createFrom().item(publicKeyIDPay));
+
+        Mockito.when(idpayRestClient.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
+                .thenReturn(Uni.createFrom().item(authTransactionResponse));
+
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .body(authorizeTransaction)
+                .pathParam("milTransactionId", transactionId)
+                .when()
+                .post("/{milTransactionId}/authorize")
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(200, response.statusCode());
     }
 }
