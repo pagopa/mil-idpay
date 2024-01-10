@@ -5,13 +5,10 @@ import it.pagopa.swclient.mil.idpay.bean.AuthTransactionResponse;
 import it.pagopa.swclient.mil.idpay.bean.PinBlockDTO;
 import it.pagopa.swclient.mil.idpay.bean.PublicKeyIDPay;
 import it.pagopa.swclient.mil.idpay.client.bean.*;
-import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieRequest;
-import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieResponse;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import org.eclipse.microprofile.rest.client.annotation.ClientHeaderParam;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import org.jboss.resteasy.reactive.RestQuery;
 
 import java.util.List;
 
@@ -48,13 +45,6 @@ public interface IdpayRestClient {
     @Path("/idpay/mil/payment/{transactionId}")
     @ClientHeaderParam(name = "Ocp-Apim-Subscription-Key", value = "${idpay-rest-client.apim-subscription-key}", required = false)
     Uni<Void> deleteTransaction(@HeaderParam("x-merchant-fiscalcode") @NotNull String idpayMerchantId, @HeaderParam("x-acquirer-id") @NotNull String xAcquirerId, @PathParam("transactionId") String transactionId);
-
-    /*
-     * VERIFY CIE
-     */
-    @POST
-    @Path("/api/identitycards")
-    Uni<IpzsVerifyCieResponse> identitycards(@RestQuery @NotNull String transactionId, IpzsVerifyCieRequest ipzsVerifyCieRequest);
 
     /*
      * AUTHORIZE TRANSACTIONS

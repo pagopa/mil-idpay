@@ -18,6 +18,7 @@ import it.pagopa.swclient.mil.idpay.bean.cer.CertificateBundle;
 import it.pagopa.swclient.mil.idpay.bean.secret.SecretBundle;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
+import it.pagopa.swclient.mil.idpay.client.IpzsRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.*;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieRequest;
@@ -79,6 +80,9 @@ public class TransactionsService {
 
     @RestClient
     IdpayRestClient idpayRestClient = null;
+
+    @RestClient
+    IpzsRestClient ipzsRestClient;
 
     @ConfigProperty(name = "azure-cert.name")
     String certName;
@@ -473,7 +477,7 @@ public class TransactionsService {
                     .build());
         } else {
             //call ipzs to retrieve CIE state
-            return idpayRestClient.identitycards(entity.idpayTransaction.getIdpayTransactionId(), this.createIpzsVerifyCieRequest(verifyCie, entity.idpayTransaction.getTrxCode()))
+            return ipzsRestClient.identitycards(entity.idpayTransaction.getIdpayTransactionId(), this.createIpzsVerifyCieRequest(verifyCie, entity.idpayTransaction.getTrxCode()))
                     .onFailure().transform(t -> {
                         if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {//IPZS respond NOT FOUND - trasforming in BAD_REQUEST
                             Log.errorf(t, " TransactionsService -> verifyCie: IPZS NOT FOUND for mil transaction [%s]", transactionId);
@@ -839,7 +843,7 @@ public class TransactionsService {
                                         // Retry
                                         return checkOrGenerateClient().chain(() ->
                                                 idpayRestClient.getStatusTransaction(idpayMerchantId, xAcquirerId, transactionId)
-                                                        .onFailure().transform(Unchecked.function((retryException) -> {
+                                                        .onFailure().transform(Unchecked.function(retryException -> {
 
                                                             if (retryException instanceof CertificateException) {
                                                                 throw certificateException(retryException, "statusTransaction");
