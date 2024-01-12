@@ -10,10 +10,10 @@ import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.bean.cer.CertificateBundle;
 import it.pagopa.swclient.mil.idpay.bean.secret.SecretBundle;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
-import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.InitiativeDTO;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
 import it.pagopa.swclient.mil.idpay.resource.InitiativesResource;
+import it.pagopa.swclient.mil.idpay.service.IdPayRestService;
 import it.pagopa.swclient.mil.idpay.util.InitiativesTestData;
 import it.pagopa.swclient.mil.idpay.util.TransactionsTestData;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -37,15 +37,14 @@ class InitiativesResourceTest {
 
     @InjectMock
     @RestClient
-    IdpayRestClient idpayRestClient;
-
-    @InjectMock
-    @RestClient
     AzureADRestClient azureADRestClient;
 
     @InjectMock
     @RestClient
     AzureKeyVaultClient azureKeyVaultClient;
+
+    @InjectMock
+    IdPayRestService idPayRestService;
 
     Map<String, String> validMilHeaders;
 
@@ -80,7 +79,7 @@ class InitiativesResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(initiativesList));
 
         Response response = given()
@@ -109,7 +108,7 @@ class InitiativesResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(404)));
 
         Response response = given()
@@ -139,7 +138,7 @@ class InitiativesResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
         Response response = given()
@@ -169,7 +168,7 @@ class InitiativesResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new RuntimeException()));
 
         Response response = given()
@@ -199,7 +198,7 @@ class InitiativesResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new CertificateException()));
 
         Response response = given()
@@ -231,7 +230,7 @@ class InitiativesResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new CertificateException()))
                 .thenReturn(Uni.createFrom().item(initiativesList));
 

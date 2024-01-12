@@ -80,10 +80,13 @@ public class TransactionsService {
     AzureKeyVaultClient azureKeyVaultClient;
 
     @RestClient
-    IdpayRestClient idpayRestClient = null;
+    IdpayRestClient idpayRestClient;
 
     @RestClient
     IpzsRestClient ipzsRestClient;
+
+    @Inject
+    IdPayRestService idPayRestService;
 
     @ConfigProperty(name = "azure-cert.name")
     String certName;
@@ -108,19 +111,19 @@ public class TransactionsService {
 
         Log.debugf("TransactionsService -> getInitiatives - Input parameters: %s", headers);
 
-        return checkOrGenerateClient().chain(() ->
-                idpayRestClient.getMerchantInitiativeList(getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId())
+        return idPayRestService.checkOrGenerateClient().chain(() ->
+                idPayRestService.getMerchantInitiativeList(headers.getMerchantId(), headers.getAcquirerId())
                         .onItemOrFailure()
                         .transformToUni(Unchecked.function((initiativeList, error) -> {
 
                             if (error instanceof CertificateException) {
                                 Log.errorf(error, " TransactionsService -> getInitiatives: first try, idpay error response for certificate");
 
-                                idpayRestClient = null;
+                                idPayRestService.setIdpayRestClient(null);
 
                                 // Retry
-                                return checkOrGenerateClient().chain(() ->
-                                        idpayRestClient.getMerchantInitiativeList(getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId())
+                                return idPayRestService.checkOrGenerateClient().chain(() ->
+                                        idPayRestService.getMerchantInitiativeList(headers.getMerchantId(), headers.getAcquirerId())
                                                 .onFailure().transform(Unchecked.function(retryException -> {
 
                                                     if (retryException instanceof CertificateException) {
@@ -189,7 +192,7 @@ public class TransactionsService {
         Log.debugf("TransactionsService -> createTransaction: REQUEST to idpay [%s]", req);
 
         return checkOrGenerateClient().chain(() ->
-                idpayRestClient.createTransaction(getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId(), req)
+                idpayRestClient.createTransaction(headers.getMerchantId(), headers.getAcquirerId(), req)
                         .onItemOrFailure()
                         .transformToUni(Unchecked.function((transactionResponse, error) -> {
 
@@ -200,7 +203,7 @@ public class TransactionsService {
 
                                 // Retry
                                 return checkOrGenerateClient().chain(() ->
-                                        idpayRestClient.createTransaction(getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId(), req)
+                                        idpayRestClient.createTransaction(headers.getMerchantId(), headers.getAcquirerId(), req)
                                                 .onFailure().transform(Unchecked.function(retryException -> {
 
                                                     if (retryException instanceof CertificateException) {
@@ -738,11 +741,6 @@ public class TransactionsService {
                 });
     }
 
-    public String getIdpayMerchantId(String merchantId, String acquirerId) {
-        Log.debugf("TransactionsService -> getIdpayMerchantId: idpayMerchantId [%s] retrieved for merchantId [%s] and acquirerId [%s]", merchantId, merchantId, acquirerId);
-        return merchantId;
-    }
-
     public Uni<GetTransactionsResponse> getLastTransactions(CommonHeader headers) {
 
         Log.debugf("TransactionsService -> getLastTransactions - Input parameters: %s", headers);
@@ -887,40 +885,44 @@ public class TransactionsService {
         if (this.idpayRestClient == null) {
             Log.debugf("TransactionsService -> checkOrGenerateClient - client is null");
 
-            return getCertificate()
-                    .onItem()
-                    .transformToUni(Unchecked.function(certificateBundle -> {
-                        if (checkCertIsValid(certificateBundle)) {
-                            return getSecret().onFailure().transform(error -> {
-                                        Log.errorf(error, "TransactionsService -> checkOrGenerateClient: error while trying to getSecret");
-
-                                        return new InternalServerErrorException(Response
-                                                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_SECRET_FOR_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_SECRET_FOR_IDPAY_MSG)))
-                                                .build());
-                                    })
-                                    .chain(secretBundle -> createRestClient(certificateBundle.getCer(), secretBundle.getValue()));
-                        } else {
-                            return Uni.createFrom()
-                                    .failure(new InternalServerErrorException(Response
-                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity(new Errors(List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED), List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED_MSG)))
-                                            .build()));
-                        }
-
-                    })).onFailure().invoke(Unchecked.consumer(failure -> {
-                        Log.errorf(failure, "TransactionsService -> checkOrGenerateClient: error while trying to getCertificate");
-
-                        throw new InternalServerErrorException(Response
-                                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY_MSG)))
-                                .build());
-                    }));
+            return generateClient();
         } else {
             Log.debugf("TransactionsService -> checkOrGenerateClient - client is not null , no action needed[%s]", this.idpayRestClient);
 
             return Uni.createFrom().voidItem();
         }
+    }
+
+    private Uni<Void> generateClient() {
+        return getCertificate()
+                .onItem()
+                .transformToUni(Unchecked.function(certificateBundle -> {
+                    if (checkCertIsValid(certificateBundle)) {
+                        return getSecret().onFailure().transform(error -> {
+                                    Log.errorf(error, "TransactionsService -> checkOrGenerateClient: error while trying to getSecret");
+
+                                    return new InternalServerErrorException(Response
+                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_SECRET_FOR_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_SECRET_FOR_IDPAY_MSG)))
+                                            .build());
+                                })
+                                .chain(secretBundle -> createRestClient(certificateBundle.getCer(), secretBundle.getValue()));
+                    } else {
+                        return Uni.createFrom()
+                                .failure(new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED), List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED_MSG)))
+                                        .build()));
+                    }
+
+                })).onFailure().invoke(Unchecked.consumer(failure -> {
+                    Log.errorf(failure, "TransactionsService -> checkOrGenerateClient: error while trying to getCertificate");
+
+                    throw new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY_MSG)))
+                            .build());
+                }));
     }
 
     private Uni<CertificateBundle> getCertificate() {
@@ -1009,21 +1011,23 @@ public class TransactionsService {
             }
 
             URL url = new URL(idpayUrl);
-            Log.debugf("TransactionsService -> createRestClient: idpay url and relative string: [%s], [%s]", url, idpayUrl);
+            Log.debugf("TransactionsService -> createRestClient: idpay url: [%s]", url);
+
             /*
              * Build REST client.
              */
-            this.idpayRestClient = RestClientBuilder.newBuilder()
+            idpayRestClient = RestClientBuilder.newBuilder()
                     .baseUrl(url)
                     .keyStore(ephemeralKeyStore, new String(nopwd))
                     .build(IdpayRestClient.class);
 
+            Log.debugf("TransactionsService -> createRestClient: rest client generated correctly: [%s]", idpayRestClient);
             return Uni.createFrom().voidItem();
 
         } catch (IOException | KeyStoreException | UnrecoverableKeyException | CertificateException |
                  NoSuchAlgorithmException e) {
             Log.errorf(e, "TransactionsService -> createRestClient: error generating key store with certificate and pkcs: [%s], [%s]", certificate, pkcs);
-            this.idpayRestClient = null;
+            idpayRestClient = null;
 
             throw new InternalServerErrorException(Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
