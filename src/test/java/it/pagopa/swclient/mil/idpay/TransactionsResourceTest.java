@@ -15,7 +15,6 @@ import it.pagopa.swclient.mil.idpay.bean.TransactionStatus;
 import it.pagopa.swclient.mil.idpay.bean.cer.CertificateBundle;
 import it.pagopa.swclient.mil.idpay.bean.secret.SecretBundle;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
-import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.PreAuthPaymentResponseDTO;
 import it.pagopa.swclient.mil.idpay.client.bean.SyncTrxStatus;
 import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
@@ -23,6 +22,7 @@ import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionRepository;
 import it.pagopa.swclient.mil.idpay.resource.TransactionsResource;
+import it.pagopa.swclient.mil.idpay.service.IdPayRestService;
 import it.pagopa.swclient.mil.idpay.util.TransactionsTestData;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -47,10 +47,6 @@ class TransactionsResourceTest {
 
     @InjectMock
     @RestClient
-    IdpayRestClient idpayRestClient;
-
-    @InjectMock
-    @RestClient
     AzureADRestClient azureADRestClient;
 
     @InjectMock
@@ -59,6 +55,9 @@ class TransactionsResourceTest {
 
     @InjectMock
     IdpayTransactionRepository idpayTransactionRepository;
+
+    @InjectMock
+    IdPayRestService idPayRestService;
 
     Map<String, String> validMilHeaders;
 
@@ -116,7 +115,7 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
+        Mockito.when(idPayRestService.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
                 .thenReturn(Uni.createFrom().item(transactionResponse));
 
         Mockito.when(idpayTransactionRepository.persist(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -152,7 +151,7 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
+        Mockito.when(idPayRestService.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
         Response response = given()
@@ -186,7 +185,7 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
+        Mockito.when(idPayRestService.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
                 .thenReturn(Uni.createFrom().item(transactionResponse));
 
         Mockito.when(idpayTransactionRepository.persist(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().failure(new TimeoutException()));
@@ -224,7 +223,7 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
+        Mockito.when(idPayRestService.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
                 .thenReturn(Uni.createFrom().failure(new CertificateException()));
 
         Response response = given()
@@ -258,7 +257,7 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
+        Mockito.when(idPayRestService.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
                 .thenReturn(Uni.createFrom().failure(new CertificateException()))
                 .thenReturn(Uni.createFrom().item(transactionResponse));
 
@@ -294,7 +293,7 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -339,7 +338,7 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatusNotChanged));
 
         Response response = given()
@@ -423,7 +422,7 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(404)));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -460,7 +459,7 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -497,7 +496,7 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new TimeoutException()));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -535,7 +534,7 @@ class TransactionsResourceTest {
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
         syncTrxStatus.setStatus(TransactionStatus.AUTHORIZED);
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -571,7 +570,7 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new CertificateException()));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
@@ -607,7 +606,7 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new CertificateException()))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
@@ -650,10 +649,10 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
-        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
@@ -693,10 +692,10 @@ class TransactionsResourceTest {
 
         syncTrxStatus.setStatus(TransactionStatus.AUTHORIZED);
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
-        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
@@ -785,12 +784,12 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(404)));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Response response = given()
@@ -825,12 +824,12 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Response response = given()
@@ -865,12 +864,12 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new TimeoutException()));
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         Response response = given()
@@ -905,10 +904,10 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
-        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
@@ -948,11 +947,11 @@ class TransactionsResourceTest {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new CertificateException()));
 
 
-        //Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        //Mockito.when(idPayRestService.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
         // .thenReturn(Uni.createFrom().failure(new CertificateException()));
 
         Response response = given()
@@ -986,11 +985,11 @@ class TransactionsResourceTest {
         Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new CertificateException()))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
-        Mockito.when(idpayRestClient.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.deleteTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().voidItem());
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntityForDelete));
@@ -1085,7 +1084,7 @@ class TransactionsResourceTest {
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
         syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         idpayTransactionEntity.idpayTransaction.setByCie(true);
@@ -1096,7 +1095,7 @@ class TransactionsResourceTest {
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
-        Mockito.when(idpayRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(preAuthPaymentResponseDTO));
 
         Response response = given()
@@ -1136,7 +1135,7 @@ class TransactionsResourceTest {
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
         syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         idpayTransactionEntity.idpayTransaction.setByCie(true);
@@ -1147,7 +1146,7 @@ class TransactionsResourceTest {
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
-        Mockito.when(idpayRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(500)));
 
         Response response = given()
@@ -1184,7 +1183,7 @@ class TransactionsResourceTest {
                 .thenReturn(Uni.createFrom().item(secretBundle));
 
         syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         //idpayTransactionEntity.idpayTransaction.setByCie(true);
@@ -1195,7 +1194,7 @@ class TransactionsResourceTest {
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
-        Mockito.when(idpayRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(preAuthPaymentResponseDTO));
 
         Response response = given()
@@ -1238,7 +1237,7 @@ class TransactionsResourceTest {
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
 
         syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
-        Mockito.when(idpayRestClient.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(syncTrxStatus));
 
         IdpayTransactionEntity updEntity = idpayTransactionEntity;
@@ -1247,7 +1246,7 @@ class TransactionsResourceTest {
 
         Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
 
-        Mockito.when(idpayRestClient.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+        Mockito.when(idPayRestService.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(preAuthPaymentResponseDTO));
 
         Response response = given()

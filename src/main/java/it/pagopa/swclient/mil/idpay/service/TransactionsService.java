@@ -14,10 +14,7 @@ import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.service.AzureKeyVaultService;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.util.EncryptUtil;
 import it.pagopa.swclient.mil.idpay.bean.*;
-import it.pagopa.swclient.mil.idpay.bean.cer.CertificateBundle;
-import it.pagopa.swclient.mil.idpay.bean.secret.SecretBundle;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
-import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
 import it.pagopa.swclient.mil.idpay.client.IpzsRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.*;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
@@ -35,29 +32,24 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
-import java.security.cert.Certificate;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 @ApplicationScoped
 public class TransactionsService {
@@ -80,16 +72,10 @@ public class TransactionsService {
     AzureKeyVaultClient azureKeyVaultClient;
 
     @RestClient
-    IdpayRestClient idpayRestClient;
-
-    @RestClient
     IpzsRestClient ipzsRestClient;
 
     @Inject
     IdPayRestService idPayRestService;
-
-    @ConfigProperty(name = "azure-cert.name")
-    String certName;
 
     private static final String BEARER = "Bearer ";
 
@@ -104,9 +90,6 @@ public class TransactionsService {
     @ConfigProperty(name = "azure-auth-api.identity")
     String identity;
 
-    @ConfigProperty(name = "quarkus.rest-client.idpay-rest-api.url")
-    String idpayUrl;
-
     public Uni<InitiativesResponse> getInitiatives(CommonHeader headers) {
 
         Log.debugf("TransactionsService -> getInitiatives - Input parameters: %s", headers);
@@ -118,7 +101,6 @@ public class TransactionsService {
 
                             if (error instanceof CertificateException) {
                                 Log.errorf(error, " TransactionsService -> getInitiatives: first try, idpay error response for certificate");
-
                                 idPayRestService.setIdpayRestClient(null);
 
                                 // Retry
@@ -191,19 +173,18 @@ public class TransactionsService {
 
         Log.debugf("TransactionsService -> createTransaction: REQUEST to idpay [%s]", req);
 
-        return checkOrGenerateClient().chain(() ->
-                idpayRestClient.createTransaction(headers.getMerchantId(), headers.getAcquirerId(), req)
+        return idPayRestService.checkOrGenerateClient().chain(() ->
+                idPayRestService.createTransaction(headers.getMerchantId(), headers.getAcquirerId(), req)
                         .onItemOrFailure()
                         .transformToUni(Unchecked.function((transactionResponse, error) -> {
 
                             if (error instanceof CertificateException) {
                                 Log.errorf(error, " TransactionsService -> createTransaction: first try, idpay error response for certificate");
-
-                                idpayRestClient = null;
+                                idPayRestService.setIdpayRestClient(null);
 
                                 // Retry
-                                return checkOrGenerateClient().chain(() ->
-                                        idpayRestClient.createTransaction(headers.getMerchantId(), headers.getAcquirerId(), req)
+                                return idPayRestService.checkOrGenerateClient().chain(() ->
+                                        idPayRestService.createTransaction(headers.getMerchantId(), headers.getAcquirerId(), req)
                                                 .onFailure().transform(Unchecked.function(retryException -> {
 
                                                     if (retryException instanceof CertificateException) {
@@ -369,7 +350,7 @@ public class TransactionsService {
                     return this.getStatusTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                             .chain(status -> //response ok
                                     //call idpay to cancel transaction
-                                    idpayRestClient.deleteTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                                    idPayRestService.deleteTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                                             .onFailure().transform(t -> {
                                                 if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
                                                     Log.errorf(t, " TransactionsService -> cancelTransaction: idpay NOT FOUND for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
@@ -610,19 +591,18 @@ public class TransactionsService {
     }
 
     private Uni<PublicKeyIDPay> retrieveIdpayPublicKey(String acquirerId) {
-        return checkOrGenerateClient().chain(() ->
-                idpayRestClient.retrieveIdpayPublicKey(acquirerId)
+        return idPayRestService.checkOrGenerateClient().chain(() ->
+                idPayRestService.retrieveIdpayPublicKey(acquirerId)
                         .onItemOrFailure()
                         .transformToUni(Unchecked.function((publicKeyIDPay, t) -> {
 
                             if (t instanceof CertificateException) {
                                 Log.errorf(t, " TransactionsService -> authorizeTransaction: first try, idpay error response for certificate");
-
-                                idpayRestClient = null;
+                                idPayRestService.setIdpayRestClient(null);
 
                                 // Retry
-                                return checkOrGenerateClient().chain(() ->
-                                        idpayRestClient.retrieveIdpayPublicKey(acquirerId)
+                                return idPayRestService.checkOrGenerateClient().chain(() ->
+                                        idPayRestService.retrieveIdpayPublicKey(acquirerId)
                                                 .onFailure().transform(Unchecked.function(retryException -> {
 
                                                     if (retryException instanceof CertificateException) {
@@ -646,14 +626,14 @@ public class TransactionsService {
         // If idpay public key retrieval fails, return INTERNAL_SERVER_ERROR
         Log.errorf(t, "TransactionsService -> authorizeTransaction: IDPay error response while retrieving public key.");
 
-        throw new InternalServerErrorException(Response
+        return new InternalServerErrorException(Response
                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_PUBLIC_KEY_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_PUBLIC_KEY_IDPAY_MSG)))
                 .build());
     }
 
     private Uni<Response> authorize(IdpayTransactionEntity dbData, PinBlockDTO pinBlock) {
-        return idpayRestClient.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), pinBlock)
+        return idPayRestService.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), pinBlock)
                 .onFailure().transform(Unchecked.function(t -> {
 
                     // Error 500 while trying to authorize transaction
@@ -797,7 +777,7 @@ public class TransactionsService {
 
     private Uni<PreAuthPaymentResponseDTO> getSecondFactor(String idpayMerchantId, String xAcquirerId, String transactionId) {
 
-        return idpayRestClient.putPreviewPreAuthPayment(idpayMerchantId, xAcquirerId, transactionId)
+        return idPayRestService.putPreviewPreAuthPayment(idpayMerchantId, xAcquirerId, transactionId)
                 .onFailure().transform(t -> {
                     Log.errorf(t, "[%s] TransactionsService -> getSecondFactor: Error while retrieving secondFactor for idpay transaction [%s]",
                             ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR, transactionId);
@@ -832,19 +812,18 @@ public class TransactionsService {
 
     private Uni<SyncTrxStatus> getStatusTransaction(String idpayMerchantId, String xAcquirerId, String transactionId) {
 
-        return checkOrGenerateClient().chain(() ->
-                idpayRestClient.getStatusTransaction(idpayMerchantId, xAcquirerId, transactionId)
+        return idPayRestService.checkOrGenerateClient().chain(() ->
+                idPayRestService.getStatusTransaction(idpayMerchantId, xAcquirerId, transactionId)
                         .onItemOrFailure()
                         .transformToUni(Unchecked.function((syncTrxStatus, t) -> {
 
                                     if (t instanceof CertificateException) {
                                         Log.errorf(t, " TransactionsService -> getStatusTransaction: first try, idpay error response for certificate");
-
-                                        idpayRestClient = null;
+                                        idPayRestService.setIdpayRestClient(null);
 
                                         // Retry
-                                        return checkOrGenerateClient().chain(() ->
-                                                idpayRestClient.getStatusTransaction(idpayMerchantId, xAcquirerId, transactionId)
+                                        return idPayRestService.checkOrGenerateClient().chain(() ->
+                                                idPayRestService.getStatusTransaction(idpayMerchantId, xAcquirerId, transactionId)
                                                         .onFailure().transform(Unchecked.function(retryException -> {
 
                                                             if (retryException instanceof CertificateException) {
@@ -879,167 +858,6 @@ public class TransactionsService {
                     .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
                     .build());
         }
-    }
-
-    private Uni<Void> checkOrGenerateClient() {
-        if (this.idpayRestClient == null) {
-            Log.debugf("TransactionsService -> checkOrGenerateClient - client is null");
-
-            return generateClient();
-        } else {
-            Log.debugf("TransactionsService -> checkOrGenerateClient - client is not null , no action needed[%s]", this.idpayRestClient);
-
-            return Uni.createFrom().voidItem();
-        }
-    }
-
-    private Uni<Void> generateClient() {
-        return getCertificate()
-                .onItem()
-                .transformToUni(Unchecked.function(certificateBundle -> {
-                    if (checkCertIsValid(certificateBundle)) {
-                        return getSecret().onFailure().transform(error -> {
-                                    Log.errorf(error, "TransactionsService -> checkOrGenerateClient: error while trying to getSecret");
-
-                                    return new InternalServerErrorException(Response
-                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_SECRET_FOR_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_SECRET_FOR_IDPAY_MSG)))
-                                            .build());
-                                })
-                                .chain(secretBundle -> createRestClient(certificateBundle.getCer(), secretBundle.getValue()));
-                    } else {
-                        return Uni.createFrom()
-                                .failure(new InternalServerErrorException(Response
-                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED), List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED_MSG)))
-                                        .build()));
-                    }
-
-                })).onFailure().invoke(Unchecked.consumer(failure -> {
-                    Log.errorf(failure, "TransactionsService -> checkOrGenerateClient: error while trying to getCertificate");
-
-                    throw new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY_MSG)))
-                            .build());
-                }));
-    }
-
-    private Uni<CertificateBundle> getCertificate() {
-        Log.debugf("TransactionsService -> getCertificate - certName: [%s]", certName);
-
-        return azureADRestClient.getAccessToken(identity, VAULT)
-                .onFailure().transform(t -> {
-                    Log.errorf(t, "TransactionsService -> getCertificate: Azure AD error response for certName [%s]", certName);
-
-                    return new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES_MSG)))
-                            .build());
-                }).chain(token -> {
-                    Log.debugf("TransactionsService -> getCertificate:  Azure AD service returned a 200 status, response: [%s]", token);
-
-                    return azureKeyVaultClient.getCertificate(BEARER + token.getToken(), certName)
-                            .onFailure().transform(t -> {
-                                Log.errorf(t, "TransactionsService -> getCertificate: Azure Key Vault error for certName [%s]", certName);
-
-                                return new InternalServerErrorException(Response
-                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY_MSG)))
-                                        .build());
-                            });
-                });
-    }
-
-    private Uni<SecretBundle> getSecret() {
-        Log.debugf("TransactionsService -> getSecret - certName: [%s]", certName);
-
-        return azureADRestClient.getAccessToken(identity, VAULT)
-                .onFailure().transform(t -> {
-                    Log.errorf(t, "TransactionsService -> getSecret: Azure AD error response for certName [%s]", certName);
-
-                    return new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES_MSG)))
-                            .build());
-                }).chain(token -> {
-                    Log.debugf("TransactionsService -> getSecret:  Azure AD service returned a 200 status, response: [%s]", token);
-
-                    return azureKeyVaultClient.getSecret(BEARER + token.getToken(), certName)
-                            .onFailure().transform(t -> {
-                                Log.errorf(t, "TransactionsService -> getSecret: Azure Key Vault error for certName [%s]", certName);
-
-                                return new InternalServerErrorException(Response
-                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_SECRET_FOR_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_SECRET_FOR_IDPAY_MSG)))
-                                        .build());
-                            });
-                });
-    }
-
-    private Uni<Void> createRestClient(String certificate, String pkcs) {
-        Log.debugf("TransactionsService -> createRestClient: Generating private key with certificate and pkcs: [%s], [%s]", certificate, pkcs);
-
-        try (InputStream p12Stream = new ByteArrayInputStream(Base64.getDecoder().decode(pkcs));
-             InputStream cerStream = new ByteArrayInputStream(Base64.getDecoder().decode(certificate))) {
-            KeyStore ephemeralKeyStore = KeyStore.getInstance("JKS");
-            ephemeralKeyStore.load(null);
-
-            /*
-             * Load certificate.
-             */
-            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-            X509Certificate cert = (X509Certificate) certFactory.generateCertificate(cerStream);
-            ephemeralKeyStore.setCertificateEntry("certificate", cert);
-            char[] nopwd = new char[0];
-
-            /*
-             * Load private key.
-             */
-            KeyStore p12 = KeyStore.getInstance("PKCS12");
-            p12.load(p12Stream, nopwd);
-            Iterator<String> aliases = p12.aliases().asIterator();
-            PrivateKey privateKey = null;
-            while (aliases.hasNext() && privateKey == null) {
-                String alias = aliases.next();
-                if (p12.isKeyEntry(alias)) {
-                    privateKey = (PrivateKey) p12.getKey(alias, nopwd);
-                    ephemeralKeyStore.setKeyEntry("private-key", privateKey, nopwd, new Certificate[]{
-                            cert
-                    });
-                }
-            }
-
-            URL url = new URL(idpayUrl);
-            Log.debugf("TransactionsService -> createRestClient: idpay url: [%s]", url);
-
-            /*
-             * Build REST client.
-             */
-            idpayRestClient = RestClientBuilder.newBuilder()
-                    .baseUrl(url)
-                    .keyStore(ephemeralKeyStore, new String(nopwd))
-                    .build(IdpayRestClient.class);
-
-            Log.debugf("TransactionsService -> createRestClient: rest client generated correctly: [%s]", idpayRestClient);
-            return Uni.createFrom().voidItem();
-
-        } catch (IOException | KeyStoreException | UnrecoverableKeyException | CertificateException |
-                 NoSuchAlgorithmException e) {
-            Log.errorf(e, "TransactionsService -> createRestClient: error generating key store with certificate and pkcs: [%s], [%s]", certificate, pkcs);
-            idpayRestClient = null;
-
-            throw new InternalServerErrorException(Response
-                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_STORE), List.of(ErrorCode.ERROR_GENERATING_KEY_STORE_MSG)))
-                    .build());
-        }
-    }
-
-    private boolean checkCertIsValid(CertificateBundle cert) {
-        long now = Instant.now().getEpochSecond();
-
-        return cert.getAttributes().getEnabled() && (cert.getAttributes().getNbf() <= now && cert.getAttributes().getExp() > now);
     }
 
     private InternalServerErrorException certificateException(Throwable exception, String funcName) {

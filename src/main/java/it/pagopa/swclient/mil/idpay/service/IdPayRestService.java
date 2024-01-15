@@ -7,11 +7,14 @@ import io.smallrye.mutiny.unchecked.Unchecked;
 import it.pagopa.swclient.mil.bean.Errors;
 import it.pagopa.swclient.mil.idpay.ErrorCode;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
+import it.pagopa.swclient.mil.idpay.bean.AuthTransactionResponse;
+import it.pagopa.swclient.mil.idpay.bean.PinBlockDTO;
+import it.pagopa.swclient.mil.idpay.bean.PublicKeyIDPay;
 import it.pagopa.swclient.mil.idpay.bean.cer.CertificateBundle;
 import it.pagopa.swclient.mil.idpay.bean.secret.SecretBundle;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
 import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
-import it.pagopa.swclient.mil.idpay.client.bean.InitiativeDTO;
+import it.pagopa.swclient.mil.idpay.client.bean.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.core.Response;
@@ -19,6 +22,7 @@ import lombok.Setter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,7 +67,7 @@ public class IdPayRestService {
     void init() {
         Log.debugf("START: idpayRestClient %s ", idpayRestClient);
         idpayRestClient = null;
-        Log.debugf("END: idpayRestClient generated: [%s] ", idpayRestClient);
+        Log.debugf("END: idpayRestClient: [%s] ", idpayRestClient);
     }
 
     public Uni<Void> checkOrGenerateClient() {
@@ -229,6 +233,32 @@ public class IdPayRestService {
 
     public Uni<List<InitiativeDTO>> getMerchantInitiativeList(String idpayMerchantId, String xAcquirerId) {
         return idpayRestClient.getMerchantInitiativeList(idpayMerchantId, xAcquirerId);
+    }
+
+    public Uni<TransactionResponse> createTransaction(String idpayMerchantId, String xAcquirerId,
+                                                      TransactionCreationRequest transactionCreationRequest) {
+        return idpayRestClient.createTransaction(idpayMerchantId, xAcquirerId, transactionCreationRequest);
+    }
+
+    public Uni<Void> deleteTransaction(String idpayMerchantId, String xAcquirerId, String transactionId) {
+        return idpayRestClient.deleteTransaction(idpayMerchantId, xAcquirerId, transactionId);
+    }
+
+    public Uni<PublicKeyIDPay> retrieveIdpayPublicKey(String xAcquirerId) {
+        return idpayRestClient.retrieveIdpayPublicKey(xAcquirerId);
+    }
+
+    public Uni<AuthTransactionResponse> authorize(String xMerchantFiscalCode, String xAcquirerId, String idpayTransactionId,
+                                                  PinBlockDTO pinBlockDTO) {
+        return idpayRestClient.authorize(xMerchantFiscalCode, xAcquirerId, idpayTransactionId, pinBlockDTO);
+    }
+
+    public Uni<PreAuthPaymentResponseDTO> putPreviewPreAuthPayment(String idpayMerchantId, String xAcquirerId, String transactionId) {
+        return idpayRestClient.putPreviewPreAuthPayment(idpayMerchantId, xAcquirerId, transactionId);
+    }
+
+    public Uni<SyncTrxStatus> getStatusTransaction(String idpayMerchantId, String xAcquirerId, String transactionId) {
+        return idpayRestClient.getStatusTransaction(idpayMerchantId, xAcquirerId, transactionId);
     }
 
 }
