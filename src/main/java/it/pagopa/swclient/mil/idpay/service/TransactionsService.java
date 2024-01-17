@@ -548,10 +548,11 @@ public class TransactionsService {
             // If transaction is NOT IDENTIFIED, return BAD_REQUEST
             Log.errorf("TransactionsService -> authorizeTransaction: idpay transaction with id [%s] is NOT IDENTIFIED", dbData.idpayTransaction.getIdpayTransactionId());
 
-            throw new BadRequestException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(new Errors(List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB), List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB_MSG)))
-                    .build());
+            return Uni.createFrom().failure(
+                    new BadRequestException(Response
+                            .status(Response.Status.BAD_REQUEST)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB), List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB_MSG)))
+                            .build()));
         } else {
             // If transaction is IDENTIFIED, start retrieving azure access token
 
@@ -561,7 +562,7 @@ public class TransactionsService {
                         // If retrieve access token fails, return INTERNAL_SERVER_ERROR
                         Log.errorf(t, "TransactionsService -> authorizeTransaction: Azure AD error response for mil transaction [%s]", milTransactionId);
 
-                        throw new InternalServerErrorException(Response
+                        return new InternalServerErrorException(Response
                                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                                 .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES_MSG)))
                                 .build());
@@ -583,7 +584,7 @@ public class TransactionsService {
                     // If unwrap key fails, return INTERNAL_SERVER_ERROR
                     Log.errorf(t, "TransactionsService -> authorizeTransaction: Azure KV error response while unwrapping session key [%s]", authorizeTransaction.getAuthCodeBlockData().getEncSessionKey());
 
-                    throw new InternalServerErrorException(Response
+                    return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
                             .build());
@@ -640,7 +641,7 @@ public class TransactionsService {
                     Log.errorf(t, "TransactionsService -> authorizeTransaction: error response while authorizing transaction.");
                     Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES_MSG));
 
-                    throw new InternalServerErrorException(Response
+                    return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(errors)
                             .build());
@@ -688,7 +689,7 @@ public class TransactionsService {
                 .onFailure().transform(Unchecked.function(err -> {
                     Log.errorf(err, "TransactionsService -> authorizeTransaction: Error while updating transaction %s on db", dbData.transactionId);
 
-                    throw new InternalServerErrorException(Response
+                    return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
                             .build());
@@ -827,9 +828,9 @@ public class TransactionsService {
                                                         .onFailure().transform(Unchecked.function(retryException -> {
 
                                                             if (retryException instanceof CertificateException) {
-                                                                throw certificateException(retryException, "statusTransaction");
+                                                                return certificateException(retryException, "statusTransaction");
                                                             } else {
-                                                                throw errorGetStatusResult(retryException, transactionId);
+                                                                return errorGetStatusResult(retryException, transactionId);
                                                             }
                                                         }))
                                         ).chain(res -> Uni.createFrom().item(res));
@@ -864,7 +865,7 @@ public class TransactionsService {
         Log.errorf(exception, " TransactionsService -> " + funcName + ": second try, idpay error response for certificate");
 
         // Throw error in case of a second failure
-        throw new InternalServerErrorException(Response
+        return new InternalServerErrorException(Response
                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(new Errors(List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED), List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED_MSG)))
                 .build());

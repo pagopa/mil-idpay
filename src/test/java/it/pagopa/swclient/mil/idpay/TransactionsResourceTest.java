@@ -24,6 +24,7 @@ import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionRepository;
 import it.pagopa.swclient.mil.idpay.resource.TransactionsResource;
 import it.pagopa.swclient.mil.idpay.service.IdPayRestService;
 import it.pagopa.swclient.mil.idpay.util.TransactionsTestData;
+import jakarta.ws.rs.InternalServerErrorException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
@@ -278,6 +279,40 @@ class TransactionsResourceTest {
         Assertions.assertNull(response.jsonPath().getList("errors"));
 
         Assertions.assertEquals(TransactionStatus.CREATED.toString(), response.jsonPath().getString("status"));
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
+    void createTransactionTestTest_KOCertAndKO500() {
+
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(azureAdAccessToken));
+
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
+        Mockito.when(idPayRestService.createTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any()))
+                .thenReturn(Uni.createFrom().failure(new CertificateException()))
+                .thenReturn(Uni.createFrom().failure(new InternalServerErrorException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .body(createTransactionRequest)
+                .when()
+                .post("/")
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+        Assertions.assertNull(response.jsonPath().getList("transaction"));
     }
 
     @Test
@@ -632,6 +667,42 @@ class TransactionsResourceTest {
         Assertions.assertNull(response.jsonPath().getList("errors"));
 
         Assertions.assertEquals(TransactionStatus.CREATED.toString(), response.jsonPath().getString("status"));
+
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
+    void getStatusTransactionTest_KOCertAndKO500() {
+
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(azureAdAccessToken));
+
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new CertificateException()))
+                .thenReturn(Uni.createFrom().failure(new InternalServerErrorException()));
+
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .pathParam("transactionId", transactionId)
+                .when()
+                .get("/{transactionId}")
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
 
     }
 

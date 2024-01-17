@@ -210,7 +210,7 @@
 					<includeParent>false</includeParent>
 				</configuration>
 			</plugin>
-						<plugin>
+			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>${jacoco-maven-plugin.version}</version>
@@ -222,6 +222,9 @@
 						</goals>
 						<phase>test</phase>
 						<configuration>
+							<excludes>
+								<exclude>it/pagopa/swclient/mil/idpay/service/IdPayRestService.class</exclude>
+							</excludes>
 							<dataFile>${project.build.directory}/jacoco-quarkus.exec</dataFile>
 							<rules>
 								<rule>

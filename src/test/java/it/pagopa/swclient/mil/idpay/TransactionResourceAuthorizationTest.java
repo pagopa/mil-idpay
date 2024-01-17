@@ -22,6 +22,7 @@ import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionRepository;
 import it.pagopa.swclient.mil.idpay.resource.TransactionsResource;
 import it.pagopa.swclient.mil.idpay.service.IdPayRestService;
 import it.pagopa.swclient.mil.idpay.util.TransactionsTestData;
+import jakarta.ws.rs.InternalServerErrorException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
@@ -638,5 +639,46 @@ class TransactionResourceAuthorizationTest {
                 .response();
 
         Assertions.assertEquals(200, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
+    void authorizeTransactionTest_KOCertAndKO500() {
+        idpayTransactionEntity.idpayTransaction.setStatus(TransactionStatus.IDENTIFIED);
+
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
+
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
+        Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
+                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
+
+        Mockito.when(idPayRestService.retrieveIdpayPublicKey(Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new CertificateException()))
+                .thenReturn(Uni.createFrom().failure(new InternalServerErrorException()));
+
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .body(authorizeTransaction)
+                .pathParam("milTransactionId", transactionId)
+                .when()
+                .post("/{milTransactionId}/authorize")
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
     }
 }

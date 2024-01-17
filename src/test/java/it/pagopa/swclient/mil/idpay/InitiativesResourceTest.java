@@ -16,6 +16,7 @@ import it.pagopa.swclient.mil.idpay.resource.InitiativesResource;
 import it.pagopa.swclient.mil.idpay.service.IdPayRestService;
 import it.pagopa.swclient.mil.idpay.util.InitiativesTestData;
 import it.pagopa.swclient.mil.idpay.util.TransactionsTestData;
+import jakarta.ws.rs.InternalServerErrorException;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import org.junit.jupiter.api.Assertions;
@@ -245,5 +246,36 @@ class InitiativesResourceTest {
         Assertions.assertEquals(200, response.statusCode());
         Assertions.assertEquals(6, response.jsonPath().getList("initiatives").size());
         Assertions.assertNull(response.jsonPath().getList("errors"));
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
+    void getMerchantInitiativeListTest_KOCertAndKO500() {
+
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(azureAdAccessToken));
+
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
+        Mockito.when(idPayRestService.getMerchantInitiativeList(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new CertificateException()))
+                .thenReturn(Uni.createFrom().failure(new InternalServerErrorException()));
+
+        Response response = given()
+                .headers(validMilHeaders)
+                .when()
+                .get()
+                .then()
+                .extract()
+                .response();
+
+        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+        Assertions.assertNull(response.jsonPath().getList("initiatives"));
     }
 }
