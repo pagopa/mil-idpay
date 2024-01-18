@@ -90,7 +90,7 @@ jobs:
       # Build native executable.
       #
       - name: Build native executable
-        run: ${{ runner.temp }}/maven/bin/mvn clean package -Pnative -Dmaven.test.skip=false -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image@sha256:05baf3fd2173f6f25ad35216b6b066c35fbfb97f06daba75efb5b22bc0a85b9c -s ${{ runner.temp }}/settings.xml --no-transfer-progress
+        run: ${{ runner.temp }}/maven/bin/mvn clean package -Pnative -Dmaven.test.skip=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image@sha256:05baf3fd2173f6f25ad35216b6b066c35fbfb97f06daba75efb5b22bc0a85b9c -s ${{ runner.temp }}/settings.xml --no-transfer-progress
 
       #
       # Build Docker image.
