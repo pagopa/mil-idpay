@@ -6,6 +6,7 @@ package it.pagopa.swclient.mil.idpay.resource;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.quarkus.logging.Log;
 import it.pagopa.swclient.mil.bean.CommonHeader;
 
 /**
@@ -24,16 +25,20 @@ public class AcqMerchMapper {
 		MERCH_MAP.put("12346789", "RNZPMP80A44X000M");
 	}
 	
+	private AcqMerchMapper() {
+	}
+	
 	public static void map(CommonHeader header) {
 		String acq = ACQ_MAP.get(header.getAcquirerId());
 		if (acq != null) {
+			Log.debugf("AcquirerId remapped to %s.", acq);
 			header.setAcquirerId(acq);
 		}
 		
 		String merch = MERCH_MAP.get(header.getMerchantId());
 		if (merch != null) {
+			Log.debugf("MerchantId remapped to %s.", merch);
 			header.setMerchantId(merch);
 		}
-		
 	}
 }
