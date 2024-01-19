@@ -1,0 +1,39 @@
+/**
+ * THIS IS TEMPORARY AND IT WILL BE ADDRESSED WITH THE NEW VERSION OF AUTH MECHANISM.
+ */
+package it.pagopa.swclient.mil.idpay.resource;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import it.pagopa.swclient.mil.bean.CommonHeader;
+
+/**
+ * 
+ */
+public class AcqMerchMapper {
+	private static final Map<String, String> ACQ_MAP = new HashMap<>();
+	static {
+		ACQ_MAP.put("4585625", "PAGOPA");
+		ACQ_MAP.put("4585626", "PAGOPA");
+	}
+	
+	private static final Map<String, String> MERCH_MAP = new HashMap<>();
+	static {
+		MERCH_MAP.put("28405fHfk73x88D", "RNZPMP80A44X000M");
+		MERCH_MAP.put("12346789", "RNZPMP80A44X000M");
+	}
+	
+	public static void map(CommonHeader header) {
+		String acq = ACQ_MAP.get(header.getAcquirerId());
+		if (acq != null) {
+			header.setAcquirerId(acq);
+		}
+		
+		String merch = MERCH_MAP.get(header.getMerchantId());
+		if (merch != null) {
+			header.setMerchantId(merch);
+		}
+		
+	}
+}

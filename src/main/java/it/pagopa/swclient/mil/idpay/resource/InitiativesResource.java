@@ -28,6 +28,11 @@ public class InitiativesResource {
 
         Log.debugf("InitiativesResource -> getInitiatives - Input parameters: %s", headers);
 
+        /**
+         * THIS IS TEMPORARY AND IT WILL BE ADDRESSED WITH THE NEW VERSION OF AUTH MECHANISM.
+         */
+        AcqMerchMapper.map(headers);
+        
         return transactionsService.getInitiatives(headers).chain(res -> {
                     Log.debugf("InitiativesResource -> TransactionsService -> getInitiatives - Response %s", res);
 
