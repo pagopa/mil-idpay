@@ -287,7 +287,7 @@ public class TransactionsService {
                     Log.debugf("TransactionsService -> getTransaction: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
                     //call idpay to retrieve current state
-                    return this.getStatusTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                    return this.getStatusTransaction(entity.idpayTransaction.getMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                             .chain(res -> { //response ok
                                 Log.debugf("TransactionsService -> getTransaction: idpay getStatusTransaction service returned a 200 status, response: [%s]", res);
 
@@ -347,10 +347,10 @@ public class TransactionsService {
                     Log.debugf("TransactionsService -> cancelTransaction: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
                     //call idpay to retrieve current state
-                    return this.getStatusTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                    return this.getStatusTransaction(entity.idpayTransaction.getMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                             .chain(status -> //response ok
                                     //call idpay to cancel transaction
-                                    idPayRestService.deleteTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                                    idPayRestService.deleteTransaction(entity.idpayTransaction.getMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                                             .onFailure().transform(t -> {
                                                 if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
                                                     Log.errorf(t, " TransactionsService -> cancelTransaction: idpay NOT FOUND for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
@@ -634,7 +634,7 @@ public class TransactionsService {
     }
 
     private Uni<Response> authorize(IdpayTransactionEntity dbData, PinBlockDTO pinBlock) {
-        return idPayRestService.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), pinBlock)
+        return idPayRestService.authorize(dbData.idpayTransaction.getMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), pinBlock)
                 .onFailure().transform(Unchecked.function(t -> {
 
                     // Error 500 while trying to authorize transaction
@@ -804,7 +804,7 @@ public class TransactionsService {
 
     private Uni<Transaction> getSecFactAndRespond(IdpayTransactionEntity entity, SyncTrxStatus res) {
         if (TransactionStatus.IDENTIFIED.equals(res.getStatus()) && entity.idpayTransaction.getByCie() != null && Boolean.TRUE.equals(entity.idpayTransaction.getByCie())) {
-            return getSecondFactor(entity.idpayTransaction.getIdpayMerchantId(), entity.idpayTransaction.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+            return getSecondFactor(entity.idpayTransaction.getMerchantId(), entity.idpayTransaction.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                     .map(secFactResp -> createTransactionFromIdpayTransactionEntity(entity, secFactResp.getSecondFactor(), null, false));
         } else {
             return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(entity, null, null, false));
