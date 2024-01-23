@@ -21,8 +21,8 @@ public class AcqMerchMapper {
 	
 	private static final Map<String, String> MERCH_MAP = new HashMap<>();
 	static {
-		MERCH_MAP.put("28405fHfk73x88D", "RNZPMP80A44X000M");
-		MERCH_MAP.put("12346789", "RNZPMP80A44X000M");
+		MERCH_MAP.put("28405fHfk73x88D", "33444433488"); // RNZPMP80A44X000M
+		MERCH_MAP.put("12346789", "33444433488"); // RNZPMP80A44X000M
 	}
 	
 	private AcqMerchMapper() {
