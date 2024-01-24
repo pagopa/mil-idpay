@@ -780,12 +780,23 @@ public class TransactionsService {
 
         return idPayRestService.putPreviewPreAuthPayment(idpayMerchantId, xAcquirerId, transactionId)
                 .onFailure().transform(t -> {
-                    Log.errorf(t, "[%s] TransactionsService -> getSecondFactor: Error while retrieving secondFactor for idpay transaction [%s]",
-                            ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR, transactionId);
-                    return new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR), List.of(ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR_MSG)))
-                            .build());
+                    if (t instanceof NotFoundException) {
+                        Log.errorf(t, "[%s] TransactionsService -> getSecondFactor: Error pin for the current user [%s]",
+                                ErrorCode.ERROR_PIN_CIE_CURRENT_USER, transactionId);
+
+                        return new InternalServerErrorException(Response
+                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(new Errors(List.of(ErrorCode.ERROR_PIN_CIE_CURRENT_USER), List.of(ErrorCode.ERROR_PIN_CIE_CURRENT_USER_MSG)))
+                                .build());
+                    } else {
+                        Log.errorf(t, "[%s] TransactionsService -> getSecondFactor: Error while retrieving secondFactor for idpay transaction [%s]",
+                                ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR, transactionId);
+
+                        return new InternalServerErrorException(Response
+                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR), List.of(ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR_MSG)))
+                                .build());
+                    }
                 });
     }
 

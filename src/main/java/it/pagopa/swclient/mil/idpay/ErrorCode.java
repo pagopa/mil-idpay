@@ -47,6 +47,7 @@ public final class ErrorCode {
     public static final String ERROR_IDPAY_WRONG_AUTH_CODE           							        = MODULE_ID + "000053";
     public static final String ERROR_IDPAY_UNKNOWN_ERROR_CODE      							            = MODULE_ID + "000054";
     public static final String ERROR_RETRIEVING_SECOND_FACTOR	 							            = MODULE_ID + "000055";
+    public static final String ERROR_PIN_CIE_CURRENT_USER	 							                = MODULE_ID + "000056";
 
 
     // db errors
@@ -102,6 +103,7 @@ public final class ErrorCode {
     public static final String ERROR_RETRIEVING_SECRET_FOR_IDPAY_DESCR = "Azure KV secret for idpay retrieving error";
     public static final String ERROR_GENERATING_KEY_STORE_FOR_IDPAY_DESCR = "Error during private key generation for idpay";
     public static final String ERROR_CERTIFICATE_EXPIRED_DESCR = "Azure KV certificate has expired";
+    public static final String ERROR_PIN_CIE_CURRENT_USER_DESCR = "Missing cie pin for the current user";
 
 
     /*
@@ -132,6 +134,7 @@ public final class ErrorCode {
     public static final String ERROR_RETRIEVING_SECRET_FOR_IDPAY_MSG = "[" + ERROR_RETRIEVING_SECRET_FOR_IDPAY + "] " + ERROR_RETRIEVING_SECRET_FOR_IDPAY_DESCR;
     public static final String ERROR_GENERATING_KEY_STORE_MSG = "[" + ERROR_GENERATING_KEY_STORE + "] " + ERROR_GENERATING_KEY_STORE_FOR_IDPAY_DESCR;
     public static final String ERROR_CERTIFICATE_EXPIRED_MSG = "[" + ERROR_CERTIFICATE_EXPIRED + "] " + ERROR_CERTIFICATE_EXPIRED_DESCR;
+    public static final String ERROR_PIN_CIE_CURRENT_USER_MSG = "[" + ERROR_PIN_CIE_CURRENT_USER + "] " + ERROR_PIN_CIE_CURRENT_USER_DESCR;
 
     private ErrorCode() {
     }
