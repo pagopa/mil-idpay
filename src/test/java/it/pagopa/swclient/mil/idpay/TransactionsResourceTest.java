@@ -1242,6 +1242,54 @@ class TransactionsResourceTest {
 
     @Test
     @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
+    void getStatusTransactionSecondFactorTest_KOIdPay404() {
+
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(azureAdAccessToken));
+
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
+        syncTrxStatus.setStatus(TransactionStatus.IDENTIFIED);
+        Mockito.when(idPayRestService.getStatusTransaction(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(syncTrxStatus));
+
+        idpayTransactionEntity.idpayTransaction.setByCie(true);
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        IdpayTransactionEntity updEntity = idpayTransactionEntity;
+        //updEntity.idpayTransaction.setTrxCode("Updated Transaction for getStatusTransactionTest");
+
+        Mockito.when(idpayTransactionRepository.update(Mockito.any(IdpayTransactionEntity.class))).thenReturn(Uni.createFrom().item(updEntity));
+
+        Mockito.when(idPayRestService.putPreviewPreAuthPayment(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(404)));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .pathParam("transactionId", transactionId)
+                .when()
+                .get("/{transactionId}")
+                .then()
+                .extract()
+                .response();
+
+        syncTrxStatus.setStatus(TransactionStatus.CREATED);
+        idpayTransactionEntity.idpayTransaction.setByCie(null);
+
+        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
+        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void getStatusTransactionSecondFactorTestCieNull_OK() {
 
         Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))

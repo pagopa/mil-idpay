@@ -780,7 +780,7 @@ public class TransactionsService {
 
         return idPayRestService.putPreviewPreAuthPayment(idpayMerchantId, xAcquirerId, transactionId)
                 .onFailure().transform(t -> {
-                    if (t instanceof NotFoundException) {
+                    if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
                         Log.errorf(t, "[%s] TransactionsService -> getSecondFactor: Error pin for the current user [%s]",
                                 ErrorCode.ERROR_PIN_CIE_CURRENT_USER, transactionId);
 

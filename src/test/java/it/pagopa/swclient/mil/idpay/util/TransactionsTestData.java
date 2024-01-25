@@ -47,7 +47,7 @@ public final class TransactionsTestData {
         headerMap.put("AcquirerId", "4585625");
         headerMap.put("Channel", "POS");
         headerMap.put("TerminalId", "0aB9wXyZ");
-        headerMap.put("MerchantId", "28405fHfk73x88D");
+        headerMap.put("MerchantId", "33444433488");
         headerMap.put("SessionId", UUID.randomUUID().toString());
         return headerMap;
     }
@@ -230,7 +230,7 @@ public final class TransactionsTestData {
         headerMap.put("AcquirerId", "4585625");
         headerMap.put("Channel", "ATM");
         headerMap.put("TerminalId", "0aB9wXyZ");
-        headerMap.put("MerchantId", "28405fHfk73x88D");
+        headerMap.put("MerchantId", "33444433488");
         headerMap.put("SessionId", UUID.randomUUID().toString());
         return headerMap;
     }
