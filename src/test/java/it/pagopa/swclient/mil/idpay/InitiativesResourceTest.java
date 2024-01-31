@@ -6,12 +6,14 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
+import it.pagopa.swclient.mil.bean.CommonHeader;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.client.AzureKeyVaultClient;
 import it.pagopa.swclient.mil.idpay.bean.cer.CertificateBundle;
 import it.pagopa.swclient.mil.idpay.bean.secret.SecretBundle;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
 import it.pagopa.swclient.mil.idpay.client.bean.InitiativeDTO;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
+import it.pagopa.swclient.mil.idpay.resource.AcqMerchMapper;
 import it.pagopa.swclient.mil.idpay.resource.InitiativesResource;
 import it.pagopa.swclient.mil.idpay.service.IdPayRestService;
 import it.pagopa.swclient.mil.idpay.util.InitiativesTestData;
@@ -26,6 +28,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
 import java.security.cert.CertificateException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,6 +59,8 @@ class InitiativesResourceTest {
     CertificateBundle certificateBundle;
 
     SecretBundle secretBundle;
+
+    AcqMerchMapper acqMerchMapper;
 
     @BeforeAll
     void createTestObjects() {
@@ -278,4 +283,25 @@ class InitiativesResourceTest {
         Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
         Assertions.assertNull(response.jsonPath().getList("initiatives"));
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * TEMPORARY TEST TO BE REMOVED WHEN ACQMERCHMAPPER WILL BE DELETED
+     */
+    @Test
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
+    void testMapAcquirerIdNotRemapped() {
+        CommonHeader header = new CommonHeader();
+        header.setAcquirerId("someAcquirerId");
+
+        Map<String, String> ACQ_MAP = Mockito.mock(HashMap.class);
+
+        Mockito.when(ACQ_MAP.get(Mockito.anyString())).thenReturn(null);
+
+        acqMerchMapper.map(header);
+
+        Assertions.assertEquals("someAcquirerId", header.getAcquirerId());
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 }
