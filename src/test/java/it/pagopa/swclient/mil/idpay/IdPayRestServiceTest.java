@@ -252,7 +252,7 @@ class IdPayRestServiceTest {
     }
 
     @Test
-    public void getMerchantTest_OK() {
+    void getMerchantTest_OK() {
 
         idPayRestService.setIdpayRestClient(idpayRestClient);
 
@@ -264,7 +264,7 @@ class IdPayRestServiceTest {
     }
 
     @Test
-    public void createTransactionTest_OK() {
+    void createTransactionTest_OK() {
 
         idPayRestService.setIdpayRestClient(idpayRestClient);
 
@@ -278,7 +278,7 @@ class IdPayRestServiceTest {
     }
 
     @Test
-    public void deleteTransactionTest_OK() {
+    void deleteTransactionTest_OK() {
 
         idPayRestService.setIdpayRestClient(idpayRestClient);
 
@@ -290,7 +290,7 @@ class IdPayRestServiceTest {
     }
 
     @Test
-    public void retrieveIdpayPublicKeyTest_OK() {
+    void retrieveIdpayeyTest_OK() {
 
         idPayRestService.setIdpayRestClient(idpayRestClient);
 
@@ -302,7 +302,7 @@ class IdPayRestServiceTest {
     }
 
     @Test
-    public void authorizeTest_OK() {
+    void authorizeTest_OK() {
 
         idPayRestService.setIdpayRestClient(idpayRestClient);
 
@@ -316,7 +316,7 @@ class IdPayRestServiceTest {
     }
 
     @Test
-    public void putPreviewPreAuthPaymentTest_OK() {
+    void putPreviewPreAuthPaymentTest_OK() {
 
         idPayRestService.setIdpayRestClient(idpayRestClient);
 
@@ -328,7 +328,7 @@ class IdPayRestServiceTest {
     }
 
     @Test
-    public void getStatusTransactionTest_OK() {
+    void getStatusTransactionTest_OK() {
 
         idPayRestService.setIdpayRestClient(idpayRestClient);
 
