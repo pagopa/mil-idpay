@@ -18,6 +18,7 @@ import it.pagopa.swclient.mil.idpay.client.bean.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.core.Response;
+import lombok.Getter;
 import lombok.Setter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
@@ -49,6 +50,7 @@ public class IdPayRestService {
     @ConfigProperty(name = "azure-cert.name")
     String certName;
 
+    @Getter
     @Setter
     @RestClient
     IdpayRestClient idpayRestClient;
@@ -82,7 +84,7 @@ public class IdPayRestService {
         }
     }
 
-    private Uni<Void> generateClient() {
+    public Uni<Void> generateClient() {
         return getCertificate()
                 .onItem()
                 .transformToUni(Unchecked.function(certificateBundle -> {
@@ -103,14 +105,6 @@ public class IdPayRestService {
                                         .entity(new Errors(List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED), List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED_MSG)))
                                         .build()));
                     }
-
-                })).onFailure().invoke(Unchecked.consumer(failure -> {
-                    Log.errorf(failure, "IdPayRestService -> checkOrGenerateClient: error while trying to getCertificate");
-
-                    throw new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_CERT_FOR_IDPAY_MSG)))
-                            .build());
                 }));
     }
 
@@ -166,7 +160,7 @@ public class IdPayRestService {
                 });
     }
 
-    private Uni<Void> createRestClient(String certificate, String pkcs) {
+    public Uni<Void> createRestClient(String certificate, String pkcs) {
         Log.debugf("IdPayRestService -> createRestClient: Generating private key with certificate and pkcs: [%s], [%s]", certificate, pkcs);
 
         try (InputStream p12Stream = new ByteArrayInputStream(Base64.getDecoder().decode(pkcs));
@@ -219,13 +213,13 @@ public class IdPayRestService {
             idpayRestClient = null;
 
             throw new InternalServerErrorException(Response
-                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_STORE), List.of(ErrorCode.ERROR_GENERATING_KEY_STORE_MSG)))
-                    .build());
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_GENERATING_KEY_STORE), List.of(ErrorCode.ERROR_GENERATING_KEY_STORE_MSG)))
+                            .build());
         }
     }
 
-    private boolean checkCertIsValid(CertificateBundle cert) {
+    public boolean checkCertIsValid(CertificateBundle cert) {
         long now = Instant.now().getEpochSecond();
 
         return cert.getAttributes().getEnabled() && (cert.getAttributes().getNbf() <= now && cert.getAttributes().getExp() > now);
