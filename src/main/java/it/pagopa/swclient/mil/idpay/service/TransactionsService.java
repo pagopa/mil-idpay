@@ -291,25 +291,36 @@ public class TransactionsService {
                             .chain(res -> { //response ok
                                 Log.debugf("TransactionsService -> getTransaction: idpay getStatusTransaction service returned a 200 status, response: [%s]", res);
 
-                                IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(headers, entity, res);
-
-                                if (!updEntity.idpayTransaction.equals(entity.idpayTransaction)) {
-                                    Log.debugf("TransactionsService -> getTransaction: transaction situation is changed, make an update");
-                                    return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
-                                            .onFailure().recoverWithItem(err -> {
-                                                Log.errorf(err, "TransactionsService -> cancelTransaction: Error while updating transaction %s on db", entity.transactionId);
-
-                                                return updEntity;
-                                            }).chain(uEnt -> getSecFactAndRespond(uEnt, res));
+                                if (TransactionStatus.IDENTIFIED.equals(res.getStatus()) && entity.idpayTransaction.getByCie() != null && Boolean.TRUE.equals(entity.idpayTransaction.getByCie())) {
+                                    return getSecondFactor(entity.idpayTransaction.getMerchantId(), entity.idpayTransaction.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                                            .chain(secFactResp -> transactionUpdate(headers, entity, res, secFactResp));
                                 } else {
-                                    Log.debugf("TransactionsService -> getTransaction: transaction situation is NOT changed");
-                                    return getSecFactAndRespond(updEntity, res);
+                                    return transactionUpdate(headers, entity, res, null);
                                 }
                             });
                 });
     }
 
-    protected IdpayTransactionEntity updateIdpayTransactionEntity(CommonHeader headers, IdpayTransactionEntity entity, SyncTrxStatus res) {
+    private Uni<Transaction> transactionUpdate(CommonHeader headers, IdpayTransactionEntity entity, SyncTrxStatus res, PreAuthPaymentResponseDTO secFactResp) {
+        IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(headers, entity, res, secFactResp);
+
+        if (!updEntity.idpayTransaction.equals(entity.idpayTransaction)) {
+            Log.debugf("TransactionsService -> getTransaction: transaction situation is changed, make an update");
+            return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
+                    .onFailure().recoverWithItem(err -> {
+                        Log.errorf(err, "TransactionsService -> cancelTransaction: Error while updating transaction %s on db", entity.transactionId);
+
+                        return updEntity;
+                    })
+                    .chain(uEnt -> Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(uEnt, (secFactResp != null ? secFactResp.getSecondFactor() : null), null, false)));
+        } else {
+            Log.debugf("TransactionsService -> getTransaction: transaction situation is NOT changed");
+
+            return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(entity, (secFactResp != null ? secFactResp.getSecondFactor() : null), null, false));
+        }
+    }
+
+    protected IdpayTransactionEntity updateIdpayTransactionEntity(CommonHeader headers, IdpayTransactionEntity entity, SyncTrxStatus res, PreAuthPaymentResponseDTO preview) {
 
         IdpayTransaction idpayTransaction = new IdpayTransaction();
 
@@ -326,6 +337,9 @@ public class TransactionsService {
         idpayTransaction.setTrxCode(res.getTrxCode());
         idpayTransaction.setStatus(res.getStatus());
         idpayTransaction.setCoveredAmount(res.getRewardCents());
+        if (preview != null) {
+            idpayTransaction.setCoveredAmount(preview.getReward());
+        }
         idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
         idpayTransaction.setByCie(entity.idpayTransaction.getByCie());
 
@@ -811,15 +825,6 @@ public class TransactionsService {
                         .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
                         .build())
                 );
-    }
-
-    private Uni<Transaction> getSecFactAndRespond(IdpayTransactionEntity entity, SyncTrxStatus res) {
-        if (TransactionStatus.IDENTIFIED.equals(res.getStatus()) && entity.idpayTransaction.getByCie() != null && Boolean.TRUE.equals(entity.idpayTransaction.getByCie())) {
-            return getSecondFactor(entity.idpayTransaction.getMerchantId(), entity.idpayTransaction.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
-                    .map(secFactResp -> createTransactionFromIdpayTransactionEntity(entity, secFactResp.getSecondFactor(), null, false));
-        } else {
-            return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(entity, null, null, false));
-        }
     }
 
     private Uni<SyncTrxStatus> getStatusTransaction(String idpayMerchantId, String xAcquirerId, String transactionId) {
