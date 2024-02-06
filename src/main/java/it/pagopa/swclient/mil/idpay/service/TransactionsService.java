@@ -15,11 +15,8 @@ import it.pagopa.swclient.mil.idpay.azurekeyvault.service.AzureKeyVaultService;
 import it.pagopa.swclient.mil.idpay.azurekeyvault.util.EncryptUtil;
 import it.pagopa.swclient.mil.idpay.bean.*;
 import it.pagopa.swclient.mil.idpay.client.AzureADRestClient;
-import it.pagopa.swclient.mil.idpay.client.IdpayRestClient;
-import it.pagopa.swclient.mil.idpay.client.bean.PreAuthPaymentResponseDTO;
-import it.pagopa.swclient.mil.idpay.client.bean.SyncTrxStatus;
-import it.pagopa.swclient.mil.idpay.client.bean.TransactionCreationRequest;
-import it.pagopa.swclient.mil.idpay.client.bean.TransactionResponse;
+import it.pagopa.swclient.mil.idpay.client.IpzsRestClient;
+import it.pagopa.swclient.mil.idpay.client.bean.*;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieRequest;
 import it.pagopa.swclient.mil.idpay.client.bean.ipzs.IpzsVerifyCieResponse;
@@ -32,22 +29,22 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -75,7 +72,10 @@ public class TransactionsService {
     AzureKeyVaultClient azureKeyVaultClient;
 
     @RestClient
-    IdpayRestClient idpayRestClient;
+    IpzsRestClient ipzsRestClient;
+
+    @Inject
+    IdPayRestService idPayRestService;
 
     private static final String BEARER = "Bearer ";
 
@@ -90,6 +90,78 @@ public class TransactionsService {
     @ConfigProperty(name = "azure-auth-api.identity")
     String identity;
 
+    public Uni<InitiativesResponse> getInitiatives(CommonHeader headers) {
+
+        Log.debugf("TransactionsService -> getInitiatives - Input parameters: %s", headers);
+
+        return idPayRestService.checkOrGenerateClient().chain(() ->
+                idPayRestService.getMerchantInitiativeList(headers.getMerchantId(), headers.getAcquirerId())
+                        .onItemOrFailure()
+                        .transformToUni(Unchecked.function((initiativeList, error) -> {
+
+                            if (error instanceof CertificateException) {
+                                Log.errorf(error, " TransactionsService -> getInitiatives: first try, idpay error response for certificate");
+                                idPayRestService.setIdpayRestClient(null);
+
+                                // Retry
+                                return idPayRestService.checkOrGenerateClient().chain(() ->
+                                        idPayRestService.getMerchantInitiativeList(headers.getMerchantId(), headers.getAcquirerId())
+                                                .onFailure().transform(Unchecked.function(retryException -> {
+
+                                                    if (retryException instanceof CertificateException) {
+                                                        return certificateException(retryException, "getInitiatives");
+                                                    } else {
+                                                        return errorGetInitResult(retryException, headers);
+                                                    }
+                                                }))
+                                                .map(this::correctGetInitResult)
+                                );
+                            } else if (initiativeList != null) {
+                                return Uni.createFrom().item(correctGetInitResult(initiativeList));
+                            } else {
+                                return Uni.createFrom().failure(errorGetInitResult(error, headers));
+                            }
+                        }))
+        );
+    }
+
+    private InitiativesResponse correctGetInitResult(List<InitiativeDTO> initiativeList) {
+        Log.debugf("TransactionsService -> getInitiatives: idpay getMerchantInitiativeList service returned a 200 status, response: [%s]", initiativeList);
+
+        LocalDate today = LocalDate.now();
+
+        List<Initiative> iniList = initiativeList.stream().filter(ini ->
+                        InitiativeStatus.PUBLISHED == ini.getStatus()
+                                && (today.isAfter(ini.getStartDate()) || today.isEqual(ini.getStartDate()))
+                )
+                .map(fIni -> new Initiative(fIni.getInitiativeId(), fIni.getInitiativeName(), fIni.getOrganizationName())).toList();
+
+        InitiativesResponse inis = new InitiativesResponse();
+        inis.setInitiatives(iniList);
+
+        return inis;
+    }
+
+    private WebApplicationException errorGetInitResult(Throwable exception, CommonHeader headers) {
+        if (exception instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
+            Log.errorf(exception, "TransactionsService -> getInitiatives: idpay NOT FOUND for MerchantId [%s]", headers.getMerchantId());
+
+            Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
+            return new NotFoundException(Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(errors)
+                    .build());
+        } else {
+            Log.errorf(exception, "TransactionsService -> getInitiatives: idpay error response for MerchantId [%s]", headers.getMerchantId());
+
+            Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG));
+            return new InternalServerErrorException(Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(errors)
+                    .build());
+        }
+    }
+
     public Uni<Transaction> createTransaction(CommonHeader headers, CreateTransaction createTransaction) {
 
         Log.debugf("TransactionsService -> createTransaction - Input parameters: %s, %s", headers, createTransaction);
@@ -101,30 +173,62 @@ public class TransactionsService {
 
         Log.debugf("TransactionsService -> createTransaction: REQUEST to idpay [%s]", req);
 
-        return idpayRestClient.createTransaction(getIdpayMerchantId(headers.getMerchantId(), headers.getAcquirerId()), headers.getAcquirerId(), req)
-                .onFailure().transform(t -> {
-                    Log.errorf(t, "TransactionsService -> createTransaction: idpay error response for MerchantId [%s] e timestamp [%s]", headers.getMerchantId(), createTransaction.getTimestamp());
+        return idPayRestService.checkOrGenerateClient().chain(() ->
+                idPayRestService.createTransaction(headers.getMerchantId(), headers.getAcquirerId(), req)
+                        .onItemOrFailure()
+                        .transformToUni(Unchecked.function((transactionResponse, error) -> {
+
+                            if (error instanceof CertificateException) {
+                                Log.errorf(error, " TransactionsService -> createTransaction: first try, idpay error response for certificate");
+                                idPayRestService.setIdpayRestClient(null);
+
+                                // Retry
+                                return idPayRestService.checkOrGenerateClient().chain(() ->
+                                        idPayRestService.createTransaction(headers.getMerchantId(), headers.getAcquirerId(), req)
+                                                .onFailure().transform(Unchecked.function(retryException -> {
+
+                                                    if (retryException instanceof CertificateException) {
+                                                        return certificateException(retryException, "createTransaction");
+                                                    } else {
+                                                        return errorCreateTransactionResult(retryException, headers, createTransaction);
+                                                    }
+                                                }))
+                                                .chain(res -> correctCreateTransactionResult(headers, createTransaction, req, res))
+                                );
+                            } else if (transactionResponse != null) {
+                                return correctCreateTransactionResult(headers, createTransaction, req, transactionResponse);
+                            } else {
+                                return Uni.createFrom().failure(errorCreateTransactionResult(error, headers, createTransaction));
+                            }
+                        }))
+        );
+    }
+
+    private Uni<Transaction> correctCreateTransactionResult(CommonHeader headers, CreateTransaction createTransaction, TransactionCreationRequest req, TransactionResponse res) {
+        Log.debugf("TransactionsService -> createTransaction: idpay createTransaction service returned a 200 status, response: [%s]", res);
+
+        IdpayTransactionEntity entity = createIdpayTransactionEntity(headers, createTransaction, req, res);
+        Log.debugf("TransactionsService -> createTransaction: storing idpay transaction [%s] on DB", entity.idpayTransaction);
+
+        return idpayTransactionRepository.persist(entity)
+                .onFailure().transform(err -> {
+                    Log.errorf(err, "TransactionsService -> createTransaction: Error while storing transaction %s on db", entity.transactionId);
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
+                            .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
                             .build());
-                }).chain(res -> {
-                    Log.debugf("TransactionsService -> createTransaction: idpay createTransaction service returned a 200 status, response: [%s]", res);
+                })
+                .map(ent -> createTransactionFromIdpayTransactionEntity(ent, null, res.getTrxTxtUrl(), true));
+    }
 
-                    IdpayTransactionEntity entity = createIdpayTransactionEntity(headers, createTransaction, req, res);
-                    Log.debugf("TransactionsService -> createTransaction: storing idpay transaction [%s] on DB", entity.idpayTransaction);
+    private InternalServerErrorException errorCreateTransactionResult(Throwable exception, CommonHeader headers, CreateTransaction createTransaction) {
+        Log.errorf(exception, "TransactionsService -> createTransaction: idpay error response for MerchantId [%s] e timestamp [%s]", headers.getMerchantId(), createTransaction.getTimestamp());
 
-                    return idpayTransactionRepository.persist(entity)
-                            .onFailure().transform(err -> {
-                                Log.errorf(err, "TransactionsService -> createTransaction: Error while storing transaction %s on db", entity.transactionId);
-
-                                return new InternalServerErrorException(Response
-                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
-                                        .build());
-                            }).map(ent -> createTransactionFromIdpayTransactionEntity(ent, null, res.getTrxTxtUrl(), true));
-                });
+        return new InternalServerErrorException(Response
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
+                .build());
     }
 
     protected IdpayTransactionEntity createIdpayTransactionEntity(CommonHeader headers, CreateTransaction createTransaction, TransactionCreationRequest req, TransactionResponse res) {
@@ -183,29 +287,40 @@ public class TransactionsService {
                     Log.debugf("TransactionsService -> getTransaction: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
                     //call idpay to retrieve current state
-                    return this.getStatusTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                    return this.getStatusTransaction(entity.idpayTransaction.getMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                             .chain(res -> { //response ok
                                 Log.debugf("TransactionsService -> getTransaction: idpay getStatusTransaction service returned a 200 status, response: [%s]", res);
 
-                                IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(headers, entity, res);
-
-                                if (!updEntity.idpayTransaction.equals(entity.idpayTransaction)) {
-                                    Log.debugf("TransactionsService -> getTransaction: transaction situation is changed, make an update");
-                                    return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
-                                            .onFailure().recoverWithItem(err -> {
-                                                Log.errorf(err, "TransactionsService -> cancelTransaction: Error while updating transaction %s on db", entity.transactionId);
-
-                                                return updEntity;
-                                            }).chain(uEnt -> getSecFactAndRespond(uEnt, res));
+                                if (TransactionStatus.IDENTIFIED.equals(res.getStatus()) && entity.idpayTransaction.getByCie() != null && Boolean.TRUE.equals(entity.idpayTransaction.getByCie())) {
+                                    return getSecondFactor(entity.idpayTransaction.getMerchantId(), entity.idpayTransaction.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                                            .chain(secFactResp -> transactionUpdate(headers, entity, res, secFactResp));
                                 } else {
-                                    Log.debugf("TransactionsService -> getTransaction: transaction situation is NOT changed");
-                                    return getSecFactAndRespond(updEntity, res);
+                                    return transactionUpdate(headers, entity, res, null);
                                 }
                             });
                 });
     }
 
-    protected IdpayTransactionEntity updateIdpayTransactionEntity(CommonHeader headers, IdpayTransactionEntity entity, SyncTrxStatus res) {
+    private Uni<Transaction> transactionUpdate(CommonHeader headers, IdpayTransactionEntity entity, SyncTrxStatus res, PreAuthPaymentResponseDTO secFactResp) {
+        IdpayTransactionEntity updEntity = updateIdpayTransactionEntity(headers, entity, res, secFactResp);
+
+        if (!updEntity.idpayTransaction.equals(entity.idpayTransaction)) {
+            Log.debugf("TransactionsService -> getTransaction: transaction situation is changed, make an update");
+            return idpayTransactionRepository.update(updEntity) //updating transaction in DB mil
+                    .onFailure().recoverWithItem(err -> {
+                        Log.errorf(err, "TransactionsService -> cancelTransaction: Error while updating transaction %s on db", entity.transactionId);
+
+                        return updEntity;
+                    })
+                    .chain(uEnt -> Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(uEnt, (secFactResp != null ? secFactResp.getSecondFactor() : null), null, false)));
+        } else {
+            Log.debugf("TransactionsService -> getTransaction: transaction situation is NOT changed");
+
+            return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(entity, (secFactResp != null ? secFactResp.getSecondFactor() : null), null, false));
+        }
+    }
+
+    protected IdpayTransactionEntity updateIdpayTransactionEntity(CommonHeader headers, IdpayTransactionEntity entity, SyncTrxStatus res, PreAuthPaymentResponseDTO preview) {
 
         IdpayTransaction idpayTransaction = new IdpayTransaction();
 
@@ -222,6 +337,9 @@ public class TransactionsService {
         idpayTransaction.setTrxCode(res.getTrxCode());
         idpayTransaction.setStatus(res.getStatus());
         idpayTransaction.setCoveredAmount(res.getRewardCents());
+        if (preview != null) {
+            idpayTransaction.setCoveredAmount(preview.getReward());
+        }
         idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
         idpayTransaction.setByCie(entity.idpayTransaction.getByCie());
 
@@ -234,7 +352,6 @@ public class TransactionsService {
         return trEntity;
     }
 
-
     public Uni<Void> cancelTransaction(CommonHeader headers, String transactionId) {
 
         Log.debugf("TransactionsService -> cancelTransaction - Input parameters: %s, %s", headers, transactionId);
@@ -244,10 +361,10 @@ public class TransactionsService {
                     Log.debugf("TransactionsService -> cancelTransaction: found idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
 
                     //call idpay to retrieve current state
-                    return this.getStatusTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                    return this.getStatusTransaction(entity.idpayTransaction.getMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                             .chain(status -> //response ok
                                     //call idpay to cancel transaction
-                                    idpayRestClient.deleteTransaction(entity.idpayTransaction.getIdpayMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
+                                    idPayRestService.deleteTransaction(entity.idpayTransaction.getMerchantId(), headers.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
                                             .onFailure().transform(t -> {
                                                 if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
                                                     Log.errorf(t, " TransactionsService -> cancelTransaction: idpay NOT FOUND for idpay transaction [%s] for mil transaction [%s]", entity.idpayTransaction.getIdpayTransactionId(), transactionId);
@@ -288,7 +405,6 @@ public class TransactionsService {
 
         return entity;
     }
-
 
     public Uni<PublicKeyIDPay> verifyCie(CommonHeader headers, String transactionId, VerifyCie verifyCie) {
 
@@ -363,7 +479,7 @@ public class TransactionsService {
                     .build());
         } else {
             //call ipzs to retrieve CIE state
-            return idpayRestClient.identitycards(entity.idpayTransaction.getIdpayTransactionId(), this.createIpzsVerifyCieRequest(verifyCie, entity.idpayTransaction.getTrxCode()))
+            return ipzsRestClient.identitycards(entity.idpayTransaction.getIdpayTransactionId(), this.createIpzsVerifyCieRequest(verifyCie, entity.idpayTransaction.getTrxCode()))
                     .onFailure().transform(t -> {
                         if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {//IPZS respond NOT FOUND - trasforming in BAD_REQUEST
                             Log.errorf(t, " TransactionsService -> verifyCie: IPZS NOT FOUND for mil transaction [%s]", transactionId);
@@ -446,10 +562,11 @@ public class TransactionsService {
             // If transaction is NOT IDENTIFIED, return BAD_REQUEST
             Log.errorf("TransactionsService -> authorizeTransaction: idpay transaction with id [%s] is NOT IDENTIFIED", dbData.idpayTransaction.getIdpayTransactionId());
 
-            throw new BadRequestException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(new Errors(List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB), List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB_MSG)))
-                    .build());
+            return Uni.createFrom().failure(
+                    new BadRequestException(Response
+                            .status(Response.Status.BAD_REQUEST)
+                            .entity(new Errors(List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB), List.of(ErrorCode.ERROR_WRONG_TRANSACTION_STATUS_MIL_DB_MSG)))
+                            .build()));
         } else {
             // If transaction is IDENTIFIED, start retrieving azure access token
 
@@ -459,7 +576,7 @@ public class TransactionsService {
                         // If retrieve access token fails, return INTERNAL_SERVER_ERROR
                         Log.errorf(t, "TransactionsService -> authorizeTransaction: Azure AD error response for mil transaction [%s]", milTransactionId);
 
-                        throw new InternalServerErrorException(Response
+                        return new InternalServerErrorException(Response
                                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                                 .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AZUREAD_REST_SERVICES_MSG)))
                                 .build());
@@ -481,7 +598,7 @@ public class TransactionsService {
                     // If unwrap key fails, return INTERNAL_SERVER_ERROR
                     Log.errorf(t, "TransactionsService -> authorizeTransaction: Azure KV error response while unwrapping session key [%s]", authorizeTransaction.getAuthCodeBlockData().getEncSessionKey());
 
-                    throw new InternalServerErrorException(Response
+                    return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR), List.of(ErrorCode.ERROR_RETRIEVING_KEY_PAIR_MSG)))
                             .build());
@@ -489,28 +606,56 @@ public class TransactionsService {
     }
 
     private Uni<PublicKeyIDPay> retrieveIdpayPublicKey(String acquirerId) {
-        return idpayRestClient.retrieveIdpayPublicKey(acquirerId)
-                .onFailure().transform(Unchecked.function(t -> {
+        return idPayRestService.checkOrGenerateClient().chain(() ->
+                idPayRestService.retrieveIdpayPublicKey(acquirerId)
+                        .onItemOrFailure()
+                        .transformToUni(Unchecked.function((publicKeyIDPay, t) -> {
 
-                    // If idpay public key retrieval fails, return INTERNAL_SERVER_ERROR
-                    Log.errorf(t, "TransactionsService -> authorizeTransaction: IDPay error response while retrieving public key.");
+                            if (t instanceof CertificateException) {
+                                Log.errorf(t, " TransactionsService -> authorizeTransaction: first try, idpay error response for certificate");
+                                idPayRestService.setIdpayRestClient(null);
 
-                    throw new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_PUBLIC_KEY_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_PUBLIC_KEY_IDPAY_MSG)))
-                            .build());
-                })).chain(publicKeyIDPay -> Uni.createFrom().item(publicKeyIDPay));
+                                // Retry
+                                return idPayRestService.checkOrGenerateClient().chain(() ->
+                                        idPayRestService.retrieveIdpayPublicKey(acquirerId)
+                                                .onFailure().transform(Unchecked.function(retryException -> {
+
+                                                    if (retryException instanceof CertificateException) {
+                                                        return certificateException(retryException, "authorizeTransaction");
+                                                    } else {
+                                                        return errorRetrieveResult(retryException);
+                                                    }
+                                                }))
+                                                .chain(res -> Uni.createFrom().item(res))
+                                );
+                            } else if (publicKeyIDPay != null) {
+                                return Uni.createFrom().item(publicKeyIDPay);
+                            } else {
+                                return Uni.createFrom().failure(errorRetrieveResult(t));
+                            }
+                        }))
+        );
+    }
+
+    private InternalServerErrorException errorRetrieveResult(Throwable t) {
+        // If idpay public key retrieval fails, return INTERNAL_SERVER_ERROR
+        Log.errorf(t, "TransactionsService -> authorizeTransaction: IDPay error response while retrieving public key.");
+
+        return new InternalServerErrorException(Response
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_PUBLIC_KEY_IDPAY), List.of(ErrorCode.ERROR_RETRIEVING_PUBLIC_KEY_IDPAY_MSG)))
+                .build());
     }
 
     private Uni<Response> authorize(IdpayTransactionEntity dbData, PinBlockDTO pinBlock) {
-        return idpayRestClient.authorize(dbData.idpayTransaction.getIdpayMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), pinBlock)
+        return idPayRestService.authorize(dbData.idpayTransaction.getMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), pinBlock)
                 .onFailure().transform(Unchecked.function(t -> {
 
                     // Error 500 while trying to authorize transaction
                     Log.errorf(t, "TransactionsService -> authorizeTransaction: error response while authorizing transaction.");
                     Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES_MSG));
 
-                    throw new InternalServerErrorException(Response
+                    return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(errors)
                             .build());
@@ -558,7 +703,7 @@ public class TransactionsService {
                 .onFailure().transform(Unchecked.function(err -> {
                     Log.errorf(err, "TransactionsService -> authorizeTransaction: Error while updating transaction %s on db", dbData.transactionId);
 
-                    throw new InternalServerErrorException(Response
+                    return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
                             .build());
@@ -591,15 +736,11 @@ public class TransactionsService {
                 });
     }
 
-    public String getIdpayMerchantId(String merchantId, String acquirerId) {
-        Log.debugf("TransactionsService -> getIdpayMerchantId: idpayMerchantId [%s] retrieved for merchantId [%s] and acquirerId [%s]", merchantId, merchantId, acquirerId);
-        return merchantId;
-    }
-
     public Uni<GetTransactionsResponse> getLastTransactions(CommonHeader headers) {
 
         Log.debugf("TransactionsService -> getLastTransactions - Input parameters: %s", headers);
 
+        // set midnight
         return idpayTransactionRepository.find(
                         """
                                   idpayTransaction.status in ?1 and
@@ -616,8 +757,7 @@ public class TransactionsService {
                         headers.getChannel(),
                         headers.getAcquirerId(),
                         LocalDateTime.ofInstant(Instant.now().truncatedTo(ChronoUnit.SECONDS), ZoneOffset.UTC)
-                                .toLocalDate().atTime(LocalTime.MIN) // set midnight
-                                .minus(getTransactionsDaysBefore, ChronoUnit.DAYS) // transaction of the last 30 days
+                                .toLocalDate().atTime(LocalTime.MIN).minusDays(getTransactionsDaysBefore) // transaction of the last 30 days
                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
                 .withBatchSize(getTransactionsMaxTransactions)
                 .page(Page.ofSize(getTransactionsMaxTransactions))
@@ -652,17 +792,27 @@ public class TransactionsService {
 
     private Uni<PreAuthPaymentResponseDTO> getSecondFactor(String idpayMerchantId, String xAcquirerId, String transactionId) {
 
-        return idpayRestClient.putPreviewPreAuthPayment(idpayMerchantId, xAcquirerId, transactionId)
+        return idPayRestService.putPreviewPreAuthPayment(idpayMerchantId, xAcquirerId, transactionId)
                 .onFailure().transform(t -> {
-                    Log.errorf(t, "[%s] TransactionsService -> getSecondFactor: Error while retrieving secondFactor for idpay transaction [%s]",
-                            ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR, transactionId);
-                    return new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR), List.of(ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR_MSG)))
-                            .build());
+                    if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
+                        Log.errorf(t, "[%s] TransactionsService -> getSecondFactor: Error pin for the current user [%s]",
+                                ErrorCode.ERROR_PIN_CIE_CURRENT_USER, transactionId);
+
+                        return new InternalServerErrorException(Response
+                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(new Errors(List.of(ErrorCode.ERROR_PIN_CIE_CURRENT_USER), List.of(ErrorCode.ERROR_PIN_CIE_CURRENT_USER_MSG)))
+                                .build());
+                    } else {
+                        Log.errorf(t, "[%s] TransactionsService -> getSecondFactor: Error while retrieving secondFactor for idpay transaction [%s]",
+                                ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR, transactionId);
+
+                        return new InternalServerErrorException(Response
+                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(new Errors(List.of(ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR), List.of(ErrorCode.ERROR_RETRIEVING_SECOND_FACTOR_MSG)))
+                                .build());
+                    }
                 });
     }
-
 
     private Uni<IdpayTransactionEntity> updateByCie(IdpayTransactionEntity entity) {
 
@@ -677,33 +827,63 @@ public class TransactionsService {
                 );
     }
 
-    private Uni<Transaction> getSecFactAndRespond(IdpayTransactionEntity entity, SyncTrxStatus res) {
-        if (TransactionStatus.IDENTIFIED.equals(res.getStatus()) && entity.idpayTransaction.getByCie() != null && Boolean.TRUE.equals(entity.idpayTransaction.getByCie())) {
-            return getSecondFactor(entity.idpayTransaction.getIdpayMerchantId(), entity.idpayTransaction.getAcquirerId(), entity.idpayTransaction.getIdpayTransactionId())
-                    .map(secFactResp -> createTransactionFromIdpayTransactionEntity(entity, secFactResp.getSecondFactor(), null, false));
+    private Uni<SyncTrxStatus> getStatusTransaction(String idpayMerchantId, String xAcquirerId, String transactionId) {
+
+        return idPayRestService.checkOrGenerateClient().chain(() ->
+                idPayRestService.getStatusTransaction(idpayMerchantId, xAcquirerId, transactionId)
+                        .onItemOrFailure()
+                        .transformToUni(Unchecked.function((syncTrxStatus, t) -> {
+
+                                    if (t instanceof CertificateException) {
+                                        Log.errorf(t, " TransactionsService -> getStatusTransaction: first try, idpay error response for certificate");
+                                        idPayRestService.setIdpayRestClient(null);
+
+                                        // Retry
+                                        return idPayRestService.checkOrGenerateClient().chain(() ->
+                                                idPayRestService.getStatusTransaction(idpayMerchantId, xAcquirerId, transactionId)
+                                                        .onFailure().transform(Unchecked.function(retryException -> {
+
+                                                            if (retryException instanceof CertificateException) {
+                                                                return certificateException(retryException, "statusTransaction");
+                                                            } else {
+                                                                return errorGetStatusResult(retryException, transactionId);
+                                                            }
+                                                        }))
+                                        ).chain(res -> Uni.createFrom().item(res));
+                                    } else if (syncTrxStatus != null) {
+                                        return Uni.createFrom().item(syncTrxStatus);
+                                    } else {
+                                        return Uni.createFrom().failure(errorGetStatusResult(t, transactionId));
+                                    }
+                                })
+                        ));
+    }
+
+    private WebApplicationException errorGetStatusResult(Throwable t, String transactionId) {
+        if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
+            Log.errorf(t, " TransactionsService -> getStatusTransaction: idpay NOT FOUND for mil transaction [%s]", transactionId);
+            Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
+            return new NotFoundException(Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(errors)
+                    .build());
         } else {
-            return Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(entity, null, null, false));
+            Log.errorf(t, "TransactionsService -> getStatusTransaction: idpay error response for mil transaction [%s]", transactionId);
+
+            return new InternalServerErrorException(Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
+                    .build());
         }
     }
 
-    private Uni<SyncTrxStatus> getStatusTransaction(String idpayMerchantId, String xAcquirerId, String transactionId) {
-        return idpayRestClient.getStatusTransaction(idpayMerchantId, xAcquirerId, transactionId)
-                .onFailure().transform(t -> {
-                    if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 404) {
-                        Log.errorf(t, " TransactionsService -> getStatusTransaction: idpay NOT FOUND for mil transaction [%s]", transactionId);
-                        Errors errors = new Errors(List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_NOT_FOUND_IDPAY_REST_SERVICES_MSG));
-                        return new NotFoundException(Response
-                                .status(Response.Status.NOT_FOUND)
-                                .entity(errors)
-                                .build());
-                    } else {
-                        Log.errorf(t, "TransactionsService -> getStatusTransaction: idpay error response for mil transaction [%s]", transactionId);
+    private InternalServerErrorException certificateException(Throwable exception, String funcName) {
+        Log.errorf(exception, " TransactionsService -> " + funcName + ": second try, idpay error response for certificate");
 
-                        return new InternalServerErrorException(Response
-                                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                .entity(new Errors(List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_IDPAY_REST_SERVICES_MSG)))
-                                .build());
-                    }
-                });
+        // Throw error in case of a second failure
+        return new InternalServerErrorException(Response
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(new Errors(List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED), List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED_MSG)))
+                .build());
     }
 }

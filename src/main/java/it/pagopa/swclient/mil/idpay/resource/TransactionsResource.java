@@ -58,6 +58,11 @@ public class TransactionsResource {
 
         Log.debugf("TransactionsResource -> createTransaction - Input createTransaction: %s, %s", headers, createTransaction);
 
+        /**
+         * THIS IS TEMPORARY AND IT WILL BE ADDRESSED WITH THE NEW VERSION OF AUTH MECHANISM.
+         */
+        AcqMerchMapper.map(headers);
+        
         return transactionsService.createTransaction(headers, createTransaction).chain(res -> {
             Log.debugf("TransactionsResource -> TransactionsService -> createTransaction - Response %s", res);
 
@@ -82,6 +87,11 @@ public class TransactionsResource {
 
         Log.debugf("TransactionsResource -> getTransaction - Input parameters: %s, transactionId: %s", headers, transactionId);
 
+        /**
+         * THIS IS TEMPORARY AND IT WILL BE ADDRESSED WITH THE NEW VERSION OF AUTH MECHANISM.
+         */
+        AcqMerchMapper.map(headers);
+        
         return transactionsService.getTransaction(headers, transactionId).chain(res -> {
             Log.debugf("TransactionsResource -> TransactionsService -> getTransaction - Response %s", res);
 
@@ -103,6 +113,11 @@ public class TransactionsResource {
 
         Log.debugf("TransactionsResource -> cancelTransaction - Input parameters: %s, transactionId: %s", headers, transactionId);
 
+        /**
+         * THIS IS TEMPORARY AND IT WILL BE ADDRESSED WITH THE NEW VERSION OF AUTH MECHANISM.
+         */
+        AcqMerchMapper.map(headers);
+        
         return transactionsService.cancelTransaction(headers, transactionId).chain(() ->
             Uni.createFrom().item(
                     Response.status(Status.NO_CONTENT).build())
@@ -129,6 +144,11 @@ public class TransactionsResource {
 
         Log.debugf("TransactionsResource -> verifyCie - Input verifyCie: %s, %s", headers, verifyCie);
 
+        /**
+         * THIS IS TEMPORARY AND IT WILL BE ADDRESSED WITH THE NEW VERSION OF AUTH MECHANISM.
+         */
+        AcqMerchMapper.map(headers);
+        
         return transactionsService.verifyCie(headers, transactionId, verifyCie).chain(res -> {
             Log.debugf("TransactionsResource -> TransactionsService -> verifyCie - Response %s", res);
 
@@ -154,6 +174,11 @@ public class TransactionsResource {
 
         Log.debugf("TransactionsResource -> authorizeTransaction - Input authorizeTransaction: %s, %s", headers, authorizeTransaction);
 
+        /**
+         * THIS IS TEMPORARY AND IT WILL BE ADDRESSED WITH THE NEW VERSION OF AUTH MECHANISM.
+         */
+        AcqMerchMapper.map(headers);
+        
         return transactionsService.authorizeTransaction(headers, authorizeTransaction, milTransactionId).chain(res -> {
             Log.debugf("TransactionsResource -> TransactionsService -> authorizeTransaction - Response %s", res);
 
@@ -169,6 +194,11 @@ public class TransactionsResource {
 
         Log.debugf("TransactionsResource -> getLastTransactions - Input parameters: %s", headers);
 
+        /**
+         * THIS IS TEMPORARY AND IT WILL BE ADDRESSED WITH THE NEW VERSION OF AUTH MECHANISM.
+         */
+        AcqMerchMapper.map(headers);
+        
         return transactionsService.getLastTransactions(headers).chain(res -> {
             Log.debugf("TransactionsResource -> TransactionsService -> getLastTransactions - Response %s", res);
 
