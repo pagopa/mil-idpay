@@ -6,6 +6,7 @@ on:
 jobs:
   run_it:
     runs-on: ubuntu-latest
+    environment: dev-cd
     
     steps:
       #
