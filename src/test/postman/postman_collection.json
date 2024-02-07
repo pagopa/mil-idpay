@@ -706,7 +706,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"modulus\": {{modulus}},\r\n  \"exponent\": {{exponent}},\r\n  \"sessionKey\": \"TestSessionKey\"\r\n}",
+					"raw": "{\r\n  \"modulus\": \"{{modulus}}\",\r\n  \"exponent\": \"{{exponent}}\",\r\n  \"sessionKey\": \"TestSessionKey\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
