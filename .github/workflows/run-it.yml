@@ -1,0 +1,38 @@
+name: Run Postman Collection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run_it:
+    runs-on: ubuntu-latest
+    
+    steps:
+      #
+      # Checkout the source code.
+      #
+      - name: Checkout the source code
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab
+        with:
+          token: ${{ secrets.GIT_PAT }}
+          fetch-depth: 0
+
+      #
+      # Install Node.
+      #
+      - name: Install Node
+        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
+        with:
+          node-version: "18.16.0"
+
+      #
+      # Install Newman.
+      #
+      - name: Install Newman
+        run: npm install -g newman
+
+      #
+      # Run Postman collection.
+      #
+      - name: Run Postman collection
+        run: newman run src/test/postman/postman_collection.json -e src/test/postman/dev.postman_environment.json --env-var "clientId=${{ secrets.CLIENT_ID }}" --env-var "clientSecret=${{ secrets.CLIENT_SECRET }}" --env-var "azureClientId=${{ secrets.MIL_SERVICES_CLIENT_ID }}" --env-var "azureClientSecret=${{ secrets.AZURE_CLIENT_SECRET }}" --env-var "tenantId=${{ secrets.AZURE_TENANT_ID }}"
