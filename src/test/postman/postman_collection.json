@@ -902,6 +902,30 @@
 		},
 		{
 			"name": "Autorizzazione transazione",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"console.log(\"RESPONSE AUTORIZZAZIONE TRANSAZIONE:\");\r",
+							"\r",
+							"console.log(responseBody);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"console.log(\"BODY REQUEST AUTORIZZAZIONE TRANSAZIONE:\");\r",
+							"\r",
+							"console.log(interpolate(pm.request.body.toString()));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "POST",
 				"header": [
