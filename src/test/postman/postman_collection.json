@@ -294,12 +294,7 @@
 						"exec": [
 							"var jsonData = JSON.parse(responseBody);\r",
 							"\r",
-							"console.log(\"--------RISPOSTA VERIFYCIE-------- \");\r",
-							"console.log(jsonData);\r",
-							"console.log(\"--------FINE RISPOSTA VERIFYCIE-------- \");\r",
-							"\r",
 							"postman.setEnvironmentVariable(\"kid\", jsonData.kid);\r",
-							"\r",
 							"postman.setEnvironmentVariable(\"modulus\", jsonData.n);\r",
 							"postman.setEnvironmentVariable(\"exponent\", jsonData.e);"
 						],
@@ -691,9 +686,7 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"var jsonData = JSON.parse(responseBody);\r",
-							"console.log(jsonData);\r",
-							"postman.setEnvironmentVariable(\"encSessionKey\", jsonData);"
+							"postman.setEnvironmentVariable(\"encSessionKey\", responseBody);"
 						],
 						"type": "text/javascript"
 					}
@@ -702,8 +695,7 @@
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"console.log(\"--------MODULUS:-------- \" + pm.environment.get(\"modulus\"));\r",
-							"console.log(\"--------EXPONENT:-------- \" + pm.environment.get(\"exponent\"));"
+							""
 						],
 						"type": "text/javascript"
 					}
