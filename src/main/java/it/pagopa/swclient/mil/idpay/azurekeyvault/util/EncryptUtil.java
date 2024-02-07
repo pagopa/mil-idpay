@@ -44,6 +44,6 @@ public class EncryptUtil {
         byte[] encryptedSessionKeyBytes = cipher.doFinal(sessionKeyBytes);
 
         // encryptedSessionKeyBytes contains encrypted session key
-        return Base64.getEncoder().encodeToString(encryptedSessionKeyBytes);
+        return Base64.getUrlEncoder().encodeToString(encryptedSessionKeyBytes);
     }
 }

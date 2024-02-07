@@ -15,7 +15,10 @@
 					"script": {
 						"exec": [
 							"var jsonData = JSON.parse(responseBody);\r",
-							"postman.setEnvironmentVariable(\"initiativeId\", jsonData.initiatives[0].id);"
+							"postman.setEnvironmentVariable(\"initiativeId\", jsonData.initiatives[0].id);\r",
+							"\r",
+							"console.log(\"RESPONSE:\");\r",
+							"console.log(jsonData);"
 						],
 						"type": "text/javascript"
 					}
@@ -144,7 +147,10 @@
 					"script": {
 						"exec": [
 							"var jsonData = JSON.parse(responseBody);\r",
-							"postman.setEnvironmentVariable(\"milTransactionId\", jsonData.milTransactionId);"
+							"postman.setEnvironmentVariable(\"milTransactionId\", jsonData.milTransactionId);\r",
+							"\r",
+							"console.log(\"RESPONSE:\");\r",
+							"console.log(jsonData);"
 						],
 						"type": "text/javascript"
 					}
@@ -296,7 +302,10 @@
 							"\r",
 							"postman.setEnvironmentVariable(\"kid\", jsonData.kid);\r",
 							"postman.setEnvironmentVariable(\"modulus\", jsonData.n);\r",
-							"postman.setEnvironmentVariable(\"exponent\", jsonData.e);"
+							"postman.setEnvironmentVariable(\"exponent\", jsonData.e);\r",
+							"\r",
+							"console.log(\"RESPONSE:\");\r",
+							"console.log(jsonData);"
 						],
 						"type": "text/javascript"
 					}
@@ -686,7 +695,10 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"postman.setEnvironmentVariable(\"encSessionKey\", responseBody);"
+							"postman.setEnvironmentVariable(\"encSessionKey\", responseBody);\r",
+							"\r",
+							"console.log(\"RESPONSE:\");\r",
+							"console.log(responseBody);"
 						],
 						"type": "text/javascript"
 					}
@@ -728,6 +740,18 @@
 		},
 		{
 			"name": "Recupero dello stato della transazione",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"console.log(\"RESPONSE:\");\r",
+							"console.log(responseBody);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "GET",
 				"header": [
@@ -907,8 +931,7 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"console.log(\"RESPONSE AUTORIZZAZIONE TRANSAZIONE:\");\r",
-							"\r",
+							"console.log(\"RESPONSE:\");\r",
 							"console.log(responseBody);"
 						],
 						"type": "text/javascript"
@@ -918,9 +941,9 @@
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"console.log(\"BODY REQUEST AUTORIZZAZIONE TRANSAZIONE:\");\r",
-							"\r",
-							"console.log(interpolate(pm.request.body.toString()));"
+							"console.log(\"REQUEST:\");\r",
+							"console.log(pm.environment.get(\"kid\"));\r",
+							"console.log(pm.environment.get(\"encSessionKey\"));"
 						],
 						"type": "text/javascript"
 					}
@@ -991,6 +1014,18 @@
 		},
 		{
 			"name": "Cancellazione della transazione",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"console.log(\"RESPONSE:\");\r",
+							"console.log(responseBody);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "DELETE",
 				"header": [
@@ -1107,7 +1142,8 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							""
+							"console.log(\"RESPONSE:\");\r",
+							"console.log(responseBody);"
 						],
 						"type": "text/javascript"
 					}
