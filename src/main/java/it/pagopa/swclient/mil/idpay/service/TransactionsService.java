@@ -533,7 +533,7 @@ public class TransactionsService {
                                                             String encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getValue());
 
                                                             PinBlockDTO pinBlock = PinBlockDTO.builder()
-                                                                    .encryptedPinBlock(authorizeTransaction.getAuthCodeBlockData().getAuthCodeBlock())
+                                                                    .pinBlock(authorizeTransaction.getAuthCodeBlockData().getAuthCodeBlock())
                                                                     .encryptedKey(encryptedSessionKey)
                                                                     .build();
 
