@@ -46,6 +46,7 @@ import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -535,8 +536,10 @@ public class TransactionsService {
                                                             // Start trying to encrypt session key with public key retrieved
                                                             String encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getValue());
 
+                                                            String hexPinBlock = base64ToHex(authorizeTransaction.getAuthCodeBlockData().getAuthCodeBlock());
+
                                                             PinBlockDTO pinBlock = PinBlockDTO.builder()
-                                                                    .pinBlock(authorizeTransaction.getAuthCodeBlockData().getAuthCodeBlock())
+                                                                    .pinBlock(hexPinBlock)
                                                                     .encryptedKey(encryptedSessionKey)
                                                                     .build();
 
@@ -888,5 +891,16 @@ public class TransactionsService {
                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(new Errors(List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED), List.of(ErrorCode.ERROR_CERTIFICATE_EXPIRED_MSG)))
                 .build());
+    }
+
+    private static String base64ToHex(String base64String) {
+        byte[] decodedBytes = Base64.getDecoder().decode(base64String);
+
+        StringBuilder hexStringBuilder = new StringBuilder();
+        for (byte b : decodedBytes) {
+            hexStringBuilder.append(String.format("%02X", b & 0xFF));
+        }
+
+        return hexStringBuilder.toString();
     }
 }
