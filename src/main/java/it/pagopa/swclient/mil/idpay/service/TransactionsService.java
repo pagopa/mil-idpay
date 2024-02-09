@@ -25,7 +25,6 @@ import it.pagopa.swclient.mil.idpay.dao.IdpayTransaction;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionRepository;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
@@ -56,14 +55,11 @@ public class TransactionsService {
 
     private final SimpleDateFormat lastUpdateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
-    @Inject
-    IdpayTransactionRepository idpayTransactionRepository;
+    private final IdpayTransactionRepository idpayTransactionRepository;
 
-    @Inject
-    EncryptUtil encryptUtil;
+    private final EncryptUtil encryptUtil;
 
-    @Inject
-    AzureKeyVaultService azureKeyVaultService;
+    private final AzureKeyVaultService azureKeyVaultService;
 
     @RestClient
     AzureADRestClient azureADRestClient;
@@ -74,8 +70,7 @@ public class TransactionsService {
     @RestClient
     IpzsRestClient ipzsRestClient;
 
-    @Inject
-    IdPayRestService idPayRestService;
+    private final IdPayRestService idPayRestService;
 
     private static final String BEARER = "Bearer ";
 
@@ -89,6 +84,14 @@ public class TransactionsService {
 
     @ConfigProperty(name = "azure-auth-api.identity")
     String identity;
+
+    public TransactionsService(IdpayTransactionRepository idpayTransactionRepository, EncryptUtil encryptUtil,
+                               AzureKeyVaultService azureKeyVaultService, IdPayRestService idPayRestService) {
+        this.idpayTransactionRepository = idpayTransactionRepository;
+        this.encryptUtil = encryptUtil;
+        this.azureKeyVaultService = azureKeyVaultService;
+        this.idPayRestService = idPayRestService;
+    }
 
     public Uni<InitiativesResponse> getInitiatives(CommonHeader headers) {
 
@@ -533,7 +536,7 @@ public class TransactionsService {
                                                             String encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getValue());
 
                                                             PinBlockDTO pinBlock = PinBlockDTO.builder()
-                                                                    .encryptedPinBlock(authorizeTransaction.getAuthCodeBlockData().getAuthCodeBlock())
+                                                                    .pinBlock(authorizeTransaction.getAuthCodeBlockData().getAuthCodeBlock())
                                                                     .encryptedKey(encryptedSessionKey)
                                                                     .build();
 

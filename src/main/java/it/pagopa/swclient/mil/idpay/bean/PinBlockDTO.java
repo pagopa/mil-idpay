@@ -12,8 +12,8 @@ import lombok.*;
 @Builder
 public class PinBlockDTO {
 
-    @NotNull(message = "[" + ErrorCode.ERROR_ENCRYPTEDPINBLOCK_MUST_NOT_BE_NULL + "] encryptedPinBlock must not be null")
-    private String encryptedPinBlock;
+    @NotNull(message = "[" + ErrorCode.ERROR_ENCRYPTEDPINBLOCK_MUST_NOT_BE_NULL + "] pinBlock must not be null")
+    private String pinBlock;
 
     @NotNull(message = "[" + ErrorCode.ERROR_ENCRYPTEDKEY_MUST_NOT_BE_NULL + "] encryptedKey must not be null")
     private String encryptedKey;
