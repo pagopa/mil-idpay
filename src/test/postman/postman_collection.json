@@ -18,7 +18,11 @@
 							"postman.setEnvironmentVariable(\"initiativeId\", jsonData.initiatives[0].id);\r",
 							"\r",
 							"console.log(\"RESPONSE:\");\r",
-							"console.log(jsonData);"
+							"console.log(jsonData);\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
 						],
 						"type": "text/javascript"
 					}
@@ -150,7 +154,11 @@
 							"postman.setEnvironmentVariable(\"milTransactionId\", jsonData.milTransactionId);\r",
 							"\r",
 							"console.log(\"RESPONSE:\");\r",
-							"console.log(jsonData);"
+							"console.log(jsonData);\r",
+							"\r",
+							"pm.test(\"Status code is 201\", function () {\r",
+							"    pm.response.to.have.status(201);\r",
+							"});"
 						],
 						"type": "text/javascript"
 					}
@@ -305,7 +313,11 @@
 							"postman.setEnvironmentVariable(\"exponent\", jsonData.e);\r",
 							"\r",
 							"console.log(\"RESPONSE:\");\r",
-							"console.log(jsonData);"
+							"console.log(jsonData);\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
 						],
 						"type": "text/javascript"
 					}
@@ -698,7 +710,11 @@
 							"postman.setEnvironmentVariable(\"encSessionKey\", responseBody);\r",
 							"\r",
 							"console.log(\"RESPONSE:\");\r",
-							"console.log(responseBody);"
+							"console.log(responseBody);\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
 						],
 						"type": "text/javascript"
 					}
@@ -746,7 +762,11 @@
 					"script": {
 						"exec": [
 							"console.log(\"RESPONSE:\");\r",
-							"console.log(responseBody);"
+							"console.log(responseBody);\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
 						],
 						"type": "text/javascript"
 					}
@@ -932,7 +952,11 @@
 					"script": {
 						"exec": [
 							"console.log(\"RESPONSE:\");\r",
-							"console.log(responseBody);"
+							"console.log(responseBody);\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
 						],
 						"type": "text/javascript"
 					}
@@ -1020,7 +1044,11 @@
 					"script": {
 						"exec": [
 							"console.log(\"RESPONSE:\");\r",
-							"console.log(responseBody);"
+							"console.log(responseBody);\r",
+							"\r",
+							"pm.test(\"Status code is 204\", function () {\r",
+							"    pm.response.to.have.status(204);\r",
+							"});"
 						],
 						"type": "text/javascript"
 					}
@@ -1143,7 +1171,11 @@
 					"script": {
 						"exec": [
 							"console.log(\"RESPONSE:\");\r",
-							"console.log(responseBody);"
+							"console.log(responseBody);\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
 						],
 						"type": "text/javascript"
 					}
