@@ -8,7 +8,6 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
@@ -38,7 +37,7 @@ public class EncryptUtil {
         Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
         cipher.init(Cipher.ENCRYPT_MODE, rsaPublicKey);
 
-        byte[] sessionKeyBytes = sessionKey.getBytes(StandardCharsets.UTF_8);
+        byte[] sessionKeyBytes = Base64.getDecoder().decode(sessionKey);
         byte[] encryptedSessionKeyBytes = cipher.doFinal(sessionKeyBytes);
 
         // encryptedSessionKeyBytes contains encrypted session key
