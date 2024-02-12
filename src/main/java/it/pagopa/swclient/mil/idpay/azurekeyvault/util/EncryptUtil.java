@@ -37,7 +37,7 @@ public class EncryptUtil {
         Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
         cipher.init(Cipher.ENCRYPT_MODE, rsaPublicKey);
 
-        byte[] sessionKeyBytes = Base64.getDecoder().decode(sessionKey);
+        byte[] sessionKeyBytes = Base64.getUrlDecoder().decode(sessionKey);
         byte[] encryptedSessionKeyBytes = cipher.doFinal(sessionKeyBytes);
 
         // encryptedSessionKeyBytes contains encrypted session key
