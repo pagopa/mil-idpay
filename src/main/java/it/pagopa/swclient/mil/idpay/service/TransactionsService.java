@@ -535,7 +535,6 @@ public class TransactionsService {
 
                                                             // Start trying to encrypt session key with public key retrieved
                                                             String encryptedSessionKey = encryptUtil.encryptSessionKeyForIdpay(publicKeyIDPay, unwrappedKey.getValue());
-
                                                             String hexPinBlock = base64ToHex(authorizeTransaction.getAuthCodeBlockData().getAuthCodeBlock());
 
                                                             PinBlockDTO pinBlock = PinBlockDTO.builder()
