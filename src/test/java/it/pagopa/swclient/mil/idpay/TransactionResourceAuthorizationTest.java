@@ -386,7 +386,7 @@ class TransactionResourceAuthorizationTest {
         authTransactionResponse.setAuthTransactionResponseOk(null);
         authTransactionResponse.setAuthTransactionResponseWrong(AuthTransactionResponseWrong
                 .builder()
-                .code(AuthMessageType.WRONG_AUTH_CODE)
+                .code(AuthMessageType.PAYMENT_INVALID_PINBLOCK)
                 .message("Wrong Authorization Code")
                 .build());
 

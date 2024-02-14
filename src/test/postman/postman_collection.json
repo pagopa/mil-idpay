@@ -3,8 +3,8 @@
 		"_postman_id": "3ac45a22-40f3-4644-b376-c05b5ba50992",
 		"name": "mil-idpay qrcode",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "29646859",
-		"_collection_link": "https://crimson-zodiac-456704.postman.co/workspace/Personal-Workspace~7804a326-503c-4623-9152-3f4c38f2d060/collection/4131675-3ac45a22-40f3-4644-b376-c05b5ba50992?action=share&source=collection_link&creator=29646859"
+		"_exporter_id": "4131675",
+		"_collection_link": "https://crimson-zodiac-456704.postman.co/workspace/Personal-Workspace~7804a326-503c-4623-9152-3f4c38f2d060/collection/4131675-3ac45a22-40f3-4644-b376-c05b5ba50992?action=share&source=collection_link&creator=4131675"
 	},
 	"item": [
 		{
@@ -295,7 +295,7 @@
 						}
 					],
 					"cookie": [],
-					"body": "{\n\t\"id\": \"4490eea8-9c81-4879-9720-22222222333\",\n\t\"trxCode\": \"trxCodetrxCodetrxCode\",\n\t\"initiativeId\": \"initiativeId1\",\n\t\"merchantId\": \"111\",\n\t\"idTrxAcquirer\": \"4490eea8-9c81-4879-9720-9578de10ff4e\",\n\t\"trxDate\": \"2023-08-03T14:29:01\",\n\t\"trxExpirationMinutes\": 14235426,\n\t\"amountCents\": 99999999999,\n\t\"amountCurrency\": \"EUR\",\n\t\"mcc\": \"mcc1\",\n\t\"acquirerId\": \"222\",\n\t\"status\": \"CREATED\",\n\t\"merchantFiscalCode\": \"112331234\",\n\t\"vat\": \"vat1\",\n\t\"splitPayment\": false,\n\t\"residualAmountCents\": 0,\n\t\"trxPngUrl\": \"trxPngUrl\",\n\t\"trxTxtUrl\": \"trxTxtUrl\"\n}\t"
+					"body": "{\n\t\"id\": \"4490eea8-9c81-4879-9720-22222222333\",\n\t\"trxCode\": \"trxCodetrxCodetrxCode\",\n\t\"initiativeId\": \"initiativeId1\",\n\t\"merchantId\": \"111\",\n\t\"idTrxAcquirer\": \"4490eea8-9c81-4879-9720-9578de10ff4e\",\n\t\"trxDate\": \"2023-08-03T14:29:01\",\n\t\"trxExpirationSeconds\": 14235426,\n\t\"amountCents\": 99999999999,\n\t\"amountCurrency\": \"EUR\",\n\t\"mcc\": \"mcc1\",\n\t\"acquirerId\": \"222\",\n\t\"status\": \"CREATED\",\n\t\"merchantFiscalCode\": \"112331234\",\n\t\"vat\": \"vat1\",\n\t\"splitPayment\": false,\n\t\"residualAmountCents\": 0,\n\t\"qrcodePngUrl\": \"qrcodePngUrl\",\n\t\"qrcodeTxtUrl\": \"qrcodeTxtUrl\"\n}\t"
 				}
 			]
 		},

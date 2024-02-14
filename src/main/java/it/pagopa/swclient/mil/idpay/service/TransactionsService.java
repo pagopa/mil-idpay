@@ -223,7 +223,7 @@ public class TransactionsService {
                             .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
                             .build());
                 })
-                .map(ent -> createTransactionFromIdpayTransactionEntity(ent, null, res.getTrxTxtUrl(), true));
+                .map(ent -> createTransactionFromIdpayTransactionEntity(ent, null, res.getQrcodeTxtUrl(), true));
     }
 
     private InternalServerErrorException errorCreateTransactionResult(Throwable exception, CommonHeader headers, CreateTransaction createTransaction) {

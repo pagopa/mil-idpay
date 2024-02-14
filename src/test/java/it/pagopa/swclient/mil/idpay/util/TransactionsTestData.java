@@ -62,7 +62,7 @@ public final class TransactionsTestData {
         res.setMerchantId("111");
         res.setIdTrxAcquirer("4490eea8-9c81-4879-9720-9578de10ff4e");
         res.setTrxDate(new Date());
-        res.setTrxExpirationMinutes(new BigDecimal(14235426));
+        res.setTrxExpirationSeconds(new BigDecimal(14235426));
         res.setAmountCents(99999999999L);
         res.setAmountCurrency("EUR");
         res.setMcc("mcc1");
@@ -72,8 +72,8 @@ public final class TransactionsTestData {
         res.setVat("vat1");
         res.setSplitPayment(false);
         res.setResidualAmountCents(0L);
-        res.setTrxPngUrl("trxPngUrl");
-        res.setTrxTxtUrl("trxTxtUrl");
+        res.setQrcodePngUrl("qrCodePngUrl");
+        res.setQrcodeTxtUrl("qrCodeTxtUrl");
 
         return res;
     }
