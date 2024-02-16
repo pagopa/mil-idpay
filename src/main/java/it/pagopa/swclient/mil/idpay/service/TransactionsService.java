@@ -591,7 +591,7 @@ public class TransactionsService {
         UnwrapKeyRequest unwrapKeyRequest = UnwrapKeyRequest
                 .builder()
                 .alg("RSA-OAEP-256")
-                .value(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey())
+                .value(Base64.getEncoder().encodeToString(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey()))
                 .build();
 
         return azureKeyVaultClient.unwrapKey(BEARER + token.getToken(), authorizeTransaction.getAuthCodeBlockData().getKid(), unwrapKeyRequest)
@@ -889,11 +889,9 @@ public class TransactionsService {
                 .build());
     }
 
-    private static String base64ToHex(String base64String) {
-        byte[] decodedBytes = Base64.getDecoder().decode(base64String);
-
+    private static String base64ToHex(byte[] authCodeBlock) {
         StringBuilder hexStringBuilder = new StringBuilder();
-        for (byte b : decodedBytes) {
+        for (byte b : authCodeBlock) {
             hexStringBuilder.append(String.format("%02X", b & 0xFF));
         }
 
