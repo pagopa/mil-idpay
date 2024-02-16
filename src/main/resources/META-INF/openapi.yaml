@@ -294,7 +294,7 @@ components:
     AuthCodeBlock:
       description: Authorization Code Block
       type: string
-      format: byte  # Base64 URL safe
+      format: byte  # Base64 standard
       minLength: 16 # bytes
       maxLength: 16 # bytes
       example: "MDAwMTAyMDMwNDA1MDYwNzA4MDkwQTBCMEMwRDBFMEY="
@@ -302,7 +302,7 @@ components:
     Challenge:
       description: Challenge to authenticate the CIE
       type: string
-      format: byte  # Base64 URL safe
+      format: byte  # Base64 standard
       minLength: 8 # bytes
       maxLength: 8 # bytes
       example: "MTIzNDU2Nzg="
@@ -321,7 +321,7 @@ components:
     CiePublicKey:
       description: Public key read from the CIE
       type: string
-      format: byte     # Base64 URL safe
+      format: byte     # Base64 standard
       maxLength: 32767 # bytes
       
     CoveredAmount:
@@ -335,10 +335,10 @@ components:
     EncryptedSessionKey:
       description: Encrypted session key
       type: string
-      format: byte    # Base64 URL safe
+      format: byte    # Base64 standard
       minLength:  256 # bytes  
       maxLength: 2048 # bytes
-      example: "et2j4kthRmeuc5uzCLi9dE9LeQKCsqbTNxNDwrJ-mBFA4UZQaXS1hdRw6ygXoH6Ra1uciDMDHpbg7DJoYfis_foMzk3gIQxrGkmcbsPkC2ieklIpOf021smzd_pSFJ580XQzwOJCli762aRByuNQAVFismcRhkSCad8fcRe7TgevephXcrbrjr25eCRgvmACESfrydnopO5g6yIkINpzuK9wP4ljDZTO90hP-_uRrfrgjwdxa6vv-qilYqvC4RPL7HR7eEbxkHFvsri7F7J9QDp5GsAJK1Bh4EdaLyl6MwYW1sEFnpQ-27_xtvFbwFANdB70cxsosvNsRueMjh9s-2rhgPZIT_YyHn3s394OOOKql5Umamn6pvcejPgXnXY0nRmSHCDoSUzNzEnQb1sxhuDpvQLQpWsKD3DESIjaDBq7sSvpBsoOg1ybnMccWiaIIRXCpYJU8aPhrkVTR-AczxwfwKtcCipLk3CiEjv6iu6PxfO62BGGRSUpe_m_HfU02DmT4qa6wUHbg0Sy3NBwBNvBVOVVIfwzmxZcQ6D5MhJaPSlfzcp4iTLk2a3eQU0bvJ3WsTdKhwuK6VgB2IV99i4ZX_bnxBaqKOzc1I3StTPGVAVCMjsTXGy0OyHDOtJv5A4N18r8rHyIVfzOuBEDa05_cp3ceHtrE8Dl5KzjFbY"
+      example: "et2j4kthRmeuc5uzCLi9dE9LeQKCsqbTNxNDwrJ+mBFA4UZQaXS1hdRw6ygXoH6Ra1uciDMDHpbg7DJoYfis/foMzk3gIQxrGkmcbsPkC2ieklIpOf021smzd/pSFJ580XQzwOJCli762aRByuNQAVFismcRhkSCad8fcRe7TgevephXcrbrjr25eCRgvmACESfrydnopO5g6yIkINpzuK9wP4ljDZTO90hP+/uRrfrgjwdxa6vv+qilYqvC4RPL7HR7eEbxkHFvsri7F7J9QDp5GsAJK1Bh4EdaLyl6MwYW1sEFnpQ+27/xtvFbwFANdB70cxsosvNsRueMjh9s+2rhgPZIT/YyHn3s394OOOKql5Umamn6pvcejPgXnXY0nRmSHCDoSUzNzEnQb1sxhuDpvQLQpWsKD3DESIjaDBq7sSvpBsoOg1ybnMccWiaIIRXCpYJU8aPhrkVTR+AczxwfwKtcCipLk3CiEjv6iu6PxfO62BGGRSUpe/m/HfU02DmT4qa6wUHbg0Sy3NBwBNvBVOVVIfwzmxZcQ6D5MhJaPSlfzcp4iTLk2a3eQU0bvJ3WsTdKhwuK6VgB2IV99i4ZX/bnxBaqKOzc1I3StTPGVAVCMjsTXGy0OyHDOtJv5A4N18r8rHyIVfzOuBEDa05/cp3ceHtrE8Dl5KzjFbY"
     
     Error:
       description: Error code
@@ -427,7 +427,7 @@ components:
     Modulus:
       description: Modulus of master key
       type: string
-      format: byte    # Base64 URL safe
+      format: byte    # Base64 standard
       minLength:  256 # bytes  
       maxLength: 2048 # bytes
     
@@ -446,7 +446,7 @@ components:
     PublicExponent:
       description: Public key exponent
       type: string
-      format: byte    # Base64 URL safe
+      format: byte    # Base64 standard
       minLength:    1 # bytes
       maxLength: 2048 # bytes
       example: "AQAB"
@@ -483,7 +483,7 @@ components:
       type: string
       pattern: "^[a-fA-F0-9]{16}$"
       example: "abc534659def0000"
-      #format: byte # Base64 URL safe
+      #format: byte # Base64 standard
       #minLength: 6 # bytes -> 8 chars when encoded with Base64
       #maxLength: 6 # bytes -> 8 chars when encoded with Base64
       #example: "SD76s1nB"
@@ -491,13 +491,13 @@ components:
     Signature:
       description: Signature of the challenge calculated by the CIE
       type: string
-      format: byte     # Base64 URL safe
+      format: byte     # Base64 standard
       maxLength: 32767 # bytes
 
     Sod:
       description: Document Security Object read from the CIE
       type: string
-      format: byte     # Base64 URL safe
+      format: byte     # Base64 standard
       maxLength: 32767 # bytes
 
     TerminalId:
