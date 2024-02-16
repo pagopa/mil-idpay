@@ -9,6 +9,6 @@ import lombok.Data;
 @RegisterForReflection
 public class AuthTransactionResponseWrong {
 
-    private AuthMessageType code;
+    private String code;
     private String message;
 }

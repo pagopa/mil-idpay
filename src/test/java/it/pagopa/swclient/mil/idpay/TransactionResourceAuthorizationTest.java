@@ -383,15 +383,8 @@ class TransactionResourceAuthorizationTest {
         Mockito.when(idPayRestService.retrieveIdpayPublicKey(Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
-        authTransactionResponse.setAuthTransactionResponseOk(null);
-        authTransactionResponse.setAuthTransactionResponseWrong(AuthTransactionResponseWrong
-                .builder()
-                .code(AuthMessageType.PAYMENT_INVALID_PINBLOCK)
-                .message("Wrong Authorization Code")
-                .build());
-
         Mockito.when(idPayRestService.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
-                .thenReturn(Uni.createFrom().item(authTransactionResponse));
+                .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(403)));
 
 
         Response response = given()
@@ -406,14 +399,11 @@ class TransactionResourceAuthorizationTest {
                 .extract()
                 .response();
 
-        authTransactionResponse.setAuthTransactionResponseWrong(null);
-        authTransactionResponse = TransactionsTestData.getAuthTransactionResponse();
-
         Assertions.assertEquals(400, response.statusCode());
         Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
         Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
 
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_IDPAY_WRONG_AUTH_CODE));
+        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_IDPAY_PAYMENT_INVALID_PINBLOCK));
     }
 
     @Test
