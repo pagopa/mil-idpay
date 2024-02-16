@@ -62,7 +62,7 @@ public final class TransactionsTestData {
         res.setMerchantId("111");
         res.setIdTrxAcquirer("4490eea8-9c81-4879-9720-9578de10ff4e");
         res.setTrxDate(new Date());
-        res.setTrxExpirationMinutes(new BigDecimal(14235426));
+        res.setTrxExpirationSeconds(new BigDecimal(14235426));
         res.setAmountCents(99999999999L);
         res.setAmountCurrency("EUR");
         res.setMcc("mcc1");
@@ -72,8 +72,8 @@ public final class TransactionsTestData {
         res.setVat("vat1");
         res.setSplitPayment(false);
         res.setResidualAmountCents(0L);
-        res.setTrxPngUrl("trxPngUrl");
-        res.setTrxTxtUrl("trxTxtUrl");
+        res.setQrcodePngUrl("qrCodePngUrl");
+        res.setQrcodeTxtUrl("qrCodeTxtUrl");
 
         return res;
     }
@@ -248,9 +248,9 @@ public final class TransactionsTestData {
         AuthorizeTransaction authorizeTransaction = new AuthorizeTransaction();
         AuthCodeBlockData authCodeBlockData = new AuthCodeBlockData();
 
-        authCodeBlockData.setAuthCodeBlock("MDAwMTAyMDMwNDA1MDYwNzA4MDkwQTBCMEMwRDBFMEY=");
+        authCodeBlockData.setAuthCodeBlock("MDAwMTAyMDMwNDA1MDYwNzA4MDkwQTBCMEMwRDBFMEY=".getBytes());
         authCodeBlockData.setKid(vaultUrl + "/keys/0709643f49394529b92c19a68c8e184a/6581c704deda4979943c3b34468df7c2");
-        authCodeBlockData.setEncSessionKey("et2j4kthRmeuc5uzCLi9dE9LeQKCsqbTNxNDwrJ-mBFA4UZQaXS1hdRw6ygXoH6Ra1uciDMDHpbg7DJoYfis_foMzk3gIQxrGkmcbsPkC2ieklIpOf021smzd_pSFJ580XQzwOJCli762aRByuNQAVFismcRhkSCad8fcRe7TgevephXcrbrjr25eCRgvmACESfrydnopO5g6yIkINpzuK9wP4ljDZTO90hP-_uRrfrgjwdxa6vv-qilYqvC4RPL7HR7eEbxkHFvsri7F7J9QDp5GsAJK1Bh4EdaLyl6MwYW1sEFnpQ-27_xtvFbwFANdB70cxsosvNsRueMjh9s-2rhgPZIT_YyHn3s394OOOKql5Umamn6pvcejPgXnXY0nRmSHCDoSUzNzEnQb1sxhuDpvQLQpWsKD3DESIjaDBq7sSvpBsoOg1ybnMccWiaIIRXCpYJU8aPhrkVTR-AczxwfwKtcCipLk3CiEjv6iu6PxfO62BGGRSUpe_m_HfU02DmT4qa6wUHbg0Sy3NBwBNvBVOVVIfwzmxZcQ6D5MhJaPSlfzcp4iTLk2a3eQU0bvJ3WsTdKhwuK6VgB2IV99i4ZX_bnxBaqKOzc1I3StTPGVAVCMjsTXGy0OyHDOtJv5A4N18r8rHyIVfzOuBEDa05_cp3ceHtrE8Dl5KzjFbY");
+        authCodeBlockData.setEncSessionKey("et2j4kthRmeuc5uzCLi9dE9LeQKCsqbTNxNDwrJ-mBFA4UZQaXS1hdRw6ygXoH6Ra1uciDMDHpbg7DJoYfis_foMzk3gIQxrGkmcbsPkC2ieklIpOf021smzd_pSFJ580XQzwOJCli762aRByuNQAVFismcRhkSCad8fcRe7TgevephXcrbrjr25eCRgvmACESfrydnopO5g6yIkINpzuK9wP4ljDZTO90hP-_uRrfrgjwdxa6vv-qilYqvC4RPL7HR7eEbxkHFvsri7F7J9QDp5GsAJK1Bh4EdaLyl6MwYW1sEFnpQ-27_xtvFbwFANdB70cxsosvNsRueMjh9s-2rhgPZIT_YyHn3s394OOOKql5Umamn6pvcejPgXnXY0nRmSHCDoSUzNzEnQb1sxhuDpvQLQpWsKD3DESIjaDBq7sSvpBsoOg1ybnMccWiaIIRXCpYJU8aPhrkVTR-AczxwfwKtcCipLk3CiEjv6iu6PxfO62BGGRSUpe_m_HfU02DmT4qa6wUHbg0Sy3NBwBNvBVOVVIfwzmxZcQ6D5MhJaPSlfzcp4iTLk2a3eQU0bvJ3WsTdKhwuK6VgB2IV99i4ZX_bnxBaqKOzc1I3StTPGVAVCMjsTXGy0OyHDOtJv5A4N18r8rHyIVfzOuBEDa05_cp3ceHtrE8Dl5KzjFbY".getBytes());
 
         authorizeTransaction.setAuthCodeBlockData(authCodeBlockData);
 

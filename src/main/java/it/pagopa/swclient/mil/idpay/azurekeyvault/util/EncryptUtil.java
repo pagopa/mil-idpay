@@ -8,7 +8,10 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.math.BigInteger;
-import java.security.*;
+import java.security.InvalidKeyException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
@@ -21,8 +24,8 @@ public class EncryptUtil {
         String exponentBase64 = publicKeyIDPay.getE();
 
         // Decode Base64 values in byte
-        byte[] modulusBytes = Base64.getUrlDecoder().decode(modulusBase64);
-        byte[] exponentBytes = Base64.getUrlDecoder().decode(exponentBase64);
+        byte[] modulusBytes = decodeBase64UrlOrBase64(modulusBase64);
+        byte[] exponentBytes = decodeBase64UrlOrBase64(exponentBase64);
 
         // Create specific RSA public key
         RSAPublicKeySpec rsaPublicKeySpec = new RSAPublicKeySpec(
@@ -37,10 +40,14 @@ public class EncryptUtil {
         Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
         cipher.init(Cipher.ENCRYPT_MODE, rsaPublicKey);
 
-        byte[] sessionKeyBytes = Base64.getUrlDecoder().decode(sessionKey);
+        byte[] sessionKeyBytes = decodeBase64UrlOrBase64(sessionKey);
         byte[] encryptedSessionKeyBytes = cipher.doFinal(sessionKeyBytes);
 
         // encryptedSessionKeyBytes contains encrypted session key
         return Base64.getEncoder().encodeToString(encryptedSessionKeyBytes);
+    }
+
+    private byte[] decodeBase64UrlOrBase64(String base64) {
+        return (base64.contains("-") || base64.contains("_") ? Base64.getUrlDecoder() : Base64.getDecoder()).decode(base64);
     }
 }

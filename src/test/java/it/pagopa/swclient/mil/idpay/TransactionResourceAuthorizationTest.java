@@ -383,15 +383,8 @@ class TransactionResourceAuthorizationTest {
         Mockito.when(idPayRestService.retrieveIdpayPublicKey(Mockito.any(String.class)))
                 .thenReturn(Uni.createFrom().item(publicKeyIDPay));
 
-        authTransactionResponse.setAuthTransactionResponseOk(null);
-        authTransactionResponse.setAuthTransactionResponseWrong(AuthTransactionResponseWrong
-                .builder()
-                .code(AuthMessageType.WRONG_AUTH_CODE)
-                .message("Wrong Authorization Code")
-                .build());
-
         Mockito.when(idPayRestService.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
-                .thenReturn(Uni.createFrom().item(authTransactionResponse));
+                .thenReturn(Uni.createFrom().failure(new ClientWebApplicationException(403)));
 
 
         Response response = given()
@@ -406,14 +399,11 @@ class TransactionResourceAuthorizationTest {
                 .extract()
                 .response();
 
-        authTransactionResponse.setAuthTransactionResponseWrong(null);
-        authTransactionResponse = TransactionsTestData.getAuthTransactionResponse();
-
         Assertions.assertEquals(400, response.statusCode());
         Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
         Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
 
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_IDPAY_WRONG_AUTH_CODE));
+        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_IDPAY_PAYMENT_INVALID_PINBLOCK));
     }
 
     @Test
@@ -680,5 +670,95 @@ class TransactionResourceAuthorizationTest {
         Assertions.assertEquals(500, response.statusCode());
         Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
         Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
+    void authorizeTransactionTest_OKAuthorizeModulusBase64Url() {
+
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
+
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
+        Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
+                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
+
+        publicKeyIDPay.setE("----------");
+
+        Mockito.when(idPayRestService.retrieveIdpayPublicKey(Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(publicKeyIDPay));
+
+        Mockito.when(idPayRestService.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
+                .thenReturn(Uni.createFrom().item(authTransactionResponse));
+
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .body(authorizeTransaction)
+                .pathParam("milTransactionId", transactionId)
+                .when()
+                .post("/{milTransactionId}/authorize")
+                .then()
+                .extract()
+                .response();
+
+        publicKeyIDPay = TransactionsTestData.getPublicKeyIdPay();
+        idpayTransactionEntity = TransactionsTestData.getTransactionEntity(validMilHeaders, createTransactionRequest, transactionResponse);
+
+        Assertions.assertEquals(200, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
+    void authorizeTransactionTest_OKAuthorizeModulusBase64Url2() {
+
+        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
+
+        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
+
+        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(certificateBundle));
+
+        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(secretBundle));
+
+        Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
+                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
+
+        publicKeyIDPay.setE("__________");
+
+        Mockito.when(idPayRestService.retrieveIdpayPublicKey(Mockito.any(String.class)))
+                .thenReturn(Uni.createFrom().item(publicKeyIDPay));
+
+        Mockito.when(idPayRestService.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
+                .thenReturn(Uni.createFrom().item(authTransactionResponse));
+
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .headers(validMilHeaders)
+                .and()
+                .body(authorizeTransaction)
+                .pathParam("milTransactionId", transactionId)
+                .when()
+                .post("/{milTransactionId}/authorize")
+                .then()
+                .extract()
+                .response();
+
+        publicKeyIDPay = TransactionsTestData.getPublicKeyIdPay();
+        idpayTransactionEntity = TransactionsTestData.getTransactionEntity(validMilHeaders, createTransactionRequest, transactionResponse);
+
+        Assertions.assertEquals(200, response.statusCode());
     }
 }

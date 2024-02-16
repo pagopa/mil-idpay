@@ -44,7 +44,7 @@ public final class ErrorCode {
     public static final String ERROR_CALLING_IDPAY_REST_SERVICES 							            = MODULE_ID + "000050";
     public static final String ERROR_NOT_FOUND_IDPAY_REST_SERVICES 							            = MODULE_ID + "000051";
     public static final String ERROR_CALLING_AUTHORIZE_REST_SERVICES 							        = MODULE_ID + "000052";
-    public static final String ERROR_IDPAY_WRONG_AUTH_CODE           							        = MODULE_ID + "000053";
+    public static final String ERROR_IDPAY_PAYMENT_INVALID_PINBLOCK           							= MODULE_ID + "000053";
     public static final String ERROR_IDPAY_UNKNOWN_ERROR_CODE      							            = MODULE_ID + "000054";
     public static final String ERROR_RETRIEVING_SECOND_FACTOR	 							            = MODULE_ID + "000055";
     public static final String ERROR_PIN_CIE_CURRENT_USER	 							                = MODULE_ID + "000056";
@@ -95,7 +95,6 @@ public final class ErrorCode {
     public static final String ERROR_RETRIEVING_KEY_PAIR_DESCR = "Azure KV key pair retrieving error";
     public static final String ERROR_CALLING_AUTHORIZE_REST_SERVICES_DESCR = "Error calling IdPay rest service with authorize transaction";
     public static final String ERROR_RETRIEVING_PUBLIC_KEY_IDPAY_DESCR = "IDPay public key retrieving error";
-    public static final String ERROR_IDPAY_WRONG_AUTH_CODE_DESCR = "IDPay responds with WRONG_AUTH_CODE";
     public static final String ERROR_IDPAY_UNKNOWN_ERROR_DESCR = "IDPay responds with an unknown error 500";
     public static final String ERROR_ENCRYPTING_SESSION_KEY_DESCR = "Error occurs during encrypting session key";
     public static final String ERROR_RETRIEVING_SECOND_FACTOR_DESCR = "Error retrieving second factor";
@@ -126,7 +125,6 @@ public final class ErrorCode {
     public static final String ERROR_RETRIEVING_KEY_PAIR_MSG = "[" + ERROR_RETRIEVING_KEY_PAIR + "] " + ERROR_RETRIEVING_KEY_PAIR_DESCR;
     public static final String ERROR_CALLING_AUTHORIZE_REST_SERVICES_MSG = "[" + ERROR_CALLING_AUTHORIZE_REST_SERVICES + "] " + ERROR_CALLING_AUTHORIZE_REST_SERVICES_DESCR;
     public static final String ERROR_RETRIEVING_PUBLIC_KEY_IDPAY_MSG = "[" + ERROR_RETRIEVING_PUBLIC_KEY_IDPAY + "] " + ERROR_RETRIEVING_PUBLIC_KEY_IDPAY_DESCR;
-    public static final String ERROR_IDPAY_WRONG_AUTH_CODE_MSG = "[" + ERROR_IDPAY_WRONG_AUTH_CODE + "] " + ERROR_IDPAY_WRONG_AUTH_CODE_DESCR;
     public static final String ERROR_IDPAY_UNKNOWN_ERROR_MSG = "[" + ERROR_IDPAY_UNKNOWN_ERROR_CODE + "] " + ERROR_IDPAY_UNKNOWN_ERROR_DESCR;
     public static final String ERROR_ENCRYPTING_SESSION_KEY_MSG = "[" + ERROR_ENCRYPTING_SESSION_KEY + "] " + ERROR_ENCRYPTING_SESSION_KEY_DESCR;
     public static final String ERROR_RETRIEVING_SECOND_FACTOR_MSG = "[" + ERROR_RETRIEVING_SECOND_FACTOR + "] " + ERROR_RETRIEVING_SECOND_FACTOR_DESCR;

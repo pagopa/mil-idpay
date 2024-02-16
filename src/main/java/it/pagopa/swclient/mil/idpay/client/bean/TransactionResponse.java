@@ -21,7 +21,7 @@ public class TransactionResponse {
     private String merchantId;
     private String idTrxAcquirer;
     private Date trxDate;
-    private BigDecimal trxExpirationMinutes;
+    private BigDecimal trxExpirationSeconds;
     private Long amountCents;
     private String amountCurrency;
     private String mcc;
@@ -31,7 +31,7 @@ public class TransactionResponse {
     private String vat;
     private Boolean splitPayment;
     private Long residualAmountCents;
-    private String trxPngUrl;
-    private String trxTxtUrl;
+    private String qrcodePngUrl;
+    private String qrcodeTxtUrl;
 
 }

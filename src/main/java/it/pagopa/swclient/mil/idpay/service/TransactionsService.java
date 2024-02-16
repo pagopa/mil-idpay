@@ -25,10 +25,7 @@ import it.pagopa.swclient.mil.idpay.dao.IdpayTransaction;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionRepository;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.InternalServerErrorException;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -223,7 +220,7 @@ public class TransactionsService {
                             .entity(new Errors(List.of(ErrorCode.ERROR_STORING_DATA_IN_DB), List.of(ErrorCode.ERROR_STORING_DATA_IN_DB_MSG)))
                             .build());
                 })
-                .map(ent -> createTransactionFromIdpayTransactionEntity(ent, null, res.getTrxTxtUrl(), true));
+                .map(ent -> createTransactionFromIdpayTransactionEntity(ent, null, res.getQrcodeTxtUrl(), true));
     }
 
     private InternalServerErrorException errorCreateTransactionResult(Throwable exception, CommonHeader headers, CreateTransaction createTransaction) {
@@ -594,7 +591,7 @@ public class TransactionsService {
         UnwrapKeyRequest unwrapKeyRequest = UnwrapKeyRequest
                 .builder()
                 .alg("RSA-OAEP-256")
-                .value(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey())
+                .value(Base64.getEncoder().encodeToString(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey()))
                 .build();
 
         return azureKeyVaultClient.unwrapKey(BEARER + token.getToken(), authorizeTransaction.getAuthCodeBlockData().getKid(), unwrapKeyRequest)
@@ -655,15 +652,25 @@ public class TransactionsService {
     private Uni<Response> authorize(IdpayTransactionEntity dbData, PinBlockDTO pinBlock) {
         return idPayRestService.authorize(dbData.idpayTransaction.getMerchantId(), dbData.idpayTransaction.getAcquirerId(), dbData.idpayTransaction.getIdpayTransactionId(), pinBlock)
                 .onFailure().transform(Unchecked.function(t -> {
-
-                    // Error 500 while trying to authorize transaction
                     Log.errorf(t, "TransactionsService -> authorizeTransaction: error response while authorizing transaction.");
-                    Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES_MSG));
 
-                    return new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(errors)
-                            .build());
+                    // Error 400 if idpay returns a 403
+                    if (t instanceof ClientWebApplicationException webEx && webEx.getResponse().getStatus() == 403) {
+                        Errors errors = new Errors(List.of(ErrorCode.ERROR_IDPAY_PAYMENT_INVALID_PINBLOCK), List.of(ErrorCode.ERROR_IDPAY_PAYMENT_INVALID_PINBLOCK));
+                        return new BadRequestException(Response
+                                .status(Response.Status.BAD_REQUEST)
+                                .entity(errors)
+                                .build());
+                    } else {
+
+                        // Error 500 returned for every other error received from idpay
+                        Errors errors = new Errors(List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES), List.of(ErrorCode.ERROR_CALLING_AUTHORIZE_REST_SERVICES_MSG));
+
+                        return new InternalServerErrorException(Response
+                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(errors)
+                                .build());
+                    }
                 }))
                 .chain(finalResult -> {
                     if (finalResult.getAuthTransactionResponseOk() != null) {
@@ -675,16 +682,6 @@ public class TransactionsService {
                         return updateAuthorizeTransactionStatus(dbData)
                                 .onItem()
                                 .transform(result -> result);
-                    } else if (finalResult.getAuthTransactionResponseWrong() != null) {
-
-                        // If IDPay responds with WRONG_AUTH_CODE, send BAD_REQUEST to client
-                        Log.errorf("TransactionsService -> authorizeTransaction: error IDPay responds with WRONG_AUTH_CODE for transaction: [%s]", dbData.transactionId);
-                        Errors errors = new Errors(List.of(ErrorCode.ERROR_IDPAY_WRONG_AUTH_CODE), List.of(ErrorCode.ERROR_IDPAY_WRONG_AUTH_CODE_MSG));
-
-                        return Uni.createFrom().item((Response
-                                .status(Response.Status.BAD_REQUEST)
-                                .entity(errors)
-                                .build()));
                     } else {
 
                         // If any other from IDPay, send INTERNAL_SERVER_ERROR to client
@@ -892,11 +889,9 @@ public class TransactionsService {
                 .build());
     }
 
-    private static String base64ToHex(String base64String) {
-        byte[] decodedBytes = Base64.getDecoder().decode(base64String);
-
+    private static String base64ToHex(byte[] authCodeBlock) {
         StringBuilder hexStringBuilder = new StringBuilder();
-        for (byte b : decodedBytes) {
+        for (byte b : authCodeBlock) {
             hexStringBuilder.append(String.format("%02X", b & 0xFF));
         }
 
