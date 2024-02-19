@@ -591,7 +591,7 @@ public class TransactionsService {
         UnwrapKeyRequest unwrapKeyRequest = UnwrapKeyRequest
                 .builder()
                 .alg("RSA-OAEP-256")
-                .value(Base64.getEncoder().encodeToString(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey()))
+                .value(Base64.getUrlEncoder().encodeToString(authorizeTransaction.getAuthCodeBlockData().getEncSessionKey()))
                 .build();
 
         return azureKeyVaultClient.unwrapKey(BEARER + token.getToken(), authorizeTransaction.getAuthCodeBlockData().getKid(), unwrapKeyRequest)
