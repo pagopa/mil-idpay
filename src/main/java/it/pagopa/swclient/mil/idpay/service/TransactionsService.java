@@ -268,7 +268,7 @@ public class TransactionsService {
         transaction.setTimestamp(entity.idpayTransaction.getTimestamp());
         transaction.setGoodsCost(entity.idpayTransaction.getGoodsCost());
         if (createTransaction) {
-            transaction.setChallenge(entity.idpayTransaction.getTrxCode().getBytes(StandardCharsets.UTF_8));
+            transaction.setChallenge(Base64.getEncoder().encode(entity.idpayTransaction.getTrxCode().getBytes(StandardCharsets.UTF_8)));
         }
         transaction.setTrxCode(entity.idpayTransaction.getTrxCode());
         transaction.setQrCode(qrCode);

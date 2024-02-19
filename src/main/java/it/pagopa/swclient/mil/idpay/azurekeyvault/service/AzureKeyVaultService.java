@@ -15,17 +15,13 @@ import it.pagopa.swclient.mil.idpay.bean.PublicKeyIDPay;
 import it.pagopa.swclient.mil.idpay.bean.PublicKeyUse;
 import it.pagopa.swclient.mil.idpay.client.bean.azure.AccessToken;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @ApplicationScoped
 public class AzureKeyVaultService {
@@ -46,8 +42,11 @@ public class AzureKeyVaultService {
 
     private static final String BEARER = "Bearer ";
 
-    @Inject
-    KidUtil kidUtil;
+    private final KidUtil kidUtil;
+
+    public AzureKeyVaultService(KidUtil kidUtil) {
+        this.kidUtil = kidUtil;
+    }
 
     public Uni<PublicKeyIDPay> getAzureKVKey(AccessToken accessToken, CommonHeader headers) {
 
@@ -204,11 +203,16 @@ public class AzureKeyVaultService {
 
         KeyNameAndVersion keyNameAndVersion = kidUtil.getNameAndVersionFromAzureKid(key.getDetails().getKid());
 
+        //Exponent and modulus converted to base64 standard
+        String exponent = Base64.getEncoder().encodeToString(Base64.getUrlDecoder().decode(key.getDetails().getExponent()));
+        String modulus =  Base64.getEncoder().encodeToString(Base64.getUrlDecoder().decode(key.getDetails().getModulus()));
+
+
         return new PublicKeyIDPay(
-                key.getDetails().getExponent(),
+                exponent,
                 PublicKeyUse.enc,
                 kidUtil.getMyKidFromNameAndVersion(keyNameAndVersion),
-                key.getDetails().getModulus(),
+                modulus,
                 KeyType.RSA,
                 key.getAttributes().getExp(),
                 key.getAttributes().getCreated(),
