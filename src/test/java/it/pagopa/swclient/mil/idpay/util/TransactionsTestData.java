@@ -24,7 +24,7 @@ import java.util.*;
 
 public final class TransactionsTestData {
 
-    //valore vaultUrl deve coincidere con valore del parametro %test.quarkus.rest-client.azure-key-vault-api.url del application.properties
+    //value vaultUrl must coincide with value of param %test.quarkus.rest-client.azure-key-vault-api.url of application.properties
     private static final String vaultUrl = "https://156360cd-f617-4dcb-b908-ae29a2a8651c.mock.pstmn.io";
     private static final SimpleDateFormat lastUpdateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
@@ -266,8 +266,8 @@ public final class TransactionsTestData {
     }
 
     public static AuthTransactionResponse getAuthTransactionResponse() {
-        AuthTransactionResponse authTransactionResponse = new AuthTransactionResponse();
-        AuthTransactionResponseOk authTransactionResponseOk = AuthTransactionResponseOk
+
+        return AuthTransactionResponse
                 .builder()
                 .id("1")
                 .trxCode("12345678")
@@ -275,10 +275,6 @@ public final class TransactionsTestData {
                 .initiativeId("InitiativeId2")
                 .status(TransactionStatus.AUTHORIZED)
                 .build();
-
-        authTransactionResponse.setAuthTransactionResponseOk(authTransactionResponseOk);
-
-        return authTransactionResponse;
     }
 
     public static PublicKeyIDPay getPublicKeyIdPay() {
