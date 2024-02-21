@@ -13,6 +13,9 @@ import lombok.NoArgsConstructor;
 @RegisterForReflection
 public class AuthTransactionResponse {
 
-    private AuthTransactionResponseOk authTransactionResponseOk;
-    private AuthTransactionResponseWrong authTransactionResponseWrong;
+    private String id;
+    private String trxCode;
+    private String initiativeId;
+    private TransactionStatus status;
+    private Long amountCents;
 }

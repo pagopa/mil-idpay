@@ -408,55 +408,6 @@ class TransactionResourceAuthorizationTest {
 
     @Test
     @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
-    void authorizeTransactionTest_KOAuthorizeOther500() {
-
-        Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));
-
-        Mockito.when(azureADRestClient.getAccessToken(Mockito.any(String.class), Mockito.any(String.class)))
-                .thenReturn((Uni.createFrom().item(azureAdAccessToken)));
-
-        Mockito.when(azureKeyVaultClient.getCertificate(Mockito.any(String.class), Mockito.any(String.class)))
-                .thenReturn(Uni.createFrom().item(certificateBundle));
-
-        Mockito.when(azureKeyVaultClient.getSecret(Mockito.any(String.class), Mockito.any(String.class)))
-                .thenReturn(Uni.createFrom().item(secretBundle));
-
-        Mockito.when(azureKeyVaultClient.unwrapKey(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(UnwrapKeyRequest.class)))
-                .thenReturn(Uni.createFrom().item(unwrapKeyResponse));
-
-        Mockito.when(idPayRestService.retrieveIdpayPublicKey(Mockito.any(String.class)))
-                .thenReturn(Uni.createFrom().item(publicKeyIDPay));
-
-        authTransactionResponse.setAuthTransactionResponseOk(null);
-        authTransactionResponse.setAuthTransactionResponseWrong(null);
-
-        Mockito.when(idPayRestService.authorize(Mockito.any(String.class), Mockito.any(String.class), Mockito.any(String.class), Mockito.any(PinBlockDTO.class)))
-                .thenReturn(Uni.createFrom().item(authTransactionResponse));
-
-
-        Response response = given()
-                .contentType(ContentType.JSON)
-                .headers(validMilHeaders)
-                .and()
-                .body(authorizeTransaction)
-                .pathParam("milTransactionId", transactionId)
-                .when()
-                .post("/{milTransactionId}/authorize")
-                .then()
-                .extract()
-                .response();
-
-        authTransactionResponse = TransactionsTestData.getAuthTransactionResponse();
-
-        Assertions.assertEquals(500, response.statusCode());
-        Assertions.assertEquals(1, response.jsonPath().getList("errors").size());
-        Assertions.assertEquals(1, response.jsonPath().getList("descriptions").size());
-
-        Assertions.assertTrue(response.jsonPath().getList("errors").contains(ErrorCode.ERROR_IDPAY_UNKNOWN_ERROR_CODE));
-    }
-
-    @Test
-    @TestSecurity(user = "testUser", roles = {"PayWithIDPay"})
     void authorizeTransactionTest_KOEncryptingSessionKey() {
 
         Mockito.when(idpayTransactionRepository.findById(Mockito.any(String.class))).thenReturn(Uni.createFrom().item(idpayTransactionEntity));

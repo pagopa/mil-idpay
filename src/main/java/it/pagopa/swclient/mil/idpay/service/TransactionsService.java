@@ -673,26 +673,14 @@ public class TransactionsService {
                     }
                 }))
                 .chain(finalResult -> {
-                    if (finalResult.getAuthTransactionResponseOk() != null) {
 
-                        // If all went ok, send 200 OK to client
-                        Log.debugf("TransactionsService -> authorizeTransaction: call to authorize returned a 200 status, response with public key: [%s]", finalResult.getAuthTransactionResponseOk());
+                    // If all went ok, send 200 OK to client
+                    Log.debugf("TransactionsService -> authorizeTransaction: call to authorize returned a 200 status, response with public key: [%s]", finalResult);
 
-                        // Start updating transaction with new status AUTHORIZED
-                        return updateAuthorizeTransactionStatus(dbData)
-                                .onItem()
-                                .transform(result -> result);
-                    } else {
-
-                        // If any other from IDPay, send INTERNAL_SERVER_ERROR to client
-                        Log.errorf("TransactionsService -> authorizeTransaction: IDPay responds with unknown error 500 for transaction: [%s]", dbData.transactionId);
-                        Errors errors = new Errors(List.of(ErrorCode.ERROR_IDPAY_UNKNOWN_ERROR_CODE), List.of(ErrorCode.ERROR_IDPAY_UNKNOWN_ERROR_MSG));
-
-                        return Uni.createFrom().item((Response
-                                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                .entity(errors)
-                                .build()));
-                    }
+                    // Start updating transaction with new status AUTHORIZED
+                    return updateAuthorizeTransactionStatus(dbData)
+                            .onItem()
+                            .transform(result -> result);
                 });
     }
 
