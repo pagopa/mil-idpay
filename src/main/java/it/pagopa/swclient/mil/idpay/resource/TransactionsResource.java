@@ -10,7 +10,6 @@ import it.pagopa.swclient.mil.idpay.bean.CreateTransaction;
 import it.pagopa.swclient.mil.idpay.bean.VerifyCie;
 import it.pagopa.swclient.mil.idpay.service.TransactionsService;
 import jakarta.annotation.security.RolesAllowed;
-import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -24,8 +23,12 @@ import java.net.URI;
 
 @Path("/transactions")
 public class TransactionsResource {
-    @Inject
-    TransactionsService transactionsService;
+
+    private final TransactionsService transactionsService;
+
+    public TransactionsResource(TransactionsService transactionsService) {
+        this.transactionsService = transactionsService;
+    }
 
     /**
      * The value of the Max-Retries header to be sent in response to the createTransaction API
@@ -118,10 +121,14 @@ public class TransactionsResource {
          */
         AcqMerchMapper.map(headers);
         
-        return transactionsService.cancelTransaction(headers, transactionId).chain(() ->
-            Uni.createFrom().item(
-                    Response.status(Status.NO_CONTENT).build())
-        );
+        return transactionsService.cancelTransaction(headers, transactionId).chain(res -> {
+            Log.debugf("TransactionsResource -> TransactionsService -> cancelTransaction - Response %s", res);
+
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.OK)
+                            .entity(res)
+                            .build());
+        });
     }
 
     private URI getTransactionURI(String milTransactionId) {

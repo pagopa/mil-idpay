@@ -25,7 +25,10 @@ import it.pagopa.swclient.mil.idpay.dao.IdpayTransaction;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionEntity;
 import it.pagopa.swclient.mil.idpay.dao.IdpayTransactionRepository;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -275,6 +278,7 @@ public class TransactionsService {
         transaction.setCoveredAmount(entity.idpayTransaction.getCoveredAmount());
         transaction.setStatus(entity.idpayTransaction.getStatus());
         transaction.setSecondFactor(secondFactor);
+        transaction.setLastUpdate(entity.idpayTransaction.getLastUpdate());
 
         return transaction;
     }
@@ -353,7 +357,7 @@ public class TransactionsService {
         return trEntity;
     }
 
-    public Uni<Void> cancelTransaction(CommonHeader headers, String transactionId) {
+    public Uni<Transaction> cancelTransaction(CommonHeader headers, String transactionId) {
 
         Log.debugf("TransactionsService -> cancelTransaction - Input parameters: %s, %s", headers, transactionId);
 
@@ -394,7 +398,7 @@ public class TransactionsService {
 
                                                             return updEntity;
                                                         })
-                                                        .chain(() -> Uni.createFrom().voidItem());
+                                                        .chain(result -> Uni.createFrom().item(createTransactionFromIdpayTransactionEntity(result, null, null, false)));
                                             })
                             );
                 });
