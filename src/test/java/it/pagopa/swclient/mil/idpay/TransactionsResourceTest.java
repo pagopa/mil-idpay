@@ -744,7 +744,7 @@ class TransactionsResourceTest {
                 .extract()
                 .response();
 
-        Assertions.assertEquals(204, response.statusCode());
+        Assertions.assertEquals(200, response.statusCode());
 
     }
 
@@ -788,7 +788,7 @@ class TransactionsResourceTest {
                 .response();
 
         syncTrxStatus.setStatus(TransactionStatus.CREATED);
-        Assertions.assertEquals(204, response.statusCode());
+        Assertions.assertEquals(200, response.statusCode());
 
     }
 
@@ -999,7 +999,7 @@ class TransactionsResourceTest {
                 .extract()
                 .response();
 
-        Assertions.assertEquals(204, response.statusCode());
+        Assertions.assertEquals(200, response.statusCode());
 
     }
 
@@ -1081,7 +1081,7 @@ class TransactionsResourceTest {
                 .extract()
                 .response();
 
-        Assertions.assertEquals(204, response.statusCode());
+        Assertions.assertEquals(200, response.statusCode());
 
     }
 
