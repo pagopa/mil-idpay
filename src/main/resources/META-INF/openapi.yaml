@@ -162,8 +162,8 @@ paths:
       operationId: cancelTransaction
       summary: Cancels an IDPay transaction
       responses:
-        "204":
-          description: Transaction cancelled successfully
+        "200":
+          $ref: '#/components/responses/Transaction'
         "400":
           $ref: '#/components/responses/Error'
         "401":
@@ -511,6 +511,13 @@ components:
       type: string
       pattern: "^[0-9a-zA-Z]{8}$"
       example: "12345678"
+
+    TransactionLastUpdate:
+      description: Timestamp of last update of the transaction
+      type: string
+      format: date-time
+      maxLength: 19
+      example: "2024-04-04T12:45:33"
     
     TransactionLocation:
       description: URL of the transaction
@@ -752,6 +759,8 @@ components:
           $ref: '#/components/schemas/InitiativeId'
         timestamp:
           $ref: '#/components/schemas/TransactionTimestamp'
+        lastUpdate:
+          $ref: '#/components/schemas/TransactionLastUpdate'
         goodsCost:
           $ref: '#/components/schemas/GoodsCost'
         trxCode:
@@ -775,6 +784,7 @@ components:
         milTransactionId: "ccadc1c4-3913-431e-a569-6cf2ce60946c"
         initiativeId: "649c50b5a03f655e6543af06"
         timestamp: "2023-09-11T12:45:33"
+        lastUpdate: "2024-04-04T15:18:25"
         goodsCost: 50054
         trxCode: "rwkmek1x"
         coveredAmount: 10012
