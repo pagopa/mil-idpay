@@ -276,3 +276,19 @@ jobs:
             echo "Move $key to DONE."
             curl -u ${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }} -X POST --data '{"transition":{"id":"31"}}' -H "Content-Type: application/json" ${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/$key/transitions
           done
+
+      - name: Update OpenAPI 
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          API_DATA=$(az apim api show --resource-group mil-d-integration-rg --service-name mil-d-apim --api-id mil-d-idpay --query "{path:path, serviceUrl:serviceUrl}")
+          API_PATH=$(echo $API_DATA | jq -r '.path')
+          API_SERVICE_URL=$(echo $API_DATA | jq -r '.serviceUrl') 
+
+          az apim api import \
+              --resource-group mil-d-integration-rg \
+              --service-name mil-d-apim \
+              --api-id mil-d-idpay \
+              --specification-format OpenApi \
+              --specification-url https://raw.githubusercontent.com/pagopa/mil-idpay/main/src/main/resources/META-INF/openapi.yaml \
+              --path $API_PATH \
+              --service-url $API_SERVICE_URL
