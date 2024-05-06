@@ -277,6 +277,18 @@ jobs:
             curl -u ${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }} -X POST --data '{"transition":{"id":"31"}}' -H "Content-Type: application/json" ${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/$key/transitions
           done
 
+
+      #
+      # Login to Azure.
+      #
+      - name: Login to Azure for OpenApi version Update
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: azure/login@92a5484dfaf04ca78a94597f4f19fea633851fa2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          
       - name: Update OpenAPI 
         if: steps.semantic.outputs.new_release_published == 'true'
         run: |
