@@ -343,7 +343,7 @@ public class TransactionsService {
         idpayTransaction.setStatus(res.getStatus());
         idpayTransaction.setCoveredAmount(res.getRewardCents());
         if (preview != null) {
-            idpayTransaction.setCoveredAmount(preview.getReward());
+            idpayTransaction.setCoveredAmount(preview.getRewardCents());
         }
         idpayTransaction.setLastUpdate(lastUpdateFormat.format(new Date()));
         idpayTransaction.setByCie(entity.idpayTransaction.getByCie());
@@ -351,7 +351,6 @@ public class TransactionsService {
         IdpayTransactionEntity trEntity = new IdpayTransactionEntity();
 
         trEntity.transactionId = entity.transactionId;
-
         trEntity.idpayTransaction = idpayTransaction;
 
         return trEntity;

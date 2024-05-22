@@ -20,8 +20,8 @@ public class PreAuthPaymentResponseDTO {
     private String initiativeName;
     private String businessName;
     private TransactionStatus status;
-    private Long reward;
+    private Long rewardCents;
     private Long amountCents;
-    private BigDecimal residualBudget;
+    private BigDecimal residualBudgetCents;
     private String secondFactor;
 }
